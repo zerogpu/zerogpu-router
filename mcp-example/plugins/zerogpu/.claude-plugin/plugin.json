@@ -1,0 +1,21 @@
+{
+  "name": "zerogpu",
+  "version": "0.1.0",
+  "description": "Offload cheap AI tasks (classification, summarization, extraction, follow-ups, small-model chat) to ZeroGPU small/nano models.",
+  "skills": [
+    "./skill"
+  ],
+  "mcpServers": {
+    "zerogpu": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp-servers/zerogpu-mcp/dist/index.js"
+      ],
+      "env": {
+        "ZEROGPU_ORCHESTRATION_URL": "${ZEROGPU_ORCHESTRATION_URL}",
+        "ZEROGPU_API_KEY": "${ZEROGPU_API_KEY}",
+        "ZEROGPU_PROJECT_ID": "${ZEROGPU_PROJECT_ID}"
+      }
+    }
+  }
+}

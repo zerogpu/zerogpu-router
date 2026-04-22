@@ -1,0 +1,11 @@
+{
+  "name": "zerogpu-local",
+  "owner": { "name": "local" },
+  "plugins": [
+    {
+      "name": "zerogpu",
+      "source": "./plugins/zerogpu",
+      "description": "Offload cheap AI tasks to ZeroGPU small/nano models."
+    }
+  ]
+}
