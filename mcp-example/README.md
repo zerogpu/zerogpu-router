@@ -510,7 +510,7 @@ curl -s -X POST https://zerogpu-mcp-develop.<subdomain>.workers.dev/mcp \
 
 ### Pointing Claude Code at the hosted Worker
 
-Two paths — pick one, don't mix them.
+Two paths — pick one, don't mix them. 
 
 **Path A — remote MCP only (most Claude Code users will want this):**
 
