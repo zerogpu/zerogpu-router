@@ -6,7 +6,6 @@ import { ZeroGpuClient } from "./zerogpuClient.js";
 export interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   ZEROGPU_ORCHESTRATION_URL: string;
-  ZEROGPU_MCP_BEARER?: string;
   ZEROGPU_MCP_ENV?: string;
 }
 
@@ -57,15 +56,6 @@ export default {
 
     if (url.pathname !== "/mcp") {
       return new Response("not found", { status: 404 });
-    }
-
-    const expected = env.ZEROGPU_MCP_BEARER?.trim();
-    if (!expected) {
-      return jsonRpcError(500, "server misconfigured: ZEROGPU_MCP_BEARER secret not set", -32001);
-    }
-    const got = req.headers.get("authorization") ?? "";
-    if (got !== `Bearer ${expected}`) {
-      return jsonRpcError(401, "unauthorized", -32001);
     }
 
     const apiKey = req.headers.get("x-api-key")?.trim() ?? "";
