@@ -61,10 +61,22 @@ export function computeSavings(model: string, usage: ChatCompletionsUsage | unde
 }
 
 export function logSavings(entry: SavingsLogEntry): void {
+  const line = JSON.stringify({ kind: "zerogpu.savings", ...entry });
   try {
-    process.stderr.write(`${JSON.stringify({ kind: "zerogpu.savings", ...entry })}\n`);
+    const proc = (globalThis as { process?: { stderr?: { write?: (s: string) => unknown } } }).process;
+    if (proc?.stderr?.write) {
+      proc.stderr.write(`${line}\n`);
+      return;
+    }
   } catch {
-    // stderr should not fail a tool call.
+    // fall through to console
+  }
+  try {
+    // Cloudflare Workers and browsers: goes to the platform log stream.
+    // eslint-disable-next-line no-console
+    console.log(line);
+  } catch {
+    // logging must never fail a tool call.
   }
 }
 

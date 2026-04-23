@@ -1,0 +1,81 @@
+# ZeroGPU MCP - Cloudflare Worker
+# Top-level block is the "local" profile used by `wrangler dev` and bare `wrangler deploy`.
+# Deployable environments are develop / staging / production below.
+name = "zerogpu-mcp"
+main = "src/worker.ts"
+compatibility_date = "2025-03-10"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ZEROGPU_MCP_ENV = "local"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "ZeroGpuMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ZeroGpuMcp"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+
+
+# ------------------------------------------------------------------------------
+# develop — auto-deployed from pushes to `dev`
+# ------------------------------------------------------------------------------
+[env.develop]
+name = "zerogpu-mcp-develop"
+
+[env.develop.vars]
+ZEROGPU_MCP_ENV = "develop"
+
+[[env.develop.durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "ZeroGpuMcp"
+
+[[env.develop.migrations]]
+tag = "v1"
+new_sqlite_classes = ["ZeroGpuMcp"]
+
+
+# ------------------------------------------------------------------------------
+# staging — auto-deployed from pushes to `main`
+# ------------------------------------------------------------------------------
+[env.staging]
+name = "zerogpu-mcp-staging"
+
+[env.staging.vars]
+ZEROGPU_MCP_ENV = "staging"
+
+[[env.staging.durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "ZeroGpuMcp"
+
+[[env.staging.migrations]]
+tag = "v1"
+new_sqlite_classes = ["ZeroGpuMcp"]
+
+
+# ------------------------------------------------------------------------------
+# production — deployed on GitHub release publish
+# ------------------------------------------------------------------------------
+[env.production]
+name = "zerogpu-mcp"
+
+[env.production.vars]
+ZEROGPU_MCP_ENV = "production"
+
+[[env.production.durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "ZeroGpuMcp"
+
+[[env.production.migrations]]
+tag = "v1"
+new_sqlite_classes = ["ZeroGpuMcp"]

@@ -2,16 +2,11 @@
 import { buildServer } from "./server.js";
 import { ZeroGpuClient } from "./zerogpuClient.js";
 import { runStdio } from "./transports/stdio.js";
-import { runHttp } from "./transports/http.js";
 
 interface ResolvedEnv {
   baseUrl: string;
   apiKey: string;
   projectId: string;
-  transport: "stdio" | "http";
-  host: string;
-  port: number;
-  bearer?: string;
 }
 
 function readEnv(): ResolvedEnv {
@@ -25,29 +20,7 @@ function readEnv(): ResolvedEnv {
   if (missing.length > 0) {
     throw new Error(`Missing required env vars: ${missing.join(", ")}`);
   }
-
-  const transportRaw = (process.env.ZEROGPU_MCP_TRANSPORT ?? "stdio").toLowerCase();
-  if (transportRaw !== "stdio" && transportRaw !== "http") {
-    throw new Error(`ZEROGPU_MCP_TRANSPORT must be "stdio" or "http" (got "${transportRaw}").`);
-  }
-
-  const host = process.env.ZEROGPU_MCP_HTTP_HOST?.trim() || "127.0.0.1";
-  const portRaw = process.env.ZEROGPU_MCP_HTTP_PORT?.trim() || "3987";
-  const port = Number.parseInt(portRaw, 10);
-  if (!Number.isFinite(port) || port <= 0 || port > 65535) {
-    throw new Error(`ZEROGPU_MCP_HTTP_PORT must be a valid port (got "${portRaw}").`);
-  }
-  const bearer = process.env.ZEROGPU_MCP_HTTP_BEARER?.trim() || undefined;
-
-  return {
-    baseUrl: baseUrl!,
-    apiKey: apiKey!,
-    projectId: projectId!,
-    transport: transportRaw,
-    host,
-    port,
-    bearer,
-  };
+  return { baseUrl: baseUrl!, apiKey: apiKey!, projectId: projectId! };
 }
 
 async function main(): Promise<void> {
@@ -58,12 +31,7 @@ async function main(): Promise<void> {
     projectId: env.projectId,
   });
   const server = buildServer({ client });
-
-  if (env.transport === "stdio") {
-    await runStdio(server);
-  } else {
-    await runHttp(server, { host: env.host, port: env.port, bearer: env.bearer });
-  }
+  await runStdio(server);
 }
 
 main().catch((err) => {

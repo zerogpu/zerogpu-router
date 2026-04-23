@@ -1,0 +1,34 @@
+name: CI - Run Tests
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+
+defaults:
+  run:
+    working-directory: mcp-example/plugins/zerogpu/mcp-servers/zerogpu-mcp
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Type-check Worker
+        run: npm run worker:types
+
+      - name: Run Tests
+        run: npm test

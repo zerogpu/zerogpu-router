@@ -14,14 +14,12 @@ export interface ServerDeps {
   client: ZeroGpuClient;
 }
 
-export function buildServer(deps: ServerDeps): McpServer {
-  const { client } = deps;
+export const SERVER_INFO = {
+  name: "zerogpu-mcp",
+  version: "0.1.0",
+} as const;
 
-  const server = new McpServer({
-    name: "zerogpu-mcp",
-    version: "0.1.0",
-  });
-
+export function registerTools(server: McpServer, client: ZeroGpuClient): void {
   server.registerTool(
     "zerogpu_health",
     {
@@ -117,6 +115,10 @@ export function buildServer(deps: ServerDeps): McpServer {
     },
     (args) => chatHandler(client, args as never),
   );
+}
 
+export function buildServer(deps: ServerDeps): McpServer {
+  const server = new McpServer(SERVER_INFO);
+  registerTools(server, deps.client);
   return server;
 }

@@ -5,7 +5,9 @@ A single Claude Code plugin that teaches Claude when to offload cheap AI tasks �
 It ships as two artifacts that work together:
 
 1. **A Skill** ([plugins/zerogpu/skill/SKILL.md](plugins/zerogpu/skill/SKILL.md)) — the *guidance layer*. A short markdown file that Claude reads at conversation start; it says "when the user asks for X, call tool Y."
-2. **An MCP server** ([plugins/zerogpu/mcp-servers/zerogpu-mcp/](plugins/zerogpu/mcp-servers/zerogpu-mcp/)) — the *execution layer*. A TypeScript Node server that exposes nine task-centric tools (`zerogpu_classify_iab`, `zerogpu_summarize`, …), each wrapping the ZeroGPU HTTP API with retries, timeouts, and a structured savings log.
+2. **An MCP server** ([plugins/zerogpu/mcp-servers/zerogpu-mcp/](plugins/zerogpu/mcp-servers/zerogpu-mcp/)) — the *execution layer*. A TypeScript server that exposes nine task-centric tools (`zerogpu_classify_iab`, `zerogpu_summarize`, …), each wrapping the ZeroGPU HTTP API with retries, timeouts, and a structured savings log. It runs in two modes:
+   - **Local (stdio)** — Claude Code spawns `node dist/index.js` and talks JSON-RPC over the child process's stdin/stdout.
+   - **Hosted (Cloudflare Workers)** — the same tool code, re-entered through a `McpAgent` Durable Object behind a bearer-guarded `/mcp` endpoint. Deployed via `wrangler` to three named environments (develop, staging, production) by the workflows in [.github/workflows](../.github/workflows).
 
 If you just want to try it, skip to [Quick start](#quick-start). If you've never heard of MCP or Skills, read the two primer sections first — everything else in this README assumes you have those mental models.
 
@@ -22,6 +24,13 @@ If you just want to try it, skip to [Quick start](#quick-start). If you've never
 - [Installing the plugin locally in Claude Code](#installing-the-plugin-locally-in-claude-code)
 - [Running the server standalone](#running-the-server-standalone)
 - [Hosting on Cloudflare Workers](#hosting-on-cloudflare-workers)
+  - [Architecture](#architecture)
+  - [What you must set up on Cloudflare (one time per account)](#what-you-must-set-up-on-cloudflare-one-time-per-account)
+  - [Deploy pipeline (GitHub Actions)](#deploy-pipeline-github-actions)
+  - [Deploying by hand](#deploying-by-hand)
+  - [Smoke-testing a deployed Worker](#smoke-testing-a-deployed-worker)
+  - [Pointing Claude Code at the hosted Worker](#pointing-claude-code-at-the-hosted-worker)
+  - [Testing the hosted MCP server from Claude Code](#testing-the-hosted-mcp-server-from-claude-code)
 - [Verifying it works](#verifying-it-works)
 - [Troubleshooting](#troubleshooting)
 
@@ -90,7 +99,7 @@ allowed-tools:
 
 Two important details:
 
-- **`allowed-tools`** — a whitelist of MCP tool names the skill is allowed to call. Names follow the pattern `mcp__<server-name>__<tool-name>`. `<server-name>` is the key under `mcpServers` in [plugin.json](plugins/zerogpu/plugin.json) (here: `zerogpu`). `<tool-name>` is whatever the server registered (here: `zerogpu_summarize` etc., giving `mcp__zerogpu__zerogpu_summarize`).
+- **`allowed-tools`** — a whitelist of MCP tool names the skill is allowed to call. Names follow the pattern `mcp__<server-name>__<tool-name>`. `<server-name>` is the key under `mcpServers` in [plugin.json](plugins/zerogpu/.claude-plugin/plugin.json) (here: `zerogpu`). `<tool-name>` is whatever the server registered (here: `zerogpu_summarize` etc., giving `mcp__zerogpu__zerogpu_summarize`).
 - **The body is the actual guidance.** It contains decision rules ("when the user says 'summarize', call `zerogpu_summarize`"), a tool-selection table, and worked examples. Good skill bodies are short, decision-oriented, and imperative — they are not documentation.
 
 **Skill vs. MCP server — the clean split:**
@@ -110,23 +119,27 @@ Skills without an MCP server are just prompt snippets. MCP servers without skill
 
 ```
 plugins/zerogpu/
-├── plugin.json                 ← Claude Code plugin manifest — declares the skill and the MCP server
+├── .claude-plugin/
+│   └── plugin.json             ← Claude Code plugin manifest — declares the skill and the MCP server
 ├── skill/
 │   └── SKILL.md                ← guidance layer (prose)
 └── mcp-servers/
     └── zerogpu-mcp/            ← execution layer (TypeScript MCP server)
         ├── package.json
-        ├── tsconfig.json
+        ├── tsconfig.json           ← Node build (emits dist/)
+        ├── tsconfig.worker.json    ← Worker type-check config (no emit)
+        ├── wrangler.toml           ← Cloudflare Worker manifest (local + develop/staging/production envs)
         ├── vitest.config.ts
         ├── .env.example
         ├── src/
-        │   ├── index.ts                 ← entry point — reads env, picks transport
-        │   ├── server.ts                ← registers 9 tools on an McpServer
-        │   ├── zerogpuClient.ts         ← fetch wrapper (auth, timeout, retry)
+        │   ├── index.ts                 ← Node entry (stdio transport)
+        │   ├── worker.ts                ← Cloudflare Worker entry (McpAgent + Durable Object)
+        │   ├── server.ts                ← registerTools() — shared by both entries
+        │   ├── zerogpuClient.ts         ← fetch wrapper (auth, timeout, retry) — runtime-agnostic
         │   ├── modelCatalog.ts          ← task → model-id map
         │   ├── parsers.ts               ← safe JSON parse, ```json fence strip, <think> splitter
-        │   ├── savings.ts               ← cost estimator + structured stderr logger
-        │   ├── tools/                   ← one file per tool handler
+        │   ├── savings.ts               ← cost estimator + structured logger (stderr on Node, console on Workers)
+        │   ├── tools/                   ← one file per tool handler — runtime-agnostic
         │   │   ├── shared.ts
         │   │   ├── health.ts
         │   │   ├── classifyIab.ts
@@ -138,8 +151,7 @@ plugins/zerogpu/
         │   │   ├── generateFollowups.ts
         │   │   └── chat.ts
         │   └── transports/
-        │       ├── stdio.ts             ← default local transport
-        │       └── http.ts              ← Express + StreamableHTTPServerTransport, JSON-only
+        │       └── stdio.ts             ← Node child-process transport (Claude Code default)
         └── tests/
             ├── tools.unit.test.ts       ← MSW-mocked, runs in CI
             └── live.postman.test.ts     ← gated by ZEROGPU_LIVE=1
@@ -172,7 +184,7 @@ ZeroGPU Orchestration API — runs the small/nano model
 
 ### Plugin manifest
 
-**[plugins/zerogpu/plugin.json](plugins/zerogpu/plugin.json)** — tells Claude Code what this plugin provides. Two keys matter:
+**[plugins/zerogpu/.claude-plugin/plugin.json](plugins/zerogpu/.claude-plugin/plugin.json)** — tells Claude Code what this plugin provides. Two keys matter:
 
 - `skills: ["./skill"]` — relative path to the skill folder. Claude Code scans it for `SKILL.md`.
 - `mcpServers.zerogpu` — how to launch the MCP server. `command` + `args` are the shell command; `${PLUGIN_DIR}` is expanded to the plugin's on-disk location. The `env` block forwards three required environment variables from Claude Code's own environment (which you set in `~/.claude/settings.json`) into the child process.
@@ -193,9 +205,13 @@ ZeroGPU Orchestration API — runs the small/nano model
 
 ### MCP server source
 
-**[src/index.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/index.ts)** — entry point. Reads environment, validates required vars fail-fast, builds the `ZeroGpuClient` and `McpServer`, then dispatches to the stdio or HTTP transport based on `ZEROGPU_MCP_TRANSPORT`. On fatal error it writes a single JSON line to stderr and exits non-zero.
+**[src/index.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/index.ts)** — Node entry point. Reads the three ZeroGPU env vars (fail-fast if missing), builds a `ZeroGpuClient` + `McpServer` via `buildServer()`, and runs the stdio transport. This is what `node dist/index.js` executes when Claude Code spawns the plugin locally.
 
-**[src/server.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/server.ts)** — `buildServer({ client })`: creates an `McpServer` from the SDK and registers all nine tools. Each registration is `server.registerTool(name, { title, description, inputSchema: zodSchema.shape }, handler)`.
+**[src/worker.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/worker.ts)** — Cloudflare Worker entry point. `ZeroGpuMcp extends McpAgent<Env>` from the `agents` package: it's a Durable Object whose `init()` hook builds a `ZeroGpuClient` from `this.env` and calls the shared `registerTools()` helper. The exported `default.fetch` enforces `Authorization: Bearer ${ZEROGPU_MCP_BEARER}` on `/mcp` traffic, responds to `GET /health` without a bearer, and delegates everything else to `ZeroGpuMcp.serve("/mcp")`.
+
+**[src/server.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/server.ts)** — exports `registerTools(server, client)` (used by both Node and Worker entries) and `buildServer({ client })` (used by Node). Each of the nine registrations looks like `server.registerTool(name, { title, description, inputSchema: zodSchema.shape }, handler)`.
+
+**[wrangler.toml](plugins/zerogpu/mcp-servers/zerogpu-mcp/wrangler.toml)** — Cloudflare Worker manifest. A top-level `[local]` profile used by `wrangler dev`, plus three `[env.<name>]` blocks (`develop` / `staging` / `production`) that each declare the per-env Worker script name, the `MCP_OBJECT` Durable Object binding pointing at `ZeroGpuMcp`, and the SQLite migration that creates its storage.
 
 **[src/zerogpuClient.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/zerogpuClient.ts)** — the only thing that talks to the ZeroGPU backend. It uses Node's global `fetch`, attaches `x-api-key` and `x-project-id` headers on every request, aborts on a 30-second timeout via `AbortController`, retries 429/502/503/504 up to 3 times with exponential backoff (+jitter), and throws a typed `ZeroGpuError` with the upstream status + body excerpt on failure. Exports: `chatCompletions()`, `responses()`, `health()`.
 
@@ -203,13 +219,13 @@ ZeroGPU Orchestration API — runs the small/nano model
 
 **[src/parsers.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/parsers.ts)** — three small pure functions: `stripCodeFence` removes ```` ```json ```` wrappers, `safeJsonParse` returns `{ parsed, raw, ok }` instead of throwing, and `stripThinkTags` pulls `<think>…</think>` traces out of `LFM2.5-…-Thinking` output into a separate `reasoning` field so `content` is always the clean answer.
 
-**[src/savings.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/savings.ts)** — a pinned price table (`PRICE_TABLE_VERSION = "2026-04-22"`) comparing ZeroGPU's per-token cost against a nominal Claude baseline. Each tool call emits one JSON line to **stderr** with `{ tool, model, input_tokens, output_tokens, zerogpu_cost_usd, baseline_cost_usd, savings_usd, latency_ms }`. Stderr is used so the line never interferes with the JSON-RPC channel on stdout.
+**[src/savings.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/savings.ts)** — a pinned price table (`PRICE_TABLE_VERSION = "2026-04-22"`) comparing ZeroGPU's per-token cost against a nominal Claude baseline. Each tool call emits one JSON line with `{ tool, model, input_tokens, output_tokens, zerogpu_cost_usd, baseline_cost_usd, savings_usd, latency_ms }`. On Node it goes to **stderr** (so it never interferes with the JSON-RPC channel on stdout); on Cloudflare Workers it falls back to `console.log` and shows up in the Worker log stream.
 
 **[src/tools/](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/tools/)** — one file per exposed tool. Each file exports a zod argument schema and a handler function. They all follow the same shape: validate args, build an upstream request body, delegate to the shared `runChat` helper, and wrap the result in an MCP `content` array. See [Tools exposed](#tools-exposed-by-the-mcp-server) below for what each one does.
 
-**[src/transports/stdio.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/transports/stdio.ts)** — connects the server to `StdioServerTransport`. The server reads line-delimited JSON-RPC from stdin and writes responses to stdout. Used when Claude Code spawns the server as a child process (the default).
+**[src/transports/stdio.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/transports/stdio.ts)** — connects the server to `StdioServerTransport`. The server reads line-delimited JSON-RPC from stdin and writes responses to stdout. Used when Claude Code spawns the server as a child process.
 
-**[src/transports/http.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/transports/http.ts)** — an Express app mounting `StreamableHTTPServerTransport` at `/mcp` with `enableJsonResponse: true` (JSON body per call, no SSE frames). It keeps a session map keyed by the `mcp-session-id` header, refuses to bind to non-loopback hosts unless `ZEROGPU_MCP_HTTP_BEARER` is set, and validates `Authorization: Bearer …` on every request when a bearer is configured. `GET /mcp` and `DELETE /mcp` return 405 (the transport is request/response only).
+The hosted HTTP transport lives in [src/worker.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/worker.ts) and is described in [Hosting on Cloudflare Workers](#hosting-on-cloudflare-workers) — the previous Express-based local HTTP transport has been removed in favor of that Workers-native path.
 
 ### Tests
 
@@ -255,7 +271,7 @@ npm test                       # 16 unit tests, no network needed
 After that, pick one path:
 
 - **Use it from Claude Code** → [Installing the plugin locally in Claude Code](#installing-the-plugin-locally-in-claude-code)
-- **Run it yourself locally** → [Running the server locally](#running-the-server-locally)
+- **Run it yourself locally** → [Running the server standalone](#running-the-server-standalone)
 - **Host it on Cloudflare Workers** → [Hosting on Cloudflare Workers](#hosting-on-cloudflare-workers)
 
 ---
@@ -269,7 +285,7 @@ Two separate places hold the three ZeroGPU secrets, each read by a different act
 | File | Who reads it | When |
 |---|---|---|
 | [plugins/zerogpu/mcp-servers/zerogpu-mcp/.env](plugins/zerogpu/mcp-servers/zerogpu-mcp/.env) | Node's `--env-file-if-exists` flag baked into the npm scripts | When you run `npm start` / `npm run inspect` / `node dist/index.js` directly |
-| `~/.claude/settings.json` → `env` object | Claude Code, which substitutes `${ZEROGPU_…}` in [plugin.json](plugins/zerogpu/plugin.json) before spawning the server | Every time Claude Code launches the plugin |
+| `~/.claude/settings.json` → `env` object | Claude Code, which substitutes `${ZEROGPU_…}` in [plugin.json](plugins/zerogpu/.claude-plugin/plugin.json) before spawning the server | Every time Claude Code launches the plugin |
 
 Vars already set in the process environment win — `--env-file-if-exists` never overrides them — so when Claude Code spawns the server it always uses `settings.json` values, and `.env` is purely a standalone-dev convenience.
 
@@ -340,11 +356,11 @@ Edit both [.env](plugins/zerogpu/mcp-servers/zerogpu-mcp/.env) and `~/.claude/se
 
 ## Running the server standalone
 
-For development, porting, or adding a new tool you can exercise the MCP server outside Claude Code. Two runtime modes, selected by `ZEROGPU_MCP_TRANSPORT`:
+For development, porting, or adding a new tool you can exercise the MCP server outside Claude Code. There are two runtimes — pick whichever matches what you're iterating on.
 
-### Mode 1: stdio (default)
+### stdio (Node — same mode Claude Code uses)
 
-The same mode Claude Code uses. Easiest way to poke it by hand is the MCP Inspector:
+Easiest way to poke it by hand is the MCP Inspector:
 
 ```bash
 cd plugins/zerogpu/mcp-servers/zerogpu-mcp
@@ -354,151 +370,172 @@ npm run inspect
 
 If Inspector lists nine tools and one returns a payload, the server is healthy. Both `npm start` and `npm run inspect` use `node --env-file-if-exists=.env` under the hood, so they pick up your `.env` automatically (and no-op quietly if it's missing).
 
-### Mode 2: HTTP (for remote clients)
+### HTTP (Cloudflare Workers — same runtime the hosted deploys use)
 
-Set `ZEROGPU_MCP_TRANSPORT=http` and start the server. It binds to `127.0.0.1:3987` by default:
+`wrangler dev` runs the Worker entry [src/worker.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/worker.ts) in a local Workers sandbox, with Durable Objects and all. Put the three ZeroGPU creds *and* `ZEROGPU_MCP_BEARER` in your `.env`, then:
 
 ```bash
-# in .env:
-#   ZEROGPU_MCP_TRANSPORT=http
-#   ZEROGPU_MCP_HTTP_PORT=3987
-#   ZEROGPU_MCP_HTTP_HOST=127.0.0.1
-#   ZEROGPU_MCP_HTTP_BEARER=<random-string>   # required iff host is not loopback
-
-npm start
+cd plugins/zerogpu/mcp-servers/zerogpu-mcp
+npm run worker:dev
+# Worker available at http://127.0.0.1:8787
 ```
 
-You should see one JSON line on stderr: `{"kind":"zerogpu.boot","transport":"http","host":"127.0.0.1","port":3987,"bearer":false}`.
-
-Verify with a raw JSON-RPC call (every MCP session starts with `initialize`):
+Verify — every MCP session starts with `initialize`:
 
 ```bash
-curl -s -X POST http://127.0.0.1:3987/mcp \
+BEARER="$(grep ZEROGPU_MCP_BEARER .env | cut -d= -f2)"
+curl -s -X POST http://127.0.0.1:8787/mcp \
+  -H "authorization: Bearer $BEARER" \
   -H 'content-type: application/json' \
-  -H 'accept: application/json' \
+  -H 'accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"curl","version":"0"}}}'
 ```
 
-Grab the `mcp-session-id` response header and send it on every follow-up request. Then `tools/list` should enumerate the nine tools:
+Grab the `mcp-session-id` response header and send it on every follow-up:
 
 ```bash
-curl -s -X POST http://127.0.0.1:3987/mcp \
+curl -s -X POST http://127.0.0.1:8787/mcp \
+  -H "authorization: Bearer $BEARER" \
   -H 'content-type: application/json' \
-  -H 'accept: application/json' \
+  -H 'accept: application/json, text/event-stream' \
   -H 'mcp-session-id: <from-previous-response>' \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
 ```
 
-Not LAN/internet-safe without a bearer token — see the refuse-to-bind check in [src/transports/http.ts:15-20](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/transports/http.ts#L15-L20).
+If the Worker is reachable, `tools/list` enumerates the nine `zerogpu_*` tools.
 
 ---
 
 ## Hosting on Cloudflare Workers
 
-Cloudflare Workers run in a V8 isolate, not Node. The current server uses Express + Node's global `fetch` + Node built-ins — **none of that runs unchanged on a Worker**. Shipping this as a true edge MCP server means porting to Cloudflare's Workers-native path: the `agents` package's `McpAgent` class plus Durable Objects for per-session state.
+The server ships with a first-class Cloudflare Worker entry point — same tool code, different edges. The worker wraps the shared `registerTools()` helper in a Durable Object via the `agents` package's `McpAgent`, and exposes it behind a bearer-guarded `/mcp` HTTP route.
 
-This is a genuine port, not a copy. The good news is that your *domain* logic moves with only minor path adjustments — it's just the transport layer that gets rewritten.
+### Architecture
 
-**What ports unchanged:**
+```
+                       ┌─────────────────────────── Cloudflare ────────────────────────────┐
+                       │                                                                    │
+Claude Code ──HTTP──▶  │  fetch(...)                                                        │
+                       │    ├─ bearer check   ──► 401 if header mismatch                    │
+                       │    └─ ZeroGpuMcp.serve("/mcp")                                     │
+                       │         └─ Durable Object (ZeroGpuMcp extends McpAgent)            │
+                       │              ├─ init(): build ZeroGpuClient, registerTools()       │
+                       │              └─ JSON-RPC session state (SQLite-backed)             │
+                       │                                                                    │
+                       └──────────────────────────────┬─────────────────────────────────────┘
+                                                      │
+                                                      ▼
+                                             ZeroGPU Orchestration API
+```
 
-- [src/modelCatalog.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/modelCatalog.ts), [src/parsers.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/parsers.ts), [src/savings.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/savings.ts) — pure functions, no Node APIs.
-- [src/zerogpuClient.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/zerogpuClient.ts) — uses only `fetch` and `AbortController`, both native to Workers.
-- All handlers in [src/tools/](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/tools/) — pure over a `ZeroGpuClient`.
-- The existing [tests/tools.unit.test.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/tests/tools.unit.test.ts) still verifies the ported tool handlers (MSW intercepts `fetch` the same way).
+Files in play:
 
-**What gets replaced:**
+- [src/worker.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/worker.ts) — `ZeroGpuMcp extends McpAgent` plus the `default fetch` bearer guard.
+- [wrangler.toml](plugins/zerogpu/mcp-servers/zerogpu-mcp/wrangler.toml) — one local profile plus three deployable environments (`develop`, `staging`, `production`). Each env declares its own Worker name, Durable Object binding, and SQLite migration tag.
+- [src/server.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/server.ts) — the `registerTools(server, client)` helper the Worker shares with the Node/stdio entry.
 
-- [src/transports/http.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/transports/http.ts) (Express) → `McpAgent` subclass.
-- [src/transports/stdio.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/transports/stdio.ts) → not applicable on a Worker (no stdio).
-- [src/index.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/index.ts) → Worker `fetch` default export.
+Everything under [src/tools/](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/tools/), plus [src/zerogpuClient.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/zerogpuClient.ts), [src/modelCatalog.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/modelCatalog.ts), [src/parsers.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/parsers.ts), and [src/savings.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/src/savings.ts) is runtime-agnostic and runs unchanged in both the Node and Worker paths. `savings.ts` picks `process.stderr` on Node and falls back to `console.log` (Workers log stream) on the Worker.
 
-### 1. Scaffold a new Worker project
+### What you must set up on Cloudflare (one time per account)
+
+None of this is done by `wrangler deploy` — it's the prerequisite state the deploy assumes already exists.
+
+1. **Cloudflare account + Workers paid plan** — Durable Objects require the Workers Paid plan ($5/month) or higher. The free plan will accept the `wrangler deploy` but the DO binding will error at runtime.
+2. **Workers subdomain** — from the Cloudflare dashboard ▸ Workers & Pages ▸ Overview, make sure your account has a `*.workers.dev` subdomain claimed. This is where the three deployed workers will live:
+   - `https://zerogpu-mcp-develop.<your-subdomain>.workers.dev`
+   - `https://zerogpu-mcp-staging.<your-subdomain>.workers.dev`
+   - `https://zerogpu-mcp.<your-subdomain>.workers.dev`
+3. **Account ID** — dashboard ▸ Workers & Pages ▸ any Worker ▸ right-hand sidebar, copy **Account ID**.
+4. **API token for deploys** — dashboard ▸ My Profile ▸ API Tokens ▸ **Create Token** ▸ template *"Edit Cloudflare Workers"*. Scope it to your account. You'll drop this into GitHub Actions secrets below.
+5. **Per-env secrets** — from a machine with `wrangler` logged in (`wrangler login`), set the four secrets **once per environment**. Repeat for `staging` and `production`:
+
+   ```bash
+   cd mcp-example/plugins/zerogpu/mcp-servers/zerogpu-mcp
+   wrangler secret put ZEROGPU_ORCHESTRATION_URL --env develop
+   wrangler secret put ZEROGPU_API_KEY           --env develop
+   wrangler secret put ZEROGPU_PROJECT_ID        --env develop
+   wrangler secret put ZEROGPU_MCP_BEARER        --env develop   # long random string; MCP clients present it as Authorization: Bearer …
+   ```
+
+   Secrets are encrypted at rest and are never emitted in `wrangler.toml` or `git`. Rotate any of them with another `wrangler secret put`.
+6. **GitHub Actions secrets** — in the GitHub repo settings ▸ Secrets and variables ▸ Actions, add:
+   - `CLOUDFLARE_API_TOKEN` — the token from step 4.
+   - `CLOUDFLARE_ACCOUNT_ID` — the ID from step 3.
+
+That's everything. The first `wrangler deploy --env <name>` (either from your laptop or from CI) will apply the SQLite migration, create the Durable Object, and publish the Worker.
+
+### Deploy pipeline (GitHub Actions)
+
+The three workflows under [.github/workflows](../.github/workflows) mirror the `orchestration-api` layout:
+
+| Workflow | Trigger | Target |
+|---|---|---|
+| [ci.yml](../.github/workflows/ci.yml) | Pull requests to `dev` or `main` | `npm test` + Worker type-check. Does *not* deploy. |
+| [deploy-dev.yml](../.github/workflows/deploy-dev.yml) | Push to `dev` | `wrangler deploy --env develop` |
+| [deploy-staging.yml](../.github/workflows/deploy-staging.yml) | Push to `main` | `wrangler deploy --env staging` |
+| [deploy-prod.yml](../.github/workflows/deploy-prod.yml) | Published GitHub Release | `wrangler deploy --env production` |
+
+Each deploy workflow uses `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` from repo secrets; the ZeroGPU secrets are pulled from Cloudflare (not GitHub) because they were set via `wrangler secret put`.
+
+### Deploying by hand
+
+The same thing, without CI:
 
 ```bash
-npm create cloudflare@latest -- zerogpu-mcp-worker
-cd zerogpu-mcp-worker
-npm install agents @modelcontextprotocol/sdk zod
+cd mcp-example/plugins/zerogpu/mcp-servers/zerogpu-mcp
+npm install
+npm test
+
+npm run deploy:develop      # → zerogpu-mcp-develop.<subdomain>.workers.dev
+npm run deploy:staging      # → zerogpu-mcp-staging.<subdomain>.workers.dev
+npm run deploy:production   # → zerogpu-mcp.<subdomain>.workers.dev
 ```
 
-`wrangler.toml`:
+`wrangler` reads `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` from your shell env, or falls back to the interactive `wrangler login` session.
 
-```toml
-name = "zerogpu-mcp-worker"
-main = "src/index.ts"
-compatibility_date = "2025-03-10"
-compatibility_flags = ["nodejs_compat"]
-
-[[durable_objects.bindings]]
-name = "MCP_OBJECT"
-class_name = "ZeroGpuMcp"
-
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["ZeroGpuMcp"]
-```
-
-### 2. Copy the domain code over
-
-Copy the files listed under "What ports unchanged" above into the new project's `src/` (matching the same relative paths). Adjust import paths only; no logic changes.
-
-### 3. Write the Worker entry with `McpAgent`
-
-`src/index.ts` in the Worker project:
-
-```ts
-import { McpAgent } from "agents/mcp";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { ZeroGpuClient } from "./zerogpuClient";
-// ... import each tool's zod schema + handler, same as the Node version's src/server.ts ...
-
-export class ZeroGpuMcp extends McpAgent {
-  server = new McpServer({ name: "zerogpu", version: "0.1.0" });
-
-  async init() {
-    const client = new ZeroGpuClient({
-      baseUrl: this.env.ZEROGPU_ORCHESTRATION_URL,
-      apiKey: this.env.ZEROGPU_API_KEY,
-      projectId: this.env.ZEROGPU_PROJECT_ID,
-    });
-    // register each of the 9 tools on this.server — mirror the logic in src/server.ts
-  }
-}
-
-export default {
-  fetch(req: Request, env: Env, ctx: ExecutionContext) {
-    // Workers are public by default — enforce a bearer before delegating.
-    const got = req.headers.get("authorization") ?? "";
-    if (!env.MCP_BEARER || got !== `Bearer ${env.MCP_BEARER}`) {
-      return new Response("unauthorized", { status: 401 });
-    }
-    return ZeroGpuMcp.serve("/mcp").fetch(req, env, ctx);
-  },
-};
-```
-
-### 4. Set secrets and deploy
+### Smoke-testing a deployed Worker
 
 ```bash
-wrangler secret put ZEROGPU_ORCHESTRATION_URL
-wrangler secret put ZEROGPU_API_KEY
-wrangler secret put ZEROGPU_PROJECT_ID
-wrangler secret put MCP_BEARER      # any long random string
-wrangler deploy
+curl -s https://zerogpu-mcp-develop.<subdomain>.workers.dev/health
+# → {"status":"ok","env":"develop"}
+
+curl -s -X POST https://zerogpu-mcp-develop.<subdomain>.workers.dev/mcp \
+  -H "authorization: Bearer <ZEROGPU_MCP_BEARER-you-set>" \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"curl","version":"0"}}}'
 ```
 
-Your endpoint is `https://zerogpu-mcp-worker.<your-subdomain>.workers.dev/mcp`.
+`/health` returns 200 without a bearer; `/mcp` refuses anything that isn't `Authorization: Bearer <bearer>` with 401.
 
-### 5. Point Claude Code at the Worker
+### Pointing Claude Code at the hosted Worker
 
-Register the remote endpoint (skip the bundled stdio launch — the two paths don't mix):
+Two paths — pick one, don't mix them.
+
+**Path A — remote MCP only (most Claude Code users will want this):**
 
 ```bash
 claude mcp add --transport http zerogpu \
-  https://zerogpu-mcp-worker.<your-subdomain>.workers.dev/mcp \
-  --header "Authorization: Bearer <MCP_BEARER-value>"
+  https://zerogpu-mcp-develop.<subdomain>.workers.dev/mcp \
+  --header "Authorization: Bearer <ZEROGPU_MCP_BEARER-value>"
 ```
 
-You can still install the plugin from the local marketplace to get the **skill** — the skill is pure guidance and doesn't care whether the backing tools are local or remote. Just delete or ignore the `mcpServers` block in [plugin.json](plugins/zerogpu/plugin.json) so Claude Code doesn't also spawn a local stdio process alongside the remote registration. Skills and MCP servers are independent surfaces.
+You can still install the local plugin from the marketplace to pick up the **skill** (pure prose guidance — doesn't care whether the tools are local or remote). If you do, edit [plugin.json](plugins/zerogpu/.claude-plugin/plugin.json) and remove the `mcpServers` block so Claude Code doesn't spawn a local stdio process alongside your remote registration.
+
+**Path B — local stdio plugin only:**
+
+Use the [Installing the plugin locally in Claude Code](#installing-the-plugin-locally-in-claude-code) flow. No Worker involved.
+
+### Testing the hosted MCP server from Claude Code
+
+Once Path A is registered, restart Claude Code and verify in the CLI:
+
+1. `/mcp` → the `zerogpu` server should appear connected; expanding it lists the nine tools.
+2. Ask Claude: *"Run the zerogpu health tool."* → it calls `mcp__zerogpu__zerogpu_health`, which round-trips through the Worker to the ZeroGPU backend and returns the upstream status.
+3. Paste a paragraph and say *"Summarize this."* → the skill's guidance should steer the model to `mcp__zerogpu__zerogpu_summarize`. The reply arrives through the Worker, and each call emits a savings JSON line into the Worker's logs (see Cloudflare dashboard ▸ Workers & Pages ▸ `zerogpu-mcp-<env>` ▸ Logs).
+4. Try each environment: register `zerogpu-dev` / `zerogpu-staging` / `zerogpu-prod` with different names (and different `ZEROGPU_MCP_BEARER` values) to keep them side-by-side in `/mcp`.
+
+If `/mcp` shows `zerogpu` as connected but tool calls return `isError: true` with a 401, the bearer stored in `claude mcp add`'s header no longer matches the Worker's `ZEROGPU_MCP_BEARER` secret — rotate one of them so they match. If tool calls return a 500 with `"server misconfigured"`, the secret was never set; re-run `wrangler secret put ZEROGPU_MCP_BEARER --env <name>`.
 
 ---
 
@@ -514,9 +551,13 @@ You can still install the plugin from the local marketplace to get the **skill**
 
 ## Troubleshooting
 
-- **"Missing required env vars" at startup** — the server refuses to start without `ZEROGPU_ORCHESTRATION_URL`, `ZEROGPU_API_KEY`, and `ZEROGPU_PROJECT_ID`. Check [plugin.json](plugins/zerogpu/plugin.json)'s `env` block is resolving from your Claude Code settings.
-- **All tools return `isError: true` with a 401/403** — credentials are reaching the server but the backend rejects them. Re-check `ZEROGPU_API_KEY` and `ZEROGPU_PROJECT_ID` against the Postman collection.
-- **HTTP server "refuses to bind to non-loopback host"** — you set `ZEROGPU_MCP_HTTP_HOST=0.0.0.0` (or similar) without setting `ZEROGPU_MCP_HTTP_BEARER`. This is an intentional safety check; either set the bearer, keep it loopback-only, or skip the local HTTP transport and port to [Cloudflare Workers](#hosting-on-cloudflare-workers) instead.
+- **"Missing required env vars" at startup (stdio)** — the server refuses to start without `ZEROGPU_ORCHESTRATION_URL`, `ZEROGPU_API_KEY`, and `ZEROGPU_PROJECT_ID`. Check [plugin.json](plugins/zerogpu/.claude-plugin/plugin.json)'s `env` block is resolving from your Claude Code settings.
+- **"Missing required secrets" at Worker cold start** — the same three creds were never set on that environment. Run `wrangler secret put <NAME> --env <env>` for each missing one.
+- **Worker returns 500 with `"server misconfigured: ZEROGPU_MCP_BEARER secret not set"`** — the bearer secret is missing on that environment. Set it: `wrangler secret put ZEROGPU_MCP_BEARER --env <env>`.
+- **Worker returns 401 on every `/mcp` call** — the `Authorization: Bearer …` header your client sends doesn't match the Worker's `ZEROGPU_MCP_BEARER` secret. Rotate one so they match (update either `wrangler secret put` or the `--header` passed to `claude mcp add`).
+- **`wrangler deploy` fails with "Durable Object bindings require migrations"** — the environment is missing its `[[env.<name>.migrations]]` block. The committed [wrangler.toml](plugins/zerogpu/mcp-servers/zerogpu-mcp/wrangler.toml) declares them for all three envs; if you edited it locally, add it back.
+- **All tools return `isError: true` with a 401/403 from the backend** — credentials are reaching the server but the ZeroGPU backend rejects them. Re-check `ZEROGPU_API_KEY` and `ZEROGPU_PROJECT_ID` against the Postman collection.
 - **Claude doesn't call any `zerogpu_*` tool even though the task fits** — confirm the skill loaded (`/plugin` lists `zerogpu` as enabled) and the MCP server is connected (`/mcp` shows it green). If both look fine, the model may have judged the task too complex; the skill's "when NOT to use it" section is deliberately conservative.
 - **Inspector shows the server but zero tools** — the build is stale. Run `npm run build` in the mcp-server directory, then restart Claude Code (or Inspector).
 - **Tests fail with "unhandled request"** — MSW only mocks what the tests register; if you change `zerogpuClient.ts` to hit a new path, add a matching handler in [tests/tools.unit.test.ts](plugins/zerogpu/mcp-servers/zerogpu-mcp/tests/tools.unit.test.ts).
+- **GitHub Actions deploy fails with `Error: Authentication error`** — `CLOUDFLARE_API_TOKEN` in repo secrets is missing, wrong, or its scope doesn't cover Workers Scripts. Regenerate from the *Edit Cloudflare Workers* template.
