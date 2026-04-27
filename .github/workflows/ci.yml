@@ -8,7 +8,7 @@ on:
 
 defaults:
   run:
-    working-directory: mcp-example/plugins/zerogpu/mcp-servers/zerogpu-mcp
+    working-directory: mcp-server
 
 jobs:
   test:
