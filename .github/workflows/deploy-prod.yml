@@ -6,7 +6,7 @@ on:
 
 defaults:
   run:
-    working-directory: mcp-example/plugins/zerogpu/mcp-servers/zerogpu-mcp
+    working-directory: mcp-server
 
 jobs:
   deploy-prod:
@@ -31,6 +31,9 @@ jobs:
 
       - name: Run Tests
         run: npm test
+
+      # KV (ZEROGPU_CONFIG) is seeded once, out-of-band, via `npm run kv:seed:production`.
+      # Re-seed manually only when config/catalog.json changes — not on every deploy.
 
       - name: Deploy to Production
         run: npx wrangler deploy --env production
