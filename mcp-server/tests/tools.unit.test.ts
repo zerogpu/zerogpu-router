@@ -1,3 +1,25 @@
+/**
+ * @fileoverview Unit tests for all tool handlers (zerogpu_*).
+ *
+ * Uses MSW (Mock Service Worker) to intercept fetch requests and return canned responses,
+ * so tests run without hitting the real ZeroGPU backend. This makes tests:
+ * - Fast: No network latency or backend processing time
+ * - Reliable: No backend downtime, no rate limiting, no data dependencies
+ * - Deterministic: Same responses every run, reproducible assertions
+ *
+ * Tests cover:
+ * - Authentication headers (x-api-key, x-project-id) are sent correctly
+ * - Each tool correctly builds its request and parses its response
+ * - Fallback behavior when JSON parsing fails (raw text returned)
+ * - Special handling (model selection, prefix insertion, tag stripping, etc.)
+ * - Retry logic on transient failures (429, 502/503/504)
+ * - Timeout handling
+ * - Cost/savings computation
+ *
+ * Run with: npm test
+ * Skipped tests can be enabled by removing .skip (e.g., it.skip → it)
+ */
+
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { http, HttpResponse, delay } from "msw";
 import { setupServer } from "msw/node";
@@ -15,8 +37,13 @@ import { generateFollowupsHandler } from "../src/tools/generateFollowups.js";
 import { chatHandler } from "../src/tools/chat.js";
 import { healthHandler } from "../src/tools/health.js";
 
+/** Mock API base URL (will be intercepted by MSW). */
 const BASE = "https://zerogpu.test";
 
+/**
+ * Test configuration with all models and pricing.
+ * Used by every test so handlers can look up model IDs and compute savings.
+ */
 const TEST_CATALOG: ZeroGpuConfig = {
   version: "test-1",
   priceTableVersion: "test-prices",
