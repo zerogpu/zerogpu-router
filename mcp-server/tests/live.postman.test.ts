@@ -1,8 +1,29 @@
 /**
- * Live parity tests — gated by ZEROGPU_LIVE=1.
- * Mirrors the key assertions from the Postman collection against a real sandbox project.
- * Do NOT run in CI without credentials configured for a non-production project.
+ * @fileoverview Live integration tests against the real ZeroGPU backend.
+ *
+ * These tests verify that all tool handlers work correctly against an actual ZeroGPU
+ * project (not a mock). Unlike unit tests, live tests:
+ * - Hit the real backend (network latency, rate limits, potential failures)
+ * - Verify end-to-end functionality (not just the request/response format)
+ * - Catch regressions that mocks might miss
+ *
+ * Gated by ZEROGPU_LIVE=1 environment variable:
+ * - Default: tests are skipped (describe.skip)
+ * - With ZEROGPU_LIVE=1: tests run against your configured ZeroGPU project
+ *
+ * Why gated: These tests require valid credentials and will consume API quota.
+ * Not suitable for CI without a dedicated non-production test project.
+ *
+ * Configuration (required when ZEROGPU_LIVE=1):
+ * - ZEROGPU_ORCHESTRATION_URL: Base URL of ZeroGPU API
+ * - ZEROGPU_API_KEY: API key for a non-production test project
+ * - ZEROGPU_PROJECT_ID: Project ID for a non-production test project
+ * - ZEROGPU_CONFIG_PATH: (optional) Path to tool catalog.json
+ *
+ * Run with: ZEROGPU_LIVE=1 npm test
+ * Or selectively: ZEROGPU_LIVE=1 npx vitest run tests/live.postman.test.ts
  */
+
 import { describe, expect, it } from "vitest";
 
 import { ZeroGpuClient } from "../src/zerogpuClient.js";

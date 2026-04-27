@@ -8,8 +8,9 @@
 //   node scripts/seed-kv.mjs --env staging --path config/catalog.json
 //   node scripts/seed-kv.mjs --env production
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { resolve, dirname, join } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -77,16 +78,29 @@ function main() {
   }
   validate(raw);
 
-  const wranglerArgs = ["wrangler", "kv", "key", "put", args.key, JSON.stringify(raw), "--binding", args.binding];
+  // Wrangler accepts the value either as a positional arg or via --path. Inlining
+  // JSON.stringify(raw) on the command line breaks on Windows (cmd.exe strips
+  // unescaped double quotes from arguments, leaving wrangler with malformed JSON
+  // like `{version:...}`). Writing to a temp file and passing --path is robust
+  // across shells.
+  const tmpDir = mkdtempSync(join(tmpdir(), "zerogpu-kv-"));
+  const valuePath = join(tmpDir, "catalog.json");
+  writeFileSync(valuePath, JSON.stringify(raw), "utf8");
+
+  const wranglerArgs = ["wrangler", "kv", "key", "put", args.key, "--path", valuePath, "--binding", args.binding];
   if (args.env && args.env !== "local") wranglerArgs.push("--env", args.env);
 
-
   console.log(`> npx ${wranglerArgs.join(" ")}`);
-  const result = spawnSync("npx", wranglerArgs, {
-    stdio: "inherit",
-    cwd: packageDir,
-    shell: process.platform === "win32",
-  });
+  let result;
+  try {
+    result = spawnSync("npx", wranglerArgs, {
+      stdio: "inherit",
+      cwd: packageDir,
+      shell: process.platform === "win32",
+    });
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
   }
