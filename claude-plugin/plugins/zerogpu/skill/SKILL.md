@@ -1,16 +1,6 @@
 ---
 name: zerogpu
-description: Route cheap AI tasks (classification, summarization, entity/JSON extraction, follow-up question generation, small-model chat) to ZeroGPU small/nano models instead of spending Claude tokens. Invoke whenever the user asks for one of these tasks and the input is plain text.
-allowed-tools:
-  - mcp__zerogpu__zerogpu_health
-  - mcp__zerogpu__zerogpu_classify_iab
-  - mcp__zerogpu__zerogpu_summarize
-  - mcp__zerogpu__zerogpu_classify_zero_shot
-  - mcp__zerogpu__zerogpu_extract_entities
-  - mcp__zerogpu__zerogpu_extract_json
-  - mcp__zerogpu__zerogpu_classify_structured
-  - mcp__zerogpu__zerogpu_generate_followups
-  - mcp__zerogpu__zerogpu_chat
+description: Route cheap AI tasks (classification, summarization, entity/JSON extraction, PII redaction/extraction, follow-up question generation, small-model chat) to ZeroGPU small/nano models instead of spending Claude tokens. Invoke whenever the user asks for one of these tasks and the input is plain text.
 ---
 
 # ZeroGPU offload guidance
@@ -22,7 +12,7 @@ You have access to an edge inference backend (ZeroGPU) that runs small/nano lang
 Offload when **all** of the following hold:
 
 - The input is plain text (a passage, email, article, message).
-- The task is one of: classify / tag / label, summarize, extract entities / fields, suggest follow-up questions, or a short chat reply that does not depend on prior conversation.
+- The task is one of: classify / tag / label, summarize, extract entities / fields, redact or extract PII, suggest follow-up questions, or a short chat reply that does not depend on prior conversation.
 - The answer does not require multi-step reasoning, code generation, tool orchestration, or access to earlier messages in the conversation.
 
 ## When NOT to use it
@@ -43,7 +33,9 @@ Keep the task in Claude when any of these apply:
 | "Classify along these axes (sentiment: pos/neg; topic: x/y/z)" | `zerogpu_classify_structured` | Use when labels have groups — pass a `schema` like `{ sentiment: ["positive","negative"], topic: ["a","b"] }`. |
 | "Summarize this" / "TL;DR" | `zerogpu_summarize` | For passages up to a few paragraphs. |
 | "Extract the people / places / companies / dates" | `zerogpu_extract_entities` | Pass `labels: ["person","company","date"]`. |
-| "Pull these fields out as JSON" | `zerogpu_extract_json` | Pass a `schema` describing each field group. |
+| "Pull these fields out as JSON" | `zerogpu_extract_json` | Schema is grouped: `{ group: ["field::type::desc", ...] }` (e.g. `{ contact: ["name::str::Full name", "email::str::Email address"] }`). |
+| "Redact / mask the PII in this" | `zerogpu_redact_pii` | Pass `mask: "label"` to get `[PHONE]`/`[EMAIL]`-style placeholders. |
+| "Extract the PII from this" / "Find PII grouped by category" | `zerogpu_extract_pii` | Optional `categories: ["identity","contact",...]` and `threshold` to scope and tighten results. |
 | "What follow-up questions should I ask about this?" | `zerogpu_generate_followups` | Plain passage in, question list out. |
 | Short chat reply where Claude-level reasoning is not needed | `zerogpu_chat` | Set `thinking: true` for visible reasoning traces. |
 | Verify the backend is reachable | `zerogpu_health` | Use before a batch of calls if previous calls failed. |
@@ -58,6 +50,15 @@ Keep the task in Claude when any of these apply:
 
 **User:** "Pull the names and companies out of this: `<text>`"
 → Call `zerogpu_extract_entities({ text: "<text>", labels: ["person","company"] })`. Return the `entities` map.
+
+**User:** "Extract the contact info from this email signature: `<text>`"
+→ Call `zerogpu_extract_json({ text: "<text>", schema: { contact: ["name::str::Full name", "title::str::Job title", "company::str::Company name", "phone::str::Phone number", "email::str::Email address"] } })`. Return the `data` map.
+
+**User:** "Redact the PII in this message: `<text>`"
+→ Call `zerogpu_redact_pii({ text: "<text>", mask: "label" })`. Return the `redacted` string.
+
+**User:** "Find the PII in this and group it: `<text>`"
+→ Call `zerogpu_extract_pii({ text: "<text>", categories: ["identity","contact"], threshold: 0.5 })`. Return the `pii` map.
 
 ## Failure handling
 

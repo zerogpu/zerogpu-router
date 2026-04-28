@@ -55,6 +55,8 @@ export type ToolHandlerId =
   | "extractEntities"
   | "extractJson"
   | "classifyStructured"
+  | "redactPii"
+  | "extractPii"
   | "generateFollowups"
   | "chat";
 
@@ -85,6 +87,8 @@ const VALID_HANDLERS: ReadonlySet<ToolHandlerId> = new Set<ToolHandlerId>([
   "extractEntities",
   "extractJson",
   "classifyStructured",
+  "redactPii",
+  "extractPii",
   "generateFollowups",
   "chat",
 ]);

@@ -43,7 +43,7 @@ export async function extractEntitiesHandler(ctx: HandlerContext, args: ExtractE
       task: "extract_entities",
       toolName: "zerogpu_extract_entities",
       messages: [{ role: "user", content: args.text }],
-      extra: {
+      metadata: {
         usecase: "ner",             // Backend: use NER model
         labels: args.labels,        // Entity types to extract
         ...(args.threshold !== undefined ? { threshold: args.threshold } : {}), // Optional confidence filter

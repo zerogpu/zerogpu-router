@@ -32,23 +32,39 @@ export interface ChatMessage {
 }
 
 /**
- * Request body for chat completion or structured extraction.
+ * Task-specific options sent to the backend in the `metadata` field.
  *
- * The optional fields (usecase, labels, schema, threshold) control model behavior
- * and are task-specific. For example:
- * - usecase "ner" + labels: Entity recognition
+ * All GLiNER usecases carry their parameters here so the top-level body stays
+ * minimal and uniform across tools. Examples:
+ * - usecase "ner" + labels (+ threshold): Entity recognition
  * - usecase "json" + schema: Structured JSON extraction
  * - usecase "classification" + schema: Multi-axis classification
+ * - usecase "redact" + mask: PII redaction
+ * - usecase "extract-pii" + categories (+ threshold): PII extraction
+ */
+export interface ChatCompletionsMetadata {
+  usecase?: "ner" | "classification" | "json" | "redact" | "extract-pii";
+  labels?: string[];                  // NER label set
+  schema?: Record<string, string[]>;  // JSON / classification schema
+  threshold?: number;                 // Confidence cutoff
+  mask?: string;                      // PII redact mask mode (e.g., "label")
+  categories?: string[];              // PII extract categories (e.g., ["identity","contact"])
+  [key: string]: unknown;             // Allow other fields for extensibility
+}
+
+/**
+ * Request body for chat completion or structured extraction.
+ *
+ * Every tool sends an OpenAI-style `messages` array; task-specific options
+ * (usecase, labels, schema, threshold, mask, categories) always live inside
+ * `metadata` rather than at the top level.
  */
 export interface ChatCompletionsRequest {
   model: string;                              // Model ID (e.g., "t5-small", "gliner2-base-v1")
   messages: ChatMessage[];                    // Chat history in OpenAI format
+  metadata?: ChatCompletionsMetadata;         // Task-specific options (usecase, labels, schema, ...)
   max_tokens?: number;                        // Max tokens in response
   temperature?: number;                       // Sampling temperature (0-2)
-  usecase?: "ner" | "classification" | "json"; // For GLiNER: specifies extraction type
-  labels?: string[];                          // For zero-shot classification and NER
-  schema?: Record<string, string[]>;          // For structured JSON extraction and multi-axis classification
-  threshold?: number;                         // Confidence threshold for returned results
   [key: string]: unknown;                     // Allow other fields for extensibility
 }
 

@@ -1,6 +1,6 @@
 {
-  "version": "2026-04-23-1",
-  "priceTableVersion": "2026-04-22",
+  "version": "2026-04-28-1",
+  "priceTableVersion": "2026-04-28",
   "models": {
     "classify_iab": { "id": "zlm-v1-iab-classify-edge", "endpoint": "chat" },
     "classify_iab_enriched": { "id": "zlm-v1-iab-classify-edge-enriched", "endpoint": "chat" },
@@ -9,6 +9,8 @@
     "extract_entities": { "id": "gliner2-base-v1", "endpoint": "chat" },
     "extract_json": { "id": "gliner2-base-v1", "endpoint": "chat" },
     "classify_structured": { "id": "gliner2-base-v1", "endpoint": "chat" },
+    "redact_pii": { "id": "gliner-multi-pii-v1", "endpoint": "chat" },
+    "extract_pii": { "id": "gliner-multi-pii-v1", "endpoint": "chat" },
     "generate_followups": { "id": "zlm-v1-followup-questions-edge", "endpoint": "chat" },
     "chat": { "id": "LFM2.5-1.2B-Instruct", "endpoint": "chat" },
     "chat_thinking": { "id": "LFM2.5-1.2B-Thinking", "endpoint": "chat" }
@@ -20,6 +22,7 @@
     "t5-small": { "input": 0.00003, "output": 0.00006 },
     "deberta-v3-small": { "input": 0.00003, "output": 0.00006 },
     "gliner2-base-v1": { "input": 0.00003, "output": 0.00006 },
+    "gliner-multi-pii-v1": { "input": 0.00003, "output": 0.00006 },
     "LFM2.5-1.2B-Instruct": { "input": 0.00005, "output": 0.0001 },
     "LFM2.5-1.2B-Thinking": { "input": 0.00005, "output": 0.0001 }
   },
@@ -60,13 +63,25 @@
       "name": "zerogpu_extract_json",
       "handler": "extractJson",
       "title": "Extract structured JSON",
-      "description": "Pull structured fields out of text using GLiNER2 JSON mode. Schema entries use the \"field::type::desc\" convention."
+      "description": "Pull structured fields out of text using GLiNER2 JSON mode. Schema is grouped: keys are group names (e.g. 'contact'), values are arrays of 'field::type::desc' specs (e.g. 'name::str::Full name')."
     },
     {
       "name": "zerogpu_classify_structured",
       "handler": "classifyStructured",
       "title": "Schema-driven classification",
       "description": "Classify text into a structured schema of label groups with GLiNER2. Use when labels have categories (not a flat list)."
+    },
+    {
+      "name": "zerogpu_redact_pii",
+      "handler": "redactPii",
+      "title": "Redact PII",
+      "description": "Replace personally identifiable information (names, phones, emails, addresses, etc.) in text with masked placeholders using gliner-multi-pii. Pass mask='label' for [PHONE]/[EMAIL]-style tokens."
+    },
+    {
+      "name": "zerogpu_extract_pii",
+      "handler": "extractPii",
+      "title": "Extract PII",
+      "description": "Detect and extract personally identifiable information from text into a category map using gliner-multi-pii. Optional categories filter (e.g. ['identity','contact']) and threshold."
     },
     {
       "name": "zerogpu_generate_followups",
