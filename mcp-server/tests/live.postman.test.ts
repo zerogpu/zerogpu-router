@@ -119,11 +119,16 @@ suite("ZeroGPU live parity", () => {
   it("gliner JSON extraction returns structured fields", async () => {
     const ctx = await ctxPromise;
     const result = await extractJsonHandler(ctx, {
-      text: "Invoice INV-92 total is $1,240 due 2026-05-01.",
+      text:
+        "Best regards, John Smith, Senior Software Engineer at Acme Corp. Phone: (555) 123-4567, Email: john.smith@acme.com.",
       schema: {
-        invoice_no: ["string::invoice identifier"],
-        total: ["money::total amount"],
-        due_date: ["date::due date"],
+        contact: [
+          "name::str::Full name",
+          "title::str::Job title",
+          "company::str::Company name",
+          "phone::str::Phone number",
+          "email::str::Email address",
+        ],
       },
     });
     const payload = parse<{ data: Record<string, unknown> }>(result);

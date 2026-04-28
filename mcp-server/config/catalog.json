@@ -60,7 +60,7 @@
       "name": "zerogpu_extract_json",
       "handler": "extractJson",
       "title": "Extract structured JSON",
-      "description": "Pull structured fields out of text using GLiNER2 JSON mode. Schema entries use the \"field::type::desc\" convention."
+      "description": "Pull structured fields out of text using GLiNER2 JSON mode. Schema is grouped: keys are group names (e.g. 'contact'), values are arrays of 'field::type::desc' specs (e.g. 'name::str::Full name')."
     },
     {
       "name": "zerogpu_classify_structured",

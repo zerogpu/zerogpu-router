@@ -43,7 +43,7 @@ Keep the task in Claude when any of these apply:
 | "Classify along these axes (sentiment: pos/neg; topic: x/y/z)" | `zerogpu_classify_structured` | Use when labels have groups — pass a `schema` like `{ sentiment: ["positive","negative"], topic: ["a","b"] }`. |
 | "Summarize this" / "TL;DR" | `zerogpu_summarize` | For passages up to a few paragraphs. |
 | "Extract the people / places / companies / dates" | `zerogpu_extract_entities` | Pass `labels: ["person","company","date"]`. |
-| "Pull these fields out as JSON" | `zerogpu_extract_json` | Pass a `schema` describing each field group. |
+| "Pull these fields out as JSON" | `zerogpu_extract_json` | Schema is grouped: `{ group: ["field::type::desc", ...] }` (e.g. `{ contact: ["name::str::Full name", "email::str::Email address"] }`). |
 | "What follow-up questions should I ask about this?" | `zerogpu_generate_followups` | Plain passage in, question list out. |
 | Short chat reply where Claude-level reasoning is not needed | `zerogpu_chat` | Set `thinking: true` for visible reasoning traces. |
 | Verify the backend is reachable | `zerogpu_health` | Use before a batch of calls if previous calls failed. |
@@ -58,6 +58,9 @@ Keep the task in Claude when any of these apply:
 
 **User:** "Pull the names and companies out of this: `<text>`"
 → Call `zerogpu_extract_entities({ text: "<text>", labels: ["person","company"] })`. Return the `entities` map.
+
+**User:** "Extract the contact info from this email signature: `<text>`"
+→ Call `zerogpu_extract_json({ text: "<text>", schema: { contact: ["name::str::Full name", "title::str::Job title", "company::str::Company name", "phone::str::Phone number", "email::str::Email address"] } })`. Return the `data` map.
 
 ## Failure handling
 

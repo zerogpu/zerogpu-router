@@ -232,27 +232,37 @@ describe("zerogpu_extract_entities", () => {
 });
 
 describe("zerogpu_extract_json", () => {
-  it("sends usecase=json and schema", async () => {
+  it("sends usecase=json and grouped schema", async () => {
     let seenBody: Record<string, unknown> = {};
     server.use(
       http.post(`${BASE}/v1/chat/completions`, async ({ request }) => {
         seenBody = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json(
-          chatResponse("gliner2-base-v1", JSON.stringify({ invoice_no: ["INV-1"], total: ["$42"] })),
+          chatResponse(
+            "gliner2-base-v1",
+            JSON.stringify({
+              contact: {
+                name: "John Smith",
+                email: "john.smith@acme.com",
+              },
+            }),
+          ),
         );
       }),
     );
     const result = await extractJsonHandler(makeCtx(), {
-      text: "Invoice INV-1 total $42",
-      schema: { invoice_no: ["string::invoice id"], total: ["money::total amount"] },
+      text: "John Smith, john.smith@acme.com",
+      schema: {
+        contact: ["name::str::Full name", "email::str::Email address"],
+      },
     });
     expect(seenBody.usecase).toBe("json");
     expect(seenBody.schema).toEqual({
-      invoice_no: ["string::invoice id"],
-      total: ["money::total amount"],
+      contact: ["name::str::Full name", "email::str::Email address"],
     });
     const parsed = extractPayload(result);
-    expect(parsed.data.invoice_no).toEqual(["INV-1"]);
+    expect(parsed.data.contact.name).toBe("John Smith");
+    expect(parsed.data.contact.email).toBe("john.smith@acme.com");
   });
 });
 
