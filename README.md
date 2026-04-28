@@ -1,11 +1,11 @@
 # ZeroGPU for Claude Code
 
-A Claude Code plugin that teaches Claude when to offload cheap AI tasks — classification, summarization, entity/JSON extraction, follow-up question generation, small-model chat — to the **ZeroGPU Orchestration API** instead of burning Claude tokens.
+A Claude Code plugin that teaches Claude when to offload cheap AI tasks — classification, summarization, entity/JSON extraction, PII redaction/extraction, follow-up question generation, small-model chat — to the **ZeroGPU Orchestration API** instead of burning Claude tokens.
 
 It ships as two artifacts that work together:
 
 1. **A Skill** ([claude-plugin/plugins/zerogpu/skill/SKILL.md](claude-plugin/plugins/zerogpu/skill/SKILL.md)) — the *guidance layer*. A short markdown file that Claude reads at conversation start; it says "when the user asks for X, call tool Y."
-2. **An MCP server** ([mcp-server/](mcp-server/)) — the *execution layer*. A TypeScript server that exposes nine task-centric tools (`zerogpu_classify_iab`, `zerogpu_summarize`, …), each wrapping the ZeroGPU HTTP API with retries, timeouts, and a structured savings log. It runs in two modes:
+2. **An MCP server** ([mcp-server/](mcp-server/)) — the *execution layer*. A TypeScript server that exposes eleven task-centric tools (`zerogpu_classify_iab`, `zerogpu_summarize`, `zerogpu_redact_pii`, …), each wrapping the ZeroGPU HTTP API with retries, timeouts, and a structured savings log. It runs in two modes:
    - **Local (stdio)** — Claude Code spawns `node dist/index.js` and talks JSON-RPC over the child process's stdin/stdout.
    - **Hosted (Cloudflare Workers)** — the same tool code behind a credential-guarded `/mcp` HTTP endpoint, deployed via `wrangler`.
 
@@ -58,7 +58,7 @@ flowchart LR
 
 A typical call flow when the user asks Claude to "summarize this paragraph":
 
-1. Claude Code lists the server's tools at startup (result: nine `zerogpu_*` tools become visible to the model).
+1. Claude Code lists the server's tools at startup (result: eleven `zerogpu_*` tools become visible to the model).
 2. The model decides to call `zerogpu_summarize` with `{ text: "..." }`.
 3. Claude Code sends a `tools/call` JSON-RPC request to the server over stdio (or HTTP).
 4. The server's handler runs, calls the ZeroGPU backend, parses the response, and returns a JSON blob.
@@ -78,10 +78,6 @@ The shape is always the same ([claude-plugin/plugins/zerogpu/skill/SKILL.md](cla
 ---
 name: zerogpu
 description: Route cheap AI tasks ... to ZeroGPU models instead of spending Claude tokens.
-allowed-tools:
-  - mcp__zerogpu__zerogpu_summarize
-  - mcp__zerogpu__zerogpu_classify_zero_shot
-  - ...
 ---
 
 # Body (plain markdown, read by the model as guidance)
@@ -95,10 +91,7 @@ allowed-tools:
 | ... | ... | ... |
 ```
 
-Two important details:
-
-- **`allowed-tools`** — a whitelist of MCP tool names the skill is allowed to call. Names follow the pattern `mcp__<server-name>__<tool-name>`. `<server-name>` is the key under `mcpServers` in [plugin.json](claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json) (here: `zerogpu`). `<tool-name>` is whatever the server registered (here: `zerogpu_summarize` etc., giving `mcp__zerogpu__zerogpu_summarize`).
-- **The body is the actual guidance.** It contains decision rules ("when the user says 'summarize', call `zerogpu_summarize`"), a tool-selection table, and worked examples.
+The frontmatter is intentionally minimal — `name` and `description` are all the skill needs. The MCP server is the source of truth for which tools exist; whichever tools it registers become callable as `mcp__<server-name>__<tool-name>` (here `<server-name>` is the key under `mcpServers` in [plugin.json](claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json), so the registered `zerogpu_summarize` shows up as `mcp__zerogpu__zerogpu_summarize`). **The body is the actual guidance** — decision rules ("when the user says 'summarize', call `zerogpu_summarize`"), a tool-selection table, and worked examples.
 
 **Skill vs. MCP server — the clean split:**
 
@@ -489,18 +482,14 @@ The key named `"zerogpu"` inside `mcpServers` becomes the **server name**. All t
 ---
 name: zerogpu
 description: Route cheap AI tasks to ZeroGPU models instead of spending Claude tokens.
-allowed-tools:
-  - mcp__zerogpu__zerogpu_health
-  - mcp__zerogpu__zerogpu_classify_iab
-  - mcp__zerogpu__zerogpu_summarize
-  - ... (nine total)
 ---
 
 # ZeroGPU offload guidance
 
 ## When to use ZeroGPU
 Offload when the input is plain text and the task is one of:
-classify / summarize / extract entities or JSON / suggest follow-up questions / short chat.
+classify / summarize / extract entities or JSON / redact or extract PII /
+suggest follow-up questions / short chat.
 
 ## When NOT to use it
 Keep in Claude when the task requires code, reasoning over prior messages, or long-form output.
@@ -509,22 +498,21 @@ Keep in Claude when the task requires code, reasoning over prior messages, or lo
 | User intent | Tool |
 | "Summarize this" | zerogpu_summarize |
 | "Classify into IAB" | zerogpu_classify_iab |
+| "Redact the PII" | zerogpu_redact_pii |
 | ...               | ...                |
 
 ## Worked examples
 ...
 ```
 
-**`allowed-tools`** is a whitelist: Claude will only call the listed tools when acting under this skill's guidance. The names must exactly match `mcp__<server-name>__<tool-name>`.
-
-**The body** is the decision logic — it tells the model when to route to ZeroGPU, which tool maps to which user intent, and what to do when a tool fails.
+**The body** is the decision logic — it tells the model when to route to ZeroGPU, which tool maps to which user intent, and what to do when a tool fails. The skill does not need an `allowed-tools` whitelist; whichever tools the MCP server registers under the `zerogpu` server name become available to the model automatically.
 
 ### How they wire together
 
 When Claude Code starts a session with the plugin installed:
 
 1. It reads `plugin.json` and spawns `node dist/index.js` (or later sends HTTP requests to the Worker URL, depending on your registration).
-2. It calls `tools/list` on the MCP server and registers the nine `zerogpu_*` tools with the model.
+2. It calls `tools/list` on the MCP server and registers the eleven `zerogpu_*` tools with the model.
 3. It reads `SKILL.md` and makes its body available to the model in context.
 4. When the user sends a message, the model checks the skill guidance. If the task fits ("summarize this paragraph"), the skill tells the model to call `zerogpu_summarize`.
 5. Claude Code translates that into a `tools/call` JSON-RPC request and sends it to the MCP server (stdio or HTTP).
@@ -620,7 +608,7 @@ Inside the new session:
 /mcp
 ```
 
-The `zerogpu` server should appear in the list with status **connected** and nine tools visible.
+The `zerogpu` server should appear in the list with status **connected** and eleven tools visible.
 
 ### Step 6 — smoke test
 
@@ -693,10 +681,31 @@ All tools return `{ <task-specific fields>, model, usage, savings }`. `savings` 
 | `zerogpu_summarize` | `text`, `max_tokens?` | Summarize a passage. | `t5-small` |
 | `zerogpu_classify_zero_shot` | `text`, `labels[]`, `threshold?` | Score text against a flat label list. | `deberta-v3-small` |
 | `zerogpu_extract_entities` | `text`, `labels[]`, `threshold?` | Named entity recognition over a custom label list. | `gliner2-base-v1` |
-| `zerogpu_extract_json` | `text`, `schema` | Structured JSON extraction from a field schema. | `gliner2-base-v1` |
-| `zerogpu_classify_structured` | `text`, `schema` | Multi-axis classification from a grouped-label schema. | `gliner2-base-v1` |
+| `zerogpu_extract_json` | `text`, `schema` | Structured JSON extraction. Schema is **grouped**: `{ group: ["field::type::desc", ...] }` (e.g. `{ contact: ["name::str::Full name", "email::str::Email address"] }`). | `gliner2-base-v1` |
+| `zerogpu_classify_structured` | `text`, `schema` | Multi-axis classification from a grouped-label schema (e.g. `{ sentiment: ["positive","negative","neutral"] }`). | `gliner2-base-v1` |
+| `zerogpu_redact_pii` | `text`, `mask?` | Redact PII (names, phones, emails, addresses, …). `mask: "label"` produces `[PHONE]`/`[EMAIL]`-style placeholders. | `gliner-multi-pii-v1` |
+| `zerogpu_extract_pii` | `text`, `threshold?`, `categories?[]` | Extract PII grouped by category. Optional `categories` (e.g. `["identity","contact"]`) scopes the search. | `gliner-multi-pii-v1` |
 | `zerogpu_generate_followups` | `text` | Generate follow-up questions about a passage. | `zlm-v1-followup-questions-edge` |
 | `zerogpu_chat` | `messages[]`, `thinking?`, `model?`, `max_tokens?`, `temperature?` | General chat. `thinking: true` routes to the reasoning model and splits `<think>…</think>` into a separate `reasoning` field. | `LFM2.5-1.2B-Instruct` / `-Thinking` |
+
+### GLiNER request shape
+
+All GLiNER tools (`zerogpu_extract_entities`, `zerogpu_extract_json`, `zerogpu_classify_structured`, `zerogpu_redact_pii`, `zerogpu_extract_pii`) send their task-specific options inside a `metadata` object on the wire. The MCP arguments above are the **caller-facing** contract; the server packs them into the upstream payload like this:
+
+```json
+{
+  "model": "gliner2-base-v1",
+  "messages": [{ "role": "user", "content": "<text>" }],
+  "metadata": {
+    "usecase": "ner",                                   // or "json" | "classification" | "redact" | "extract-pii"
+    "labels": ["programming language", "database"],     // NER
+    "schema": { "contact": ["name::str::Full name"] },  // JSON / classification
+    "threshold": 0.3,                                   // NER / extract-pii
+    "mask": "label",                                    // redact
+    "categories": ["identity", "contact"]               // extract-pii
+  }
+}
+```
 
 ---
 
@@ -721,7 +730,7 @@ The KV catalog key `"catalog"` is missing or empty. Seed it: `node scripts/seed-
 The credential headers passed during `claude mcp add` are being forwarded correctly but rejected by ZeroGPU. Rotate your API key and update the `claude mcp add` registration.
 
 **Claude doesn't call any `zerogpu_*` tool even though the task fits**
-Confirm the skill loaded (`/plugin` lists `zerogpu` as enabled) and the MCP server is connected (`/mcp` shows it green with nine tools). If both look fine, the model may have judged the task too complex; the skill's "when NOT to use it" section is deliberately conservative.
+Confirm the skill loaded (`/plugin` lists `zerogpu` as enabled) and the MCP server is connected (`/mcp` shows it green with eleven tools). If both look fine, the model may have judged the task too complex; the skill's "when NOT to use it" section is deliberately conservative.
 
 **`mcp-session-id` errors or "session not found"**
 The session ID was not forwarded on a follow-up request. Every request after `initialize` must include the `mcp-session-id` header received in the `initialize` response. Claude Code and the MCP SDK handle this automatically; manual cURL flows require it explicitly.
