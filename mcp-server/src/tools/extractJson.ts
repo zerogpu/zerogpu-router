@@ -55,7 +55,7 @@ export async function extractJsonHandler(ctx: HandlerContext, args: ExtractJsonA
       task: "extract_json",
       toolName: "zerogpu_extract_json",
       messages: [{ role: "user", content: args.text }],
-      extra: {
+      metadata: {
         usecase: "json",   // Backend: use GLiNER in JSON extraction mode
         schema: args.schema, // Grouped field schema
       },

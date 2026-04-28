@@ -35,6 +35,8 @@ import { classifyZeroShotHandler } from "../src/tools/classifyZeroShot.js";
 import { extractEntitiesHandler } from "../src/tools/extractEntities.js";
 import { extractJsonHandler } from "../src/tools/extractJson.js";
 import { classifyStructuredHandler } from "../src/tools/classifyStructured.js";
+import { redactPiiHandler } from "../src/tools/redactPii.js";
+import { extractPiiHandler } from "../src/tools/extractPii.js";
 import { generateFollowupsHandler } from "../src/tools/generateFollowups.js";
 import { chatHandler } from "../src/tools/chat.js";
 import { healthHandler } from "../src/tools/health.js";
@@ -133,6 +135,29 @@ suite("ZeroGPU live parity", () => {
     });
     const payload = parse<{ data: Record<string, unknown> }>(result);
     expect(payload.data).toBeTruthy();
+  });
+
+  it("gliner-multi-pii redacts PII with the label mask", async () => {
+    const ctx = await ctxPromise;
+    const result = await redactPiiHandler(ctx, {
+      text:
+        "Hello Jane Doe, this is John Doe. Call me at 415-555-0134 or email hi@example.com.",
+      mask: "label",
+    });
+    const payload = parse<{ redacted: string }>(result);
+    expect(typeof payload.redacted).toBe("string");
+    expect(payload.redacted.length).toBeGreaterThan(0);
+  });
+
+  it("gliner-multi-pii extracts PII by category", async () => {
+    const ctx = await ctxPromise;
+    const result = await extractPiiHandler(ctx, {
+      text: "Contact John Doe at john@example.com or +1-415-555-0134.",
+      threshold: 0.5,
+      categories: ["identity", "contact"],
+    });
+    const payload = parse<{ pii: Record<string, unknown> }>(result);
+    expect(payload.pii).toBeTruthy();
   });
 
   it("gliner classification honors schema", async () => {

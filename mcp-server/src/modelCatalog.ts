@@ -15,9 +15,11 @@ export type Task =
   | "classify_iab_enriched"  // IAB classification with richer taxonomy
   | "summarize"              // Text summarization
   | "classify_zero_shot"     // Zero-shot classification (user-provided labels)
-  | "extract_entities"       // Named Entity Recognition
-  | "extract_json"           // Structured JSON extraction
-  | "classify_structured"    // Multi-axis classification
+  | "extract_entities"       // Named Entity Recognition (GLiNER2)
+  | "extract_json"           // Structured JSON extraction (GLiNER2)
+  | "classify_structured"    // Multi-axis classification (GLiNER2)
+  | "redact_pii"             // PII redaction (GLiNER multi-PII)
+  | "extract_pii"            // PII extraction (GLiNER multi-PII)
   | "generate_followups"     // Follow-up question generation
   | "chat"                   // General-purpose chat
   | "chat_thinking";         // Chat with explicit reasoning

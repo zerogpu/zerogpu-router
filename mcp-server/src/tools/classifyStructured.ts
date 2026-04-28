@@ -55,7 +55,7 @@ export async function classifyStructuredHandler(
       task: "classify_structured",
       toolName: "zerogpu_classify_structured",
       messages: [{ role: "user", content: args.text }],
-      extra: {
+      metadata: {
         usecase: "classification", // Backend: use GLiNER in classification mode
         schema: args.schema,        // Axis and category mapping
       },

@@ -17,6 +17,7 @@ import type { Task } from "../modelCatalog.js";
 import { safeJsonParse, stripThinkTags } from "../parsers.js";
 import { computeSavings, logSavings, type SavingsSummary } from "../savings.js";
 import type {
+  ChatCompletionsMetadata,
   ChatCompletionsRequest,
   ChatCompletionsResponse,
   ChatMessage,
@@ -41,7 +42,8 @@ export interface RunArgs {
   task: Task;                              // Task name (e.g., "summarize", "classify_zero_shot")
   toolName: string;                        // Tool name for logging (e.g., "zerogpu_summarize")
   messages: ChatMessage[];                 // Chat messages to send to the model
-  extra?: Partial<ChatCompletionsRequest>; // Task-specific options (labels, schema, threshold, etc.)
+  metadata?: ChatCompletionsMetadata;      // Task-specific options sent under `metadata`
+  extra?: Partial<ChatCompletionsRequest>; // Other top-level body fields (rare; e.g., max_tokens)
   overrideModel?: string;                  // Optional: use a different model (for testing)
 }
 
@@ -94,11 +96,13 @@ export async function runChat(ctx: HandlerContext, args: RunArgs): Promise<RunRe
   const ref = getModel(config, args.task);
   const modelId = args.overrideModel ?? ref.id;
 
-  // Build the request body
+  // Build the request body. Task-specific options live under `metadata`;
+  // `extra` is reserved for the rare top-level fields (e.g., max_tokens).
   const body: ChatCompletionsRequest = {
     model: modelId,
     messages: args.messages,
-    ...(args.extra ?? {}), // Merge task-specific options (labels, schema, etc.)
+    ...(args.metadata ? { metadata: args.metadata } : {}),
+    ...(args.extra ?? {}),
   };
 
   // Time the backend call

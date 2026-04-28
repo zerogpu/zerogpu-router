@@ -27,6 +27,8 @@ import { classifyZeroShotArgs, classifyZeroShotHandler } from "./tools/classifyZ
 import { extractEntitiesArgs, extractEntitiesHandler } from "./tools/extractEntities.js";
 import { extractJsonArgs, extractJsonHandler } from "./tools/extractJson.js";
 import { classifyStructuredArgs, classifyStructuredHandler } from "./tools/classifyStructured.js";
+import { redactPiiArgs, redactPiiHandler } from "./tools/redactPii.js";
+import { extractPiiArgs, extractPiiHandler } from "./tools/extractPii.js";
 import { generateFollowupsArgs, generateFollowupsHandler } from "./tools/generateFollowups.js";
 import { chatArgs, chatHandler } from "./tools/chat.js";
 
@@ -93,6 +95,14 @@ const HANDLERS: Record<ToolHandlerId, HandlerEntry<z.ZodObject<z.ZodRawShape>>> 
   classifyStructured: {
     schema: classifyStructuredArgs as unknown as z.ZodObject<z.ZodRawShape>,
     handler: (ctx, args) => classifyStructuredHandler(ctx, args as never),
+  },
+  redactPii: {
+    schema: redactPiiArgs as unknown as z.ZodObject<z.ZodRawShape>,
+    handler: (ctx, args) => redactPiiHandler(ctx, args as never),
+  },
+  extractPii: {
+    schema: extractPiiArgs as unknown as z.ZodObject<z.ZodRawShape>,
+    handler: (ctx, args) => extractPiiHandler(ctx, args as never),
   },
   generateFollowups: {
     schema: generateFollowupsArgs as unknown as z.ZodObject<z.ZodRawShape>,
