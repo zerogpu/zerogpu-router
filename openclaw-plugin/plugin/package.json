@@ -1,0 +1,29 @@
+{
+  "name": "openclaw-plugin-zerogpu",
+  "version": "0.1.0",
+  "description": "OpenClaw plugin: offload cheap AI tasks to the ZeroGPU MCP server.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "skills",
+    "openclaw.plugin.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "openclaw": {
+    "extensions": ["./src/index.ts"],
+    "runtimeExtensions": ["./dist/index.js"]
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.4.0"
+  },
+  "devDependencies": {
+    "openclaw": "^2026.4.27",
+    "typescript": "^5.0.0"
+  }
+}
