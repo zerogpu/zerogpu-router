@@ -14,11 +14,11 @@ ZeroGPU Router is a smart task router for agents. It redirects cheap, narrow AI 
 
 Instead of asking the host model to summarize, classify, redact PII, extract JSON, or generate simple follow-up questions, ZeroGPU Router exposes task-specific MCP tools backed by the **ZeroGPU Orchestration API**.
 
-- 🔀 Route small tasks to SLMs through MCP tools
-- 🎛️ Use from OpenClaw, Claude Code, or any Streamable HTTP MCP client
-- 📊 Track model usage, latency, estimated cost, and savings on every call
-- 🚑 Keep premium host models available for complex reasoning and fallback
-- 🔐 Pass ZeroGPU credentials per client request; the hosted Worker does not store user API keys
+- Route small tasks to SLMs through MCP tools
+- Use from OpenClaw, Claude Code, or any Streamable HTTP MCP client
+- Track model usage, latency, estimated cost, and savings on every call
+- Keep premium host models available for complex reasoning and fallback
+- Pass ZeroGPU credentials per client request; the hosted Worker does not store user API keys
 
 ## Quick Start
 
@@ -67,20 +67,6 @@ claude mcp add --transport http zerogpu \
 
 Then install the skill-only Claude plugin from [claude-plugin/](claude-plugin/), so Claude knows when to call the `zerogpu_*` tools.
 
-### Self-hosted Worker
-
-ZeroGPU Router ships as a Cloudflare Worker MCP server:
-
-```sh
-cd mcp-server
-npm install
-npm run worker:types
-npm run kv:seed:develop
-npm run deploy:develop
-```
-
-Set `ZEROGPU_ORCHESTRATION_URL` as a Worker secret. Clients send `x-api-key` and `x-project-id` on each `/mcp` request.
-
 ## Routes
 
 ZeroGPU Router exposes eleven task-specific routes:
@@ -119,6 +105,9 @@ ZeroGPU Router ships as three artifacts that work together:
 - [License](LICENSE)
 
 ---
+
+<details>
+<summary>Detailed MCP Documentation</summary>
 
 ## Table of contents
 
@@ -861,3 +850,5 @@ Confirm the skill loaded (`/plugin` lists `zerogpu` as enabled) and the MCP serv
 
 **`mcp-session-id` errors or "session not found"**
 The session ID was not forwarded on a follow-up request. Every request after `initialize` must include the `mcp-session-id` header received in the `initialize` response. Claude Code and the MCP SDK handle this automatically; manual cURL flows require it explicitly.
+
+</details>
