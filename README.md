@@ -1,13 +1,51 @@
-# ZeroGPU for Claude Code
+# ZeroGPU MCP
 
-A Claude Code plugin that teaches Claude when to offload cheap AI tasks — classification, summarization, entity/JSON extraction, PII redaction/extraction, follow-up question generation, small-model chat — to the **ZeroGPU Orchestration API** instead of burning Claude tokens.
+ZeroGPU MCP is an agent-ready Model Context Protocol server and plugin set for offloading cheap AI tasks — classification, summarization, entity/JSON extraction, PII redaction/extraction, follow-up question generation, and small-model chat — to the **ZeroGPU Orchestration API** instead of spending premium host-model tokens.
 
-It ships as two artifacts that work together:
+[![CI](https://github.com/zerogpu/zerogpu-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/zerogpu/zerogpu-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-1. **A Skill** ([claude-plugin/plugins/zerogpu/skill/SKILL.md](claude-plugin/plugins/zerogpu/skill/SKILL.md)) — the *guidance layer*. A short markdown file that Claude reads at conversation start; it says "when the user asks for X, call tool Y."
-2. **An MCP server** ([mcp-server/](mcp-server/)) — the *execution layer*. A TypeScript server that exposes eleven task-centric tools (`zerogpu_classify_iab`, `zerogpu_summarize`, `zerogpu_redact_pii`, …), each wrapping the ZeroGPU HTTP API with retries, timeouts, and a structured savings log. It runs in two modes:
+It is designed for OpenClaw and Claude Code agents that already support MCP. The hosted Worker flow is the recommended public setup: deploy the MCP server once, register it in the agent client with `x-api-key` and `x-project-id` headers, then install the routing skill so the model knows when to call the `zerogpu_*` tools.
+
+It ships as three artifacts that work together:
+
+1. **An MCP server** ([mcp-server/](mcp-server/)) — the *execution layer*. A TypeScript server that exposes eleven task-centric tools (`zerogpu_classify_iab`, `zerogpu_summarize`, `zerogpu_redact_pii`, …), each wrapping the ZeroGPU HTTP API with retries, timeouts, and a structured savings log. It runs in two modes:
    - **Local (stdio)** — Claude Code spawns `node dist/index.js` and talks JSON-RPC over the child process's stdin/stdout.
    - **Hosted (Cloudflare Workers)** — the same tool code behind a credential-guarded `/mcp` HTTP endpoint, deployed via `wrangler`.
+2. **An OpenClaw plugin** ([openclaw-plugin/](openclaw-plugin/)) — the *agent integration layer* for OpenClaw. It provides the plugin manifest and routing skill that are working end-to-end with `openclaw mcp set zerogpu`.
+3. **A Claude Code skill plugin** ([claude-plugin/plugins/zerogpu/skill/SKILL.md](claude-plugin/plugins/zerogpu/skill/SKILL.md)) — the *guidance layer* for Claude Code. It is skill-only by default and pairs with a separately registered hosted MCP server.
+
+## Quick Start
+
+Register a deployed Worker in OpenClaw:
+
+```sh
+openclaw mcp set zerogpu '{
+  "url": "https://<your-worker-host>/mcp",
+  "transport": "streamable-http",
+  "headers": {
+    "x-api-key": "<your-api-key>",
+    "x-project-id": "<your-project-id>"
+  }
+}'
+```
+
+Install the OpenClaw plugin from source:
+
+```sh
+cd openclaw-plugin/plugin
+npm install
+npm run build
+openclaw plugins install ./
+```
+
+Verify with a task such as:
+
+```text
+summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
+```
+
+The agent should call `zerogpu_summarize` and return a summary plus model usage and savings metadata.
 
 ---
 
@@ -23,6 +61,7 @@ It ships as two artifacts that work together:
   - [Call a tool: POST /mcp — tools/call](#call-a-tool-post-mcp--toolscall)
   - [Internal call flow, layer by layer](#internal-call-flow-layer-by-layer)
 - [Connecting the MCP: external integration overview](#connecting-the-mcp-external-integration-overview)
+- [OpenClaw plugin](#openclaw-plugin)
 - [The Claude Code plugin](#the-claude-code-plugin)
   - [plugin.json — the manifest](#pluginjson--the-manifest)
   - [SKILL.md — the guidance layer](#skillmd--the-guidance-layer)
@@ -91,7 +130,7 @@ description: Route cheap AI tasks ... to ZeroGPU models instead of spending Clau
 | ... | ... | ... |
 ```
 
-The frontmatter is intentionally minimal — `name` and `description` are all the skill needs. The MCP server is the source of truth for which tools exist; whichever tools it registers become callable as `mcp__<server-name>__<tool-name>` (here `<server-name>` is the key under `mcpServers` in [plugin.json](claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json), so the registered `zerogpu_summarize` shows up as `mcp__zerogpu__zerogpu_summarize`). **The body is the actual guidance** — decision rules ("when the user says 'summarize', call `zerogpu_summarize`"), a tool-selection table, and worked examples.
+The frontmatter is intentionally minimal — `name` and `description` are all the skill needs. The MCP server is the source of truth for which tools exist; whichever tools it registers become callable by the agent client under that MCP server's configured name (for example, a server named `zerogpu` exposes `zerogpu_summarize`, `zerogpu_health`, and the rest of the `zerogpu_*` tool set). **The body is the actual guidance** — decision rules ("when the user says 'summarize', call `zerogpu_summarize`"), a tool-selection table, and worked examples.
 
 **Skill vs. MCP server — the clean split:**
 
@@ -438,41 +477,65 @@ The Worker does not use or expose a separate bearer token for the `/mcp` endpoin
 
 ---
 
+## OpenClaw plugin
+
+The OpenClaw integration lives in [openclaw-plugin/](openclaw-plugin/) and is the recommended agent packaging for this repository.
+
+It has two parts:
+
+| File | Role |
+|---|---|
+| [openclaw-plugin/mcp/zerogpu-server.json](openclaw-plugin/mcp/zerogpu-server.json) | Example payload for `openclaw mcp set zerogpu` |
+| [openclaw-plugin/plugin/openclaw.plugin.json](openclaw-plugin/plugin/openclaw.plugin.json) | Plugin manifest that declares the ZeroGPU skill |
+| [openclaw-plugin/plugin/skills/zerogpu/SKILL.md](openclaw-plugin/plugin/skills/zerogpu/SKILL.md) | Routing guidance that tells the agent when to call `zerogpu_*` tools |
+| [openclaw-plugin/plugin/src/index.ts](openclaw-plugin/plugin/src/index.ts) | Minimal plugin entry; skills load declaratively from the manifest |
+
+### Register the remote MCP server
+
+```sh
+openclaw mcp set zerogpu '{
+  "url": "https://<your-worker-host>/mcp",
+  "transport": "streamable-http",
+  "headers": {
+    "x-api-key": "<your-api-key>",
+    "x-project-id": "<your-project-id>"
+  }
+}'
+
+openclaw mcp show zerogpu --json
+```
+
+### Install the plugin from source
+
+```sh
+cd openclaw-plugin/plugin
+npm install
+npm run build
+openclaw plugins install ./
+openclaw plugins list
+```
+
+The skill frontmatter includes OpenClaw metadata that requires the `zerogpu` MCP server, so the routing guidance is only active when the MCP dependency is present.
+
+---
+
 ## The Claude Code plugin
 
 ### plugin.json — the manifest
 
-[claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json](claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json) is the primary manifest Claude Code reads when it installs the plugin. It has two entries that matter:
+[claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json](claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json) is the primary manifest Claude Code reads when it installs the plugin. The public package is skill-only by default:
 
 ```json
 {
   "name": "zerogpu",
   "version": "0.1.0",
-  "skills": ["./skill"],
-  "mcpServers": {
-    "zerogpu": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/../../../mcp-server/dist/index.js"],
-      "env": {
-        "ZEROGPU_ORCHESTRATION_URL": "${ZEROGPU_ORCHESTRATION_URL}",
-        "ZEROGPU_API_KEY": "${ZEROGPU_API_KEY}",
-        "ZEROGPU_PROJECT_ID": "${ZEROGPU_PROJECT_ID}"
-      }
-    }
-  }
+  "skills": ["./skill"]
 }
 ```
 
 **`skills`** — a list of relative paths to skill folders. Claude Code finds `SKILL.md` inside each folder and loads its content into context.
 
-**`mcpServers.zerogpu`** — tells Claude Code how to launch the local MCP server as a child process:
-
-- `command` and `args` become the shell command. `${CLAUDE_PLUGIN_ROOT}` is resolved at runtime to the plugin's install directory; the path `../../../mcp-server/dist/index.js` navigates up to find the built server next to the plugin folder in this repo.
-- The `env` block forwards three environment variables from Claude Code's own environment into the child process. Claude Code reads these variables from `~/.claude/settings.json → env`, substitutes `${ZEROGPU_…}` placeholders, and passes the resolved values to the spawned server.
-
-The key named `"zerogpu"` inside `mcpServers` becomes the **server name**. All tool names in Claude Code's UI follow the pattern `mcp__<server-name>__<tool-name>`, so this produces `mcp__zerogpu__zerogpu_summarize`, `mcp__zerogpu__zerogpu_health`, etc.
-
-> **Local-only server.** This `mcpServers` block makes Claude Code spawn `node dist/index.js` (stdio transport). If you want Claude Code to talk to the *hosted Cloudflare Worker* instead, remove this block from `plugin.json` and register the Worker separately with `claude mcp add --transport http`. See [Step-by-step guide](#step-by-step-connect-claude-code-to-the-hosted-cloudflare-worker) below.
+The MCP server is registered separately with `claude mcp add --transport http`. This avoids starting a second local stdio server when the hosted Worker is already configured.
 
 ### SKILL.md — the guidance layer
 
@@ -511,11 +574,11 @@ Keep in Claude when the task requires code, reasoning over prior messages, or lo
 
 When Claude Code starts a session with the plugin installed:
 
-1. It reads `plugin.json` and spawns `node dist/index.js` (or later sends HTTP requests to the Worker URL, depending on your registration).
-2. It calls `tools/list` on the MCP server and registers the eleven `zerogpu_*` tools with the model.
-3. It reads `SKILL.md` and makes its body available to the model in context.
+1. It reads `plugin.json` and loads `SKILL.md`.
+2. Separately, Claude Code initializes the `zerogpu` MCP server you registered with `claude mcp add --transport http`.
+3. It calls `tools/list` on that MCP server and registers the eleven `zerogpu_*` tools with the model.
 4. When the user sends a message, the model checks the skill guidance. If the task fits ("summarize this paragraph"), the skill tells the model to call `zerogpu_summarize`.
-5. Claude Code translates that into a `tools/call` JSON-RPC request and sends it to the MCP server (stdio or HTTP).
+5. Claude Code translates that into a `tools/call` JSON-RPC request and sends it to the hosted Worker MCP endpoint.
 6. The server runs the handler, calls ZeroGPU, and returns the result.
 7. Claude Code feeds the result back to the model, which writes its reply.
 
@@ -523,7 +586,7 @@ When Claude Code starts a session with the plugin installed:
 flowchart TD
     User["User message"]
     Skill["Claude reads SKILL.md guidance\n'this is a summarize task → call zerogpu_summarize'"]
-    CC["Claude Code sends tools/call to MCP server\n(stdio or HTTP, depending on registration)"]
+    CC["Claude Code sends tools/call to hosted MCP server\n(Streamable HTTP)"]
     MCP["MCP server handler → zerogpuClient → ZeroGPU API"]
     Result["Result returned to model → model writes reply to user"]
 
@@ -582,19 +645,7 @@ The skill is the guidance layer that tells Claude *when* to call ZeroGPU tools. 
 /plugin install zerogpu@zerogpu-local
 ```
 
-**3c.** Because you already registered the Worker via `claude mcp add`, the plugin's built-in `mcpServers` block would start a *second*, local stdio server alongside the Worker. Prevent that by removing the `mcpServers` key from the plugin manifest:
-
-Open [claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json](claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json) and delete the `mcpServers` block, keeping only `skills`:
-
-```json
-{
-  "name": "zerogpu",
-  "version": "0.1.0",
-  "skills": ["./skill"]
-}
-```
-
-This leaves the skill active but tells Claude Code not to spawn a local stdio server for this plugin — it will use your Worker registration instead.
+The plugin manifest is skill-only, so it will not start a second local stdio server. It will use the hosted `zerogpu` MCP server you registered in Step 2.
 
 ### Step 4 — restart Claude Code
 

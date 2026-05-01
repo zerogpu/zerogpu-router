@@ -30,6 +30,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Build Node server
+        run: npm run build
+
+      - name: Type-check Worker
+        run: npm run worker:types
+
       - name: Run Tests
         run: npm test
 
