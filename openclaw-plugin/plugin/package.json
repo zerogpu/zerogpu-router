@@ -12,13 +12,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/zerogpu/zerogpu-mcp.git",
+    "url": "https://github.com/zerogpu/ZeroGPU-Router.git",
     "directory": "openclaw-plugin/plugin"
   },
   "bugs": {
-    "url": "https://github.com/zerogpu/zerogpu-mcp/issues"
+    "url": "https://github.com/zerogpu/ZeroGPU-Router/issues"
   },
-  "homepage": "https://github.com/zerogpu/zerogpu-mcp/tree/main/openclaw-plugin#readme",
+  "homepage": "https://github.com/zerogpu/ZeroGPU-Router/tree/main/openclaw-plugin#readme",
   "keywords": [
     "openclaw",
     "openclaw-plugin",

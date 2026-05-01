@@ -24,4 +24,4 @@ Participants are expected to be respectful, constructive, and considerate of dif
 
 Maintainers may remove comments, close issues, restrict participation, or ban users from project spaces when behavior violates this code of conduct.
 
-Report concerns privately to `security@zerogpu.ai`.
+Report concerns privately to `hello@zerogpu.ai`.

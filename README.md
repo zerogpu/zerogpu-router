@@ -1,23 +1,30 @@
-# ZeroGPU MCP
+# ZeroGPU Router
 
-ZeroGPU MCP is an agent-ready Model Context Protocol server and plugin set for offloading cheap AI tasks — classification, summarization, entity/JSON extraction, PII redaction/extraction, follow-up question generation, and small-model chat — to the **ZeroGPU Orchestration API** instead of spending premium host-model tokens.
+Reduce your AI costs
 
-[![CI](https://github.com/zerogpu/zerogpu-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/zerogpu/zerogpu-mcp/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Beta](https://img.shields.io/badge/status-beta-blue)](README.md)
+[![CI](https://github.com/zerogpu/ZeroGPU-Router/actions/workflows/ci.yml/badge.svg)](https://github.com/zerogpu/ZeroGPU-Router/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![MCP](https://img.shields.io/badge/MCP-ready-purple)](mcp-server/)
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-plugin-black)](openclaw-plugin/)
 
-It is designed for OpenClaw and Claude Code agents that already support MCP. The hosted Worker flow is the recommended public setup: deploy the MCP server once, register it in the agent client with `x-api-key` and `x-project-id` headers, then install the routing skill so the model knows when to call the `zerogpu_*` tools.
+## What is ZeroGPU Router?
 
-It ships as three artifacts that work together:
+ZeroGPU Router is a smart task router for agents. It redirects cheap, narrow AI work to small language models (SLMs), so your premium model can stay focused on reasoning, coding, planning, and orchestration.
 
-1. **An MCP server** ([mcp-server/](mcp-server/)) — the *execution layer*. A TypeScript server that exposes eleven task-centric tools (`zerogpu_classify_iab`, `zerogpu_summarize`, `zerogpu_redact_pii`, …), each wrapping the ZeroGPU HTTP API with retries, timeouts, and a structured savings log. It runs in two modes:
-   - **Local (stdio)** — Claude Code spawns `node dist/index.js` and talks JSON-RPC over the child process's stdin/stdout.
-   - **Hosted (Cloudflare Workers)** — the same tool code behind a credential-guarded `/mcp` HTTP endpoint, deployed via `wrangler`.
-2. **An OpenClaw plugin** ([openclaw-plugin/](openclaw-plugin/)) — the *agent integration layer* for OpenClaw. It provides the plugin manifest and routing skill that are working end-to-end with `openclaw mcp set zerogpu`.
-3. **A Claude Code skill plugin** ([claude-plugin/plugins/zerogpu/skill/SKILL.md](claude-plugin/plugins/zerogpu/skill/SKILL.md)) — the *guidance layer* for Claude Code. It is skill-only by default and pairs with a separately registered hosted MCP server.
+Instead of asking the host model to summarize, classify, redact PII, extract JSON, or generate simple follow-up questions, ZeroGPU Router exposes task-specific MCP tools backed by the **ZeroGPU Orchestration API**.
+
+- 🔀 Route small tasks to SLMs through MCP tools
+- 🎛️ Use from OpenClaw, Claude Code, or any Streamable HTTP MCP client
+- 📊 Track model usage, latency, estimated cost, and savings on every call
+- 🚑 Keep premium host models available for complex reasoning and fallback
+- 🔐 Pass ZeroGPU credentials per client request; the hosted Worker does not store user API keys
 
 ## Quick Start
 
-Register a deployed Worker in OpenClaw:
+### OpenClaw
+
+Register your deployed ZeroGPU Router MCP endpoint:
 
 ```sh
 openclaw mcp set zerogpu '{
@@ -30,7 +37,7 @@ openclaw mcp set zerogpu '{
 }'
 ```
 
-Install the OpenClaw plugin from source:
+Install the OpenClaw plugin:
 
 ```sh
 cd openclaw-plugin/plugin
@@ -39,18 +46,87 @@ npm run build
 openclaw plugins install ./
 ```
 
-Verify with a task such as:
+Then ask your agent:
 
 ```text
 summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
 ```
 
-The agent should call `zerogpu_summarize` and return a summary plus model usage and savings metadata.
+The agent should call `zerogpu_summarize` and return a summary with model usage and savings metadata.
+
+### Claude Code
+
+Register the hosted MCP server:
+
+```sh
+claude mcp add --transport http zerogpu \
+  https://<your-worker-host>/mcp \
+  --header "x-api-key: <your-api-key>" \
+  --header "x-project-id: <your-project-id>"
+```
+
+Then install the skill-only Claude plugin from [claude-plugin/](claude-plugin/), so Claude knows when to call the `zerogpu_*` tools.
+
+### Self-hosted Worker
+
+ZeroGPU Router ships as a Cloudflare Worker MCP server:
+
+```sh
+cd mcp-server
+npm install
+npm run worker:types
+npm run kv:seed:develop
+npm run deploy:develop
+```
+
+Set `ZEROGPU_ORCHESTRATION_URL` as a Worker secret. Clients send `x-api-key` and `x-project-id` on each `/mcp` request.
+
+## Routes
+
+ZeroGPU Router exposes eleven task-specific routes:
+
+| Route | Workload | SLM / backend model |
+|---|---|---|
+| `zerogpu_classify_iab` | IAB topic classification | `zlm-v1-iab-classify-edge` |
+| `zerogpu_summarize` | TL;DRs, short abstracts, meeting note summaries | `t5-small` |
+| `zerogpu_classify_zero_shot` | Classify text against a flat label list | `deberta-v3-small` |
+| `zerogpu_extract_entities` | Extract people, places, companies, dates, custom entities | `gliner2-base-v1` |
+| `zerogpu_extract_json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
+| `zerogpu_classify_structured` | Multi-axis schema classification | `gliner2-base-v1` |
+| `zerogpu_redact_pii` | Mask emails, phones, names, addresses, and other PII | `gliner-multi-pii-v1` |
+| `zerogpu_extract_pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
+| `zerogpu_generate_followups` | Generate follow-up questions from a passage | `zlm-v1-followup-questions-edge` |
+| `zerogpu_chat` | Short small-model chat replies | `LFM2.5-1.2B-Instruct` / `-Thinking` |
+| `zerogpu_health` | Verify ZeroGPU backend health | ZeroGPU `/health` |
+
+## Packages
+
+ZeroGPU Router ships as three artifacts that work together:
+
+| Package | Role |
+|---|---|
+| [mcp-server/](mcp-server/) | TypeScript MCP server for Node stdio or Cloudflare Workers |
+| [openclaw-plugin/](openclaw-plugin/) | OpenClaw plugin and skill for task routing |
+| [claude-plugin/](claude-plugin/) | Claude Code skill plugin for routing guidance |
+
+## Quick Links
+
+- [OpenClaw setup](openclaw-plugin/README.md)
+- [MCP server package](mcp-server/README.md)
+- [Release guide](RELEASE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
+- [License](LICENSE)
 
 ---
 
 ## Table of contents
 
+- [What is ZeroGPU Router?](#what-is-zerogpu-router)
+- [Quick Start](#quick-start)
+- [Routes](#routes)
+- [Packages](#packages)
+- [Quick Links](#quick-links)
 - [What is MCP?](#what-is-mcp)
 - [What is a Skill?](#what-is-a-skill)
 - [How the Cloudflare Worker MCP works end-to-end](#how-the-cloudflare-worker-mcp-works-end-to-end)

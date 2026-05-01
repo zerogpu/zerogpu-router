@@ -4,7 +4,7 @@
 
 Please do not open public issues for suspected credential leaks, authentication bypasses, or vulnerabilities in the hosted MCP endpoint.
 
-Email the maintainers at `security@zerogpu.ai` with:
+Email the maintainers at `hello@zerogpu.ai` with:
 
 - A short description of the issue.
 - Reproduction steps or a proof of concept.

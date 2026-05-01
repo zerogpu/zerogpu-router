@@ -6,12 +6,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zerogpu/zerogpu-mcp.git"
+    "url": "https://github.com/zerogpu/ZeroGPU-Router.git"
   },
   "bugs": {
-    "url": "https://github.com/zerogpu/zerogpu-mcp/issues"
+    "url": "https://github.com/zerogpu/ZeroGPU-Router/issues"
   },
-  "homepage": "https://github.com/zerogpu/zerogpu-mcp#readme",
+  "homepage": "https://github.com/zerogpu/ZeroGPU-Router#readme",
   "keywords": [
     "mcp",
     "model-context-protocol",
