@@ -20,7 +20,16 @@ Instead of asking the host model to summarize, classify, redact PII, extract JSO
 - Keep premium host models available for complex reasoning and fallback
 - Pass ZeroGPU credentials per client request; the hosted Worker does not store user API keys
 
+## Prerequisites
+
+- Node.js 22 or newer (for building the OpenClaw plugin and for self-hosting the Worker)
+- A ZeroGPU API key and project ID (you pass these to the agent client; they are not stored in the Worker)
+- OpenClaw or Claude Code (for the agent quick starts below)
+- A Cloudflare account (only if you self-host the MCP Worker)
+
 ## Quick Start
+
+Replace `https://<your-worker-host>` with the MCP URL you deploy (self-hosted steps below) or the URL your team provides.
 
 ### OpenClaw
 
@@ -67,6 +76,50 @@ claude mcp add --transport http zerogpu \
 
 Then install the skill-only Claude plugin from [claude-plugin/](claude-plugin/), so Claude knows when to call the `zerogpu_*` tools.
 
+For a step-by-step Claude marketplace install and verification, expand **Detailed MCP Documentation** below or follow [openclaw-plugin/README.md](openclaw-plugin/README.md) patterns for parity.
+
+### Self-host the MCP endpoint (Cloudflare Workers)
+
+Deploy your own ZeroGPU Router Worker. The Worker stores only `ZEROGPU_ORCHESTRATION_URL` as a Cloudflare secret. MCP clients must send `x-api-key` and `x-project-id` on every `/mcp` request (those forward to ZeroGPU per tool call).
+
+1. Install dependencies and log in to Cloudflare:
+
+   ```sh
+   cd mcp-server
+   npm install
+   npx wrangler login
+   ```
+
+2. In `wrangler.toml`, ensure the KV namespace id for your target environment (`develop`, `staging`, or `production`) is correct. Create one with `npx wrangler kv namespace create ZEROGPU_CONFIG --env <env>` if you are starting fresh, then paste the returned id into `wrangler.toml`.
+
+3. Set the ZeroGPU orchestration base URL as a Worker secret (repeat per environment you use):
+
+   ```sh
+   printf '%s' 'https://your-zerogpu-orchestration-base-url' | npx wrangler secret put ZEROGPU_ORCHESTRATION_URL --env develop
+   ```
+
+4. Publish the tool catalog to KV whenever `config/catalog.json` changes:
+
+   ```sh
+   npm run kv:seed:develop
+   ```
+
+5. Deploy:
+
+   ```sh
+   npm run deploy:develop
+   ```
+
+6. Verify the Worker is up (`https://<your-worker-host>` is your workers.dev or custom hostname, no trailing path):
+
+   ```sh
+   curl -s https://<your-worker-host>/health
+   ```
+
+   Your MCP URL is `https://<your-worker-host>/mcp`. Use it in the OpenClaw and Claude Code blocks above.
+
+Local iteration: from `mcp-server/`, run `npx wrangler dev`. For a Node stdio MCP server (advanced, local only), see [mcp-server/README.md](mcp-server/README.md).
+
 ## Routes
 
 ZeroGPU Router exposes eleven task-specific routes:
@@ -112,7 +165,9 @@ ZeroGPU Router ships as three artifacts that work together:
 ## Table of contents
 
 - [What is ZeroGPU Router?](#what-is-zerogpu-router)
+- [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
+  - [Self-host the MCP endpoint (Cloudflare Workers)](#self-host-the-mcp-endpoint-cloudflare-workers)
 - [Routes](#routes)
 - [Packages](#packages)
 - [Quick Links](#quick-links)
