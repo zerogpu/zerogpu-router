@@ -25,7 +25,7 @@ OpenClaw registers MCP servers via `openclaw mcp set <name> '<json>'` — there 
 
 ```sh
 openclaw mcp set zerogpu '{
-  "url": "https://<your-worker-host>/mcp",
+  "url": "https://mcp.zerogpu.ai/mcp",
   "transport": "streamable-http",
   "headers": {
     "x-api-key": "<your-api-key>",

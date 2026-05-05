@@ -29,15 +29,15 @@ Instead of asking the host model to summarize, classify, redact PII, extract JSO
 
 ## Quick Start
 
-Replace `https://<your-worker-host>` with the MCP URL you deploy (self-hosted steps below) or the URL your team provides.
+The public ZeroGPU Router is at **https://mcp.zerogpu.ai** — MCP clients use **https://mcp.zerogpu.ai/mcp**. If you self-host the Worker (below), swap in your own origin.
 
 ### OpenClaw
 
-Register your deployed ZeroGPU Router MCP endpoint:
+Register the ZeroGPU Router MCP endpoint:
 
 ```sh
 openclaw mcp set zerogpu '{
-  "url": "https://<your-worker-host>/mcp",
+  "url": "https://mcp.zerogpu.ai/mcp",
   "transport": "streamable-http",
   "headers": {
     "x-api-key": "<your-api-key>",
@@ -69,7 +69,7 @@ Register the hosted MCP server:
 
 ```sh
 claude mcp add --transport http zerogpu \
-  https://<your-worker-host>/mcp \
+  https://mcp.zerogpu.ai/mcp \
   --header "x-api-key: <your-api-key>" \
   --header "x-project-id: <your-project-id>"
 ```
@@ -110,13 +110,13 @@ Deploy your own ZeroGPU Router Worker. The Worker stores only `ZEROGPU_ORCHESTRA
    npm run deploy:develop
    ```
 
-6. Verify the Worker is up (`https://<your-worker-host>` is your workers.dev or custom hostname, no trailing path):
+6. Verify **your** deployment (`https://<your-deployed-host>` is your workers.dev or custom hostname, no trailing path):
 
    ```sh
-   curl -s https://<your-worker-host>/health
+   curl -s https://<your-deployed-host>/health
    ```
 
-   Your MCP URL is `https://<your-worker-host>/mcp`. Use it in the OpenClaw and Claude Code blocks above.
+   Your self-hosted MCP URL is `https://<your-deployed-host>/mcp` — use that instead of `https://mcp.zerogpu.ai/mcp` in the OpenClaw and Claude Code blocks above. Quick check of the public Router (no credentials): `curl -s https://mcp.zerogpu.ai/health`.
 
 Local iteration: from `mcp-server/`, run `npx wrangler dev`. For a Node stdio MCP server (advanced, local only), see [mcp-server/README.md](mcp-server/README.md).
 
@@ -161,6 +161,8 @@ ZeroGPU Router ships as three artifacts that work together:
 
 <details>
 <summary>Detailed MCP Documentation</summary>
+
+Examples in this section use the public Worker origin **https://mcp.zerogpu.ai** (no trailing slash). If you self-host, substitute your own base URL.
 
 ## Table of contents
 
@@ -314,7 +316,7 @@ The health endpoint is unauthenticated and meant for monitoring systems and load
 
 **Request:**
 ```http
-GET {MCP_URL}/health
+GET https://mcp.zerogpu.ai/health
 ```
 
 No headers required.
@@ -338,7 +340,7 @@ Every MCP session starts with an `initialize` handshake. This is the first reque
 
 **Request:**
 ```http
-POST {MCP_URL}/mcp
+POST https://mcp.zerogpu.ai/mcp
 Content-Type: application/json
 Accept: application/json, text/event-stream
 x-api-key: <your-zerogpu-api-key>
@@ -401,7 +403,7 @@ After initialization, the client discovers what tools are available.
 
 **Request:**
 ```http
-POST {MCP_URL}/mcp
+POST https://mcp.zerogpu.ai/mcp
 Content-Type: application/json
 Accept: application/json, text/event-stream
 x-api-key: <your-zerogpu-api-key>
@@ -457,7 +459,7 @@ This is the main operation — asking the server to run a tool.
 
 **Request:**
 ```http
-POST {MCP_URL}/mcp
+POST https://mcp.zerogpu.ai/mcp
 Content-Type: application/json
 Accept: application/json, text/event-stream
 x-api-key: <your-zerogpu-api-key>
@@ -537,7 +539,7 @@ mcp-session-id: <session-id-from-initialize-response>
 
 ```mermaid
 flowchart TD
-    Client["HTTP client (e.g. Claude Code)\nPOST {MCP_URL}/mcp\nHeaders: x-api-key, x-project-id, mcp-session-id\nBody: JSON-RPC tools/call"]
+    Client["HTTP client (e.g. Claude Code)\nPOST https://mcp.zerogpu.ai/mcp\nHeaders: x-api-key, x-project-id, mcp-session-id\nBody: JSON-RPC tools/call"]
 
     Worker["worker.ts — default.fetch()\nValidates x-api-key + x-project-id (400 if missing)\nAttaches apiKey, projectId to props\nDelegates to ZeroGpuMcp.serve('/mcp')"]
 
@@ -583,17 +585,17 @@ The `/mcp` endpoint speaks **JSON-RPC 2.0 over HTTP**. Any client that can issue
 
 | Client type | How to connect |
 |---|---|
-| **Claude Code** | `claude mcp add --transport http <name> {MCP_URL}/mcp --header "x-api-key: ..." --header "x-project-id: ..."` |
+| **Claude Code** | `claude mcp add --transport http <name> https://mcp.zerogpu.ai/mcp --header "x-api-key: ..." --header "x-project-id: ..."` |
 | **cURL / REST tools** | Three-step flow: health check → initialize → tools/list or tools/call (manually carry session ID) |
-| **MCP Inspector** | Set server URL to `{MCP_URL}/mcp`, add custom headers in the UI |
-| **Any MCP SDK client** | Pass `{MCP_URL}/mcp` as the SSE/HTTP endpoint; inject the two credential headers |
+| **MCP Inspector** | Set server URL to `https://mcp.zerogpu.ai/mcp`, add custom headers in the UI |
+| **Any MCP SDK client** | Pass `https://mcp.zerogpu.ai/mcp` as the SSE/HTTP endpoint; inject the two credential headers |
 | **Postman** | Pre-request script that carries `mcp-session-id` between requests |
 
 ### What you never need to share
 
 The Worker does not use or expose a separate bearer token for the `/mcp` endpoint — access is controlled entirely by the `x-api-key` and `x-project-id` headers that gate the underlying ZeroGPU API. Rotate those headers to revoke access.
 
-> **Note on the `/health` endpoint:** `GET {MCP_URL}/health` requires *no* credentials and returns `{ "status": "ok", "env": "..." }`. Use it as a low-cost probe to verify the Worker is deployed and reachable before starting an MCP session.
+> **Note on the `/health` endpoint:** `GET https://mcp.zerogpu.ai/health` requires *no* credentials and returns `{ "status": "ok", "env": "..." }`. Use it as a low-cost probe to verify the Worker is deployed and reachable before starting an MCP session.
 
 ---
 
@@ -614,7 +616,7 @@ It has two parts:
 
 ```sh
 openclaw mcp set zerogpu '{
-  "url": "https://<your-worker-host>/mcp",
+  "url": "https://mcp.zerogpu.ai/mcp",
   "transport": "streamable-http",
   "headers": {
     "x-api-key": "<your-api-key>",
@@ -722,15 +724,15 @@ The skill and the server are deliberately decoupled: the skill is a text file (n
 
 ## Step-by-step: connect Claude Code to the hosted Cloudflare Worker
 
-This guide assumes the Worker is already deployed and you know its URL (`{MCP_URL}`) and your ZeroGPU credentials.
+This guide uses the public Router at **https://mcp.zerogpu.ai**. If you self-hosted, substitute your Worker origin in every URL below.
 
 ### Step 1 — verify the Worker is up
 
 ```bash
-curl -s {MCP_URL}/health
+curl -s https://mcp.zerogpu.ai/health
 ```
 
-Expected: `{"status":"ok","env":"production"}` (or `develop`/`staging`). If you get a network error, the Worker is not deployed or the URL is wrong. If you get `{"status":"ok"}` but `env` is missing, the `ZEROGPU_MCP_ENV` secret was not set.
+Expected: `{"status":"ok","env":"production"}` (or `develop`/`staging`). If you get a network error, the endpoint is unreachable or the URL is wrong. If you get `{"status":"ok"}` but `env` is missing, the `ZEROGPU_MCP_ENV` secret was not set.
 
 ### Step 2 — register the MCP server in Claude Code
 
@@ -738,7 +740,7 @@ Open a terminal and run:
 
 ```bash
 claude mcp add --transport http zerogpu \
-  {MCP_URL}/mcp \
+  https://mcp.zerogpu.ai/mcp \
   --header "x-api-key: <your-zerogpu-api-key>" \
   --header "x-project-id: <your-zerogpu-project-id>"
 ```
@@ -789,7 +791,7 @@ Run the health tool:
 Run the zerogpu health tool.
 ```
 
-Claude should call `mcp__zerogpu__zerogpu_health`, which hits `{MCP_URL}/mcp` → Worker → ZeroGPU `/health` → returns status.
+Claude should call `mcp__zerogpu__zerogpu_health`, which hits `https://mcp.zerogpu.ai/mcp` → Worker → ZeroGPU `/health` → returns status.
 
 Test a real task:
 
