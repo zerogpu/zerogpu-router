@@ -8,6 +8,8 @@ Reduce your AI costs
 [![MCP](https://img.shields.io/badge/MCP-ready-purple)](mcp-server/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-plugin-black)](openclaw-plugin/)
 
+![ZeroGPU dashboard](assets/zerogpu-dashboard.png)
+
 ## What is ZeroGPU Router?
 
 ZeroGPU Router is a smart task router for agents. It redirects cheap, narrow AI work to small language models (SLMs), so your premium model can stay focused on reasoning, coding, planning, and orchestration.
