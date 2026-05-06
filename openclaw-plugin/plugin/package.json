@@ -1,6 +1,6 @@
 {
   "name": "openclaw-plugin-zerogpu",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenClaw plugin: offload cheap AI tasks to the ZeroGPU MCP server.",
   "license": "MIT",
   "type": "module",
@@ -39,8 +39,20 @@
     "node": ">=22"
   },
   "openclaw": {
-    "extensions": ["./src/index.ts"],
-    "runtimeExtensions": ["./dist/index.js"]
+    "extensions": [
+      "./src/index.ts"
+    ],
+    "runtimeExtensions": [
+      "./dist/index.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.4.0",
+      "minGatewayVersion": ">=2026.4.0"
+    },
+    "build": {
+      "openclawVersion": "2026.4.27",
+      "pluginSdkVersion": "2026.4.27"
+    }
   },
   "peerDependencies": {
     "openclaw": ">=2026.4.0"

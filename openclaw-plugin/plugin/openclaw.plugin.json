@@ -2,7 +2,7 @@
   "id": "zerogpu",
   "name": "ZeroGPU",
   "description": "Offload cheap AI tasks (classification, summarization, extraction, follow-ups, small-model chat) to ZeroGPU small/nano models.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "skills": ["./skills/zerogpu"],
   "configSchema": {
     "type": "object",
