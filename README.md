@@ -8,7 +8,7 @@ Reduce your AI costs
 [![MCP](https://img.shields.io/badge/MCP-ready-purple)](mcp-server/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-plugin-black)](openclaw-plugin/)
 
-![ZeroGPU dashboard](assets/zerogpu-dashboard.png)
+![ZeroGPU dashboard](assets/zerogpu-dashboard.gif)
 
 ## What is ZeroGPU Router?
 
