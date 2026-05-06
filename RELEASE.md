@@ -3,7 +3,7 @@
 This repository publishes two independently useful artifacts:
 
 - `zerogpu-mcp` from `mcp-server/`: the MCP server package and Cloudflare Worker source.
-- `openclaw-plugin-zerogpu` from `openclaw-plugin/plugin/`: the OpenClaw plugin package and skill.
+- `openclaw-package-zerogpu` from `openclaw-plugin/plugin/`: the OpenClaw plugin package and skill.
 
 ## Pre-release Checklist
 

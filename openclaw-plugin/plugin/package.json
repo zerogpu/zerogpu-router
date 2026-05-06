@@ -1,5 +1,5 @@
 {
-  "name": "openclaw-plugin-zerogpu",
+  "name": "openclaw-package-zerogpu",
   "version": "0.1.1",
   "description": "OpenClaw plugin: offload cheap AI tasks to the ZeroGPU MCP server.",
   "license": "MIT",

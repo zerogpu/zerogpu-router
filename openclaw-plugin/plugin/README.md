@@ -1,4 +1,4 @@
-# openclaw-plugin-zerogpu
+# openclaw-package-zerogpu
 
 OpenClaw plugin and skill for routing cheap plain-text AI tasks to the ZeroGPU MCP server.
 
@@ -14,7 +14,7 @@ Register the remote MCP server separately:
 
 ```bash
 openclaw mcp set zerogpu '{
-  "url": "https://<your-worker>/mcp",
+  "url": "https://mcp.zerogpu.ai/mcp",
   "transport": "streamable-http",
   "headers": {
     "x-api-key": "<your-api-key>",

@@ -82,7 +82,7 @@ openclaw plugins list     # should show "zerogpu"
 Or, after publishing to ClawHub:
 
 ```sh
-openclaw plugins install openclaw-plugin-zerogpu
+openclaw plugins install openclaw-package-zerogpu
 ```
 
 ## Verifying end-to-end
