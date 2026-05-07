@@ -24,10 +24,10 @@
     "zerogpu"
   ],
   "scripts": {
-    "build": "npm --prefix mcp-server run build && npm --prefix openclaw-plugin/plugin run build",
+    "build": "npm --prefix mcp-server run build && npm --prefix agents/openclaw/plugin run build",
     "test": "npm --prefix mcp-server test",
-    "typecheck": "npm --prefix mcp-server run worker:types && npm --prefix openclaw-plugin/plugin run build",
-    "package:check": "cd mcp-server && npm pack --dry-run && cd ../openclaw-plugin/plugin && npm pack --dry-run",
+    "typecheck": "npm --prefix mcp-server run worker:types && npm --prefix agents/openclaw/plugin run build",
+    "package:check": "cd mcp-server && npm pack --dry-run && cd ../agents/openclaw/plugin && npm pack --dry-run",
     "release:check": "npm run typecheck && npm run test && npm run package:check"
   },
   "engines": {

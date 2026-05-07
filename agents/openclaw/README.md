@@ -1,18 +1,27 @@
-# OpenClaw ZeroGPU plugin
+# OpenClaw
 
-OpenClaw skill + plugin that routes cheap AI tasks (classification, summarization, entity/JSON extraction, PII redact/extract, follow-up generation, small-model chat) from your OpenClaw agent to the [ZeroGPU MCP server](../mcp-server). Mirrors the Claude Code plugin in [`../claude-plugin`](../claude-plugin).
+Routes cheap plain-text workloads from OpenClaw to the ZeroGPU MCP server ([`../../mcp-server/`](../../mcp-server)). Mirrors the Claude Code packaging in [`../claude/`](../claude/).
+
+## Choose an install shape
+
+| Option | Use when | Location |
+|---|---|---|
+| **Skill (drop-in)** | You want only routing guidance + will manage plugin wiring yourself | [`plugin/skills/zerogpu/`](./plugin/skills/zerogpu/) (`SKILL.md`) |
+| **Native plugin package** | You want OpenClaw to load skill + manifest from npm/ClawHub or `plugins install ./` | [`plugin/`](./plugin/) (`package.json`, `openclaw.plugin.json`) |
+| **MCP registration JSON** | You need a paste-ready `openclaw mcp set` payload | [`mcp/zerogpu-server.json`](./mcp/zerogpu-server.json) |
+
+You always register the remote MCP server (Step 1 below) so `zerogpu_*` tools exist.
 
 ## Layout
 
 ```
-openclaw-plugin/
-├── mcp/zerogpu-server.json          # config payload for `openclaw mcp set`
+agents/openclaw/
+├── mcp/zerogpu-server.json     # example payload for `openclaw mcp set`
 └── plugin/
-    ├── package.json                 # Node 22+, has `openclaw` block
-    ├── openclaw.plugin.json         # plugin manifest (declares skills)
-    ├── tsconfig.json
-    ├── src/index.ts                 # `definePluginEntry` (skills load declaratively)
-    └── skills/zerogpu/SKILL.md      # the routing skill (single source of truth)
+    ├── package.json             # Node 22+, OpenClaw metadata + build
+    ├── openclaw.plugin.json     # manifest (declares skills)
+    ├── src/index.ts             # `definePluginEntry`
+    └── skills/zerogpu/SKILL.md  # routing guidance
 ```
 
 ## Prerequisites
@@ -36,15 +45,15 @@ openclaw mcp set zerogpu '{
 openclaw mcp show zerogpu --json   # verify
 ```
 
-Or fill in [`mcp/zerogpu-server.json`](./mcp/zerogpu-server.json) with literal values and apply it from the file:
+Or fill in [`mcp/zerogpu-server.json`](./mcp/zerogpu-server.json) with literal values and apply it from the file (paths below assume repo root):
 
 ```sh
-openclaw mcp set zerogpu "$(cat openclaw-plugin/mcp/zerogpu-server.json)"
+openclaw mcp set zerogpu "$(cat agents/openclaw/mcp/zerogpu-server.json)"
 ```
 
 Either form stores the server under `mcp.servers.zerogpu` in your OpenClaw config and sends the headers verbatim on every request. The values land in your local OpenClaw config, so treat that file as a secret and don't commit a populated `zerogpu-server.json`.
 
-## Step 2 — Install the skill
+## Step 2 — Install skill or plugin
 
 Pick one of the two forms below.
 
@@ -54,11 +63,11 @@ Copy the skill folder into your OpenClaw workspace, **or** add the path to `skil
 
 ```sh
 # Option 1 — copy
-cp -R openclaw-plugin/plugin/skills/zerogpu ~/.openclaw/workspace/skills/
+cp -R agents/openclaw/plugin/skills/zerogpu ~/.openclaw/workspace/skills/
 
 # Option 2 — register the parent as an extra skill dir
 #   add this to ~/.openclaw/openclaw.json:
-#   { "skills": { "load": { "extraDirs": ["/abs/path/to/openclaw-plugin/plugin/skills"] } } }
+#   { "skills": { "load": { "extraDirs": ["/abs/path/to/ZeroGPU-Router/agents/openclaw/plugin/skills"] } } }
 ```
 
 Then verify:
@@ -72,7 +81,7 @@ openclaw skills list      # should show "zerogpu"
 Build and install locally:
 
 ```sh
-cd openclaw-plugin/plugin
+cd agents/openclaw/plugin
 npm install
 npm run build
 openclaw plugins install ./

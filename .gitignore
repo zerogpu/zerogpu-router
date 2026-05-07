@@ -20,7 +20,10 @@ dist/
 .env.local
 .env.*.local
 .env.bak
-openclaw-plugin/mcp/*.local.json
+agents/openclaw/mcp/*.local.json
+
+# Local npm pack artifacts (ClawHub publish)
+agents/openclaw/plugin/*.tgz
 
 # --- Test & coverage ---
 coverage/

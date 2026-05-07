@@ -6,7 +6,7 @@ Reduce your AI costs
 [![CI](https://github.com/zerogpu/ZeroGPU-Router/actions/workflows/ci.yml/badge.svg)](https://github.com/zerogpu/ZeroGPU-Router/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-ready-purple)](mcp-server/)
-[![OpenClaw](https://img.shields.io/badge/OpenClaw-plugin-black)](openclaw-plugin/)
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-plugin-black)](agents/openclaw/)
 
 ![ZeroGPU dashboard](assets/zerogpu-dashboard.gif)
 
@@ -51,7 +51,7 @@ openclaw mcp set zerogpu '{
 Install the OpenClaw plugin:
 
 ```sh
-cd openclaw-plugin/plugin
+cd agents/openclaw/plugin
 npm install
 npm run build
 openclaw plugins install ./
@@ -76,9 +76,9 @@ claude mcp add --transport http zerogpu \
   --header "x-project-id: <your-project-id>"
 ```
 
-Then install the skill-only Claude plugin from [claude-plugin/](claude-plugin/), so Claude knows when to call the `zerogpu_*` tools.
+Then install the skill-only Claude plugin from [agents/claude/](agents/claude/), so Claude knows when to call the `zerogpu_*` tools.
 
-For a step-by-step Claude marketplace install and verification, expand **Detailed MCP Documentation** below or follow [openclaw-plugin/README.md](openclaw-plugin/README.md) patterns for parity.
+For a step-by-step Claude marketplace install and verification, expand **Detailed MCP Documentation** below or follow [agents/claude/README.md](agents/claude/README.md).
 
 ### Self-host the MCP endpoint (Cloudflare Workers)
 
@@ -142,17 +142,20 @@ ZeroGPU Router exposes eleven task-specific routes:
 
 ## Packages
 
-ZeroGPU Router ships as three artifacts that work together:
+ZeroGPU Router ships as the MCP server plus per-agent integrations under [`agents/`](agents/):
 
 | Package | Role |
 |---|---|
 | [mcp-server/](mcp-server/) | TypeScript MCP server for Node stdio or Cloudflare Workers |
-| [openclaw-plugin/](openclaw-plugin/) | OpenClaw plugin and skill for task routing |
-| [claude-plugin/](claude-plugin/) | Claude Code skill plugin for routing guidance |
+| [agents/](agents/) | Agent integration index (Claude Code + OpenClaw) |
+| [agents/openclaw/](agents/openclaw/) | OpenClaw skill drop-in, native plugin package, MCP JSON |
+| [agents/claude/](agents/claude/) | Claude marketplace plugin + skill-only `SKILL.md` |
 
 ## Quick Links
 
-- [OpenClaw setup](openclaw-plugin/README.md)
+- [Agent integrations](agents/README.md)
+- [OpenClaw setup](agents/openclaw/README.md)
+- [Claude Code setup](agents/claude/README.md)
 - [MCP server package](mcp-server/README.md)
 - [Release guide](RELEASE.md)
 - [Contributing](CONTRIBUTING.md)
@@ -235,7 +238,7 @@ The model never sees the ZeroGPU API key, the retry logic, or the model-routing 
 
 A **Skill** in Claude Code is a markdown file with YAML frontmatter that tells Claude *when* to do something. It is pure prompt engineering — no code runs. Claude Code auto-loads all skills in your plugins/user/project directories and injects the relevant one into context when its trigger conditions look relevant.
 
-The shape is always the same ([claude-plugin/plugins/zerogpu/skill/SKILL.md](claude-plugin/plugins/zerogpu/skill/SKILL.md)):
+The shape is always the same ([agents/claude/plugins/zerogpu/skill/SKILL.md](agents/claude/plugins/zerogpu/skill/SKILL.md)):
 
 ```markdown
 ---
@@ -603,16 +606,16 @@ The Worker does not use or expose a separate bearer token for the `/mcp` endpoin
 
 ## OpenClaw plugin
 
-The OpenClaw integration lives in [openclaw-plugin/](openclaw-plugin/) and is the recommended agent packaging for this repository.
+The OpenClaw integration lives in [agents/openclaw/](agents/openclaw/) and is the recommended agent packaging for this repository.
 
 It has two parts:
 
 | File | Role |
 |---|---|
-| [openclaw-plugin/mcp/zerogpu-server.json](openclaw-plugin/mcp/zerogpu-server.json) | Example payload for `openclaw mcp set zerogpu` |
-| [openclaw-plugin/plugin/openclaw.plugin.json](openclaw-plugin/plugin/openclaw.plugin.json) | Plugin manifest that declares the ZeroGPU skill |
-| [openclaw-plugin/plugin/skills/zerogpu/SKILL.md](openclaw-plugin/plugin/skills/zerogpu/SKILL.md) | Routing guidance that tells the agent when to call `zerogpu_*` tools |
-| [openclaw-plugin/plugin/src/index.ts](openclaw-plugin/plugin/src/index.ts) | Minimal plugin entry; skills load declaratively from the manifest |
+| [agents/openclaw/mcp/zerogpu-server.json](agents/openclaw/mcp/zerogpu-server.json) | Example payload for `openclaw mcp set zerogpu` |
+| [agents/openclaw/plugin/openclaw.plugin.json](agents/openclaw/plugin/openclaw.plugin.json) | Plugin manifest that declares the ZeroGPU skill |
+| [agents/openclaw/plugin/skills/zerogpu/SKILL.md](agents/openclaw/plugin/skills/zerogpu/SKILL.md) | Routing guidance that tells the agent when to call `zerogpu_*` tools |
+| [agents/openclaw/plugin/src/index.ts](agents/openclaw/plugin/src/index.ts) | Minimal plugin entry; skills load declaratively from the manifest |
 
 ### Register the remote MCP server
 
@@ -632,7 +635,7 @@ openclaw mcp show zerogpu --json
 ### Install the plugin from source
 
 ```sh
-cd openclaw-plugin/plugin
+cd agents/openclaw/plugin
 npm install
 npm run build
 openclaw plugins install ./
@@ -647,7 +650,7 @@ The skill frontmatter includes OpenClaw metadata that requires the `zerogpu` MCP
 
 ### plugin.json — the manifest
 
-[claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json](claude-plugin/plugins/zerogpu/.claude-plugin/plugin.json) is the primary manifest Claude Code reads when it installs the plugin. The public package is skill-only by default:
+[agents/claude/plugins/zerogpu/.agents/claude/plugin.json](agents/claude/plugins/zerogpu/.agents/claude/plugin.json) is the primary manifest Claude Code reads when it installs the plugin. The public package is skill-only by default:
 
 ```json
 {
@@ -663,7 +666,7 @@ The MCP server is registered separately with `claude mcp add --transport http`. 
 
 ### SKILL.md — the guidance layer
 
-[claude-plugin/plugins/zerogpu/skill/SKILL.md](claude-plugin/plugins/zerogpu/skill/SKILL.md) is a markdown file with YAML frontmatter. Claude Code injects its body into the model's context when the skill is relevant.
+[agents/claude/plugins/zerogpu/skill/SKILL.md](agents/claude/plugins/zerogpu/skill/SKILL.md) is a markdown file with YAML frontmatter. Claude Code injects its body into the model's context when the skill is relevant.
 
 ```
 ---
@@ -760,7 +763,7 @@ The skill is the guidance layer that tells Claude *when* to call ZeroGPU tools. 
 **3a.** Register the marketplace (substitute your repo path):
 
 ```
-/plugin marketplace add <path-to-repo>/claude-plugin
+/plugin marketplace add <path-to-repo>/agents/claude
 ```
 
 **3b.** Install the plugin:

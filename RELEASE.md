@@ -3,7 +3,7 @@
 This repository publishes two independently useful artifacts:
 
 - `zerogpu-mcp` from `mcp-server/`: the MCP server package and Cloudflare Worker source.
-- `openclaw-package-zerogpu` from `openclaw-plugin/plugin/`: the OpenClaw plugin package and skill.
+- `openclaw-package-zerogpu` from `agents/openclaw/plugin/`: the OpenClaw plugin package and skill.
 
 ## Pre-release Checklist
 
@@ -37,7 +37,7 @@ Use dry runs before publishing packages:
 
 ```bash
 npm --prefix mcp-server pack --dry-run
-npm --prefix openclaw-plugin/plugin pack --dry-run
+npm --prefix agents/openclaw/plugin pack --dry-run
 ```
 
 ## Cloudflare Secrets

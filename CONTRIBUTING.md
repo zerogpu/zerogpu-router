@@ -8,7 +8,7 @@ Use Node.js 22 or newer.
 
 ```bash
 npm install --prefix mcp-server
-npm install --prefix openclaw-plugin/plugin
+npm install --prefix agents/openclaw/plugin
 ```
 
 Run the main checks before opening a pull request:
@@ -23,14 +23,14 @@ Or run the packages independently:
 npm --prefix mcp-server run build
 npm --prefix mcp-server run worker:types
 npm --prefix mcp-server test
-npm --prefix openclaw-plugin/plugin run build
+npm --prefix agents/openclaw/plugin run build
 ```
 
 ## Repository Layout
 
 - `mcp-server/` contains the TypeScript MCP server shared by Node stdio and Cloudflare Workers.
-- `openclaw-plugin/` contains the OpenClaw skill and plugin package.
-- `claude-plugin/` contains the Claude Code skill-only plugin.
+- `agents/openclaw/` contains the OpenClaw skill and plugin package.
+- `agents/claude/` contains the Claude Code marketplace plugin + skill.
 - `mcp-server/config/catalog.json` is the source of truth for tool descriptions, model routing, and pricing.
 
 ## Pull Request Guidelines

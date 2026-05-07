@@ -42,13 +42,13 @@ jobs:
       - name: Check package contents
         run: npm pack --dry-run
 
-  openclaw-plugin:
+  openclaw:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     defaults:
       run:
-        working-directory: openclaw-plugin/plugin
+        working-directory: agents/openclaw/plugin
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
