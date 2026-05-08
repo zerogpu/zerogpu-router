@@ -67,7 +67,7 @@ cp -R agents/openclaw/plugin/skills/zerogpu ~/.openclaw/workspace/skills/
 
 # Option 2 — register the parent as an extra skill dir
 #   add this to ~/.openclaw/openclaw.json:
-#   { "skills": { "load": { "extraDirs": ["/abs/path/to/ZeroGPU-Router/agents/openclaw/plugin/skills"] } } }
+#   { "skills": { "load": { "extraDirs": ["/abs/path/to/zerogpu-router/agents/openclaw/plugin/skills"] } } }
 ```
 
 Then verify:
@@ -85,13 +85,13 @@ cd agents/openclaw/plugin
 npm install
 npm run build
 openclaw plugins install ./
-openclaw plugins list     # should show "zerogpu"
+openclaw plugins list     # should show "zerogpu-router"
 ```
 
 Or, after publishing to ClawHub:
 
 ```sh
-openclaw plugins install openclaw-package-zerogpu
+openclaw plugins install zerogpu-router
 ```
 
 ## Verifying end-to-end

@@ -27,7 +27,7 @@ npm --prefix agents/openclaw/plugin run build
 ## Repository Layout
 
 - `agents/claude/` — Claude Code marketplace plugin + routing skill.
-- `agents/openclaw/` — OpenClaw plugin (`openclaw-package-zerogpu`) + drop-in skill + MCP registration JSON.
+- `agents/openclaw/` — OpenClaw plugin (`zerogpu-router`) + drop-in skill + MCP registration JSON.
 - `agents/<agent>/.../SKILL.md` — the routing guidance each agent loads.
 
 ## Pull Request Guidelines

@@ -3,7 +3,7 @@
 Cut your AI costs. Route trivial tasks — summarize, classify, redact PII, extract JSON, generate follow-ups, short chat — to small/nano models instead of burning frontier-model tokens.
 
 [![Beta](https://img.shields.io/badge/status-beta-blue)](README.md)
-[![CI](https://github.com/zerogpu/ZeroGPU-Router/actions/workflows/ci.yml/badge.svg)](https://github.com/zerogpu/ZeroGPU-Router/actions/workflows/ci.yml)
+[![CI](https://github.com/zerogpu/zerogpu-router/actions/workflows/ci.yml/badge.svg)](https://github.com/zerogpu/zerogpu-router/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-orange)](agents/claude/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-plugin-black)](agents/openclaw/)
@@ -102,7 +102,7 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 | Package | Role |
 |---|---|
 | [agents/claude/](agents/claude/) | Claude Code marketplace plugin + routing skill |
-| [agents/openclaw/](agents/openclaw/) | OpenClaw plugin (`openclaw-package-zerogpu`) + routing skill + MCP registration JSON |
+| [agents/openclaw/](agents/openclaw/) | OpenClaw plugin (`zerogpu-router`) + routing skill + MCP registration JSON |
 
 ## Quick Links
 
