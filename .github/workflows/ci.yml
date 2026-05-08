@@ -11,37 +11,6 @@ on:
       - main
 
 jobs:
-  mcp-server:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: mcp-server
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Build Node server
-        run: npm run build
-
-      - name: Type-check Worker
-        run: npm run worker:types
-
-      - name: Run Tests
-        run: npm test
-
-      - name: Check package contents
-        run: npm pack --dry-run
-
   openclaw:
     runs-on: ubuntu-latest
     permissions:
@@ -66,3 +35,18 @@ jobs:
 
       - name: Check package contents
         run: npm pack --dry-run
+
+  claude-plugin:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Validate Claude marketplace + plugin manifests
+        run: |
+          for f in agents/claude/.claude-plugin/marketplace.json agents/claude/plugins/zerogpu/.claude-plugin/plugin.json; do
+            echo "Validating $f"
+            python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f"
+          done

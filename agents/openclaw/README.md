@@ -1,6 +1,6 @@
 # OpenClaw
 
-Routes cheap plain-text workloads from OpenClaw to the ZeroGPU MCP server ([`../../mcp-server/`](../../mcp-server)). Mirrors the Claude Code packaging in [`../claude/`](../claude/).
+Routes cheap plain-text workloads from OpenClaw to the hosted ZeroGPU Router at `https://mcp.zerogpu.ai/mcp`. Mirrors the Claude Code packaging in [`../claude/`](../claude/). Manage API keys and watch live savings at [platform.zerogpu.ai](https://platform.zerogpu.ai).
 
 ## Choose an install shape
 

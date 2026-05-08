@@ -1,9 +1,8 @@
 # Release Guide
 
-This repository publishes two independently useful artifacts:
+This repository publishes one artifact: **`openclaw-package-zerogpu`** from `agents/openclaw/plugin/` — the OpenClaw plugin and routing skill.
 
-- `zerogpu-mcp` from `mcp-server/`: the MCP server package and Cloudflare Worker source.
-- `openclaw-package-zerogpu` from `agents/openclaw/plugin/`: the OpenClaw plugin package and skill.
+The hosted MCP server at `https://mcp.zerogpu.ai/mcp` is operated by ZeroGPU and released separately.
 
 ## Pre-release Checklist
 
@@ -19,27 +18,34 @@ This repository publishes two independently useful artifacts:
    npm run release:check
    ```
 
-3. If `mcp-server/config/catalog.json` changed, seed Cloudflare KV for each target environment:
+3. Bump `version` in `agents/openclaw/plugin/package.json` and `agents/openclaw/plugin/openclaw.plugin.json`.
 
-   ```bash
-   npm --prefix mcp-server run kv:seed:develop
-   npm --prefix mcp-server run kv:seed:staging
-   npm --prefix mcp-server run kv:seed:production
-   ```
+4. Tag the release and create a GitHub release from the tag.
 
-4. Create a GitHub release from the version tag.
+## NPM / ClawHub Dry Run
 
-Publishing a GitHub release triggers the production Cloudflare Worker deploy through `.github/workflows/deploy-prod.yml`.
-
-## NPM Dry Runs
-
-Use dry runs before publishing packages:
+Use a dry run before publishing the OpenClaw plugin:
 
 ```bash
-npm --prefix mcp-server pack --dry-run
 npm --prefix agents/openclaw/plugin pack --dry-run
 ```
 
-## Cloudflare Secrets
+Inspect the resulting tarball to confirm `dist/`, `skills/`, `openclaw.plugin.json`, and `README.md` are included.
 
-The Worker expects `ZEROGPU_ORCHESTRATION_URL` as a Cloudflare secret per environment. Client credentials are not stored in the Worker; OpenClaw, Claude Code, or another MCP client sends `x-api-key` and `x-project-id` on every `/mcp` request.
+## Publishing the OpenClaw plugin
+
+Publish to ClawHub:
+
+```bash
+cd agents/openclaw/plugin
+npm pack
+openclaw plugins publish ./openclaw-package-zerogpu-<version>.tgz
+```
+
+After publishing, verify the listing at <https://clawhub.ai/plugins/openclaw-package-zerogpu> — the version, integrity hash, and file count should match the local tarball.
+
+Smoke-test the install on a clean machine before announcing:
+
+```bash
+openclaw plugins install clawhub:openclaw-package-zerogpu
+```
