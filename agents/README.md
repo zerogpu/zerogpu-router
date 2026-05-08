@@ -7,4 +7,4 @@ This folder holds **per-agent** packaging for ZeroGPU Router: routing skills and
 | Claude Code | [claude/](claude/) | Marketplace plugin + skill-only `SKILL.md` |
 | OpenClaw | [openclaw/](openclaw/) | Native plugin package + drop-in skill + MCP registration JSON |
 
-Shared backend for all agents: [`../mcp-server/`](../mcp-server/) (MCP Worker / Node server).
+All agents talk to the hosted ZeroGPU Router at `https://mcp.zerogpu.ai/mcp`. Manage API keys, projects, and dashboards at [platform.zerogpu.ai](https://platform.zerogpu.ai).

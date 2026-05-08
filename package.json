@@ -1,8 +1,8 @@
 {
-  "name": "zerogpu-mcp-repo",
+  "name": "zerogpu-router",
   "version": "0.1.0",
   "private": true,
-  "description": "ZeroGPU MCP server and agent plugins for offloading low-cost AI tasks to small/nano models.",
+  "description": "ZeroGPU Router agent integrations for Claude Code and OpenClaw.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -17,18 +17,15 @@
     "model-context-protocol",
     "openclaw",
     "claude-code",
-    "cloudflare-workers",
     "model-routing",
     "cost-optimization",
     "llm-observability",
     "zerogpu"
   ],
   "scripts": {
-    "build": "npm --prefix mcp-server run build && npm --prefix agents/openclaw/plugin run build",
-    "test": "npm --prefix mcp-server test",
-    "typecheck": "npm --prefix mcp-server run worker:types && npm --prefix agents/openclaw/plugin run build",
-    "package:check": "cd mcp-server && npm pack --dry-run && cd ../agents/openclaw/plugin && npm pack --dry-run",
-    "release:check": "npm run typecheck && npm run test && npm run package:check"
+    "build": "npm --prefix agents/openclaw/plugin run build",
+    "package:check": "cd agents/openclaw/plugin && npm pack --dry-run",
+    "release:check": "npm run build && npm run package:check"
   },
   "engines": {
     "node": ">=22"

@@ -10,10 +10,6 @@ pnpm-debug.log*
 dist/
 *.tsbuildinfo
 
-# --- Cloudflare / Wrangler local cache ---
-.wrangler/
-.dev.vars
-
 # --- Secrets / local env ---
 # Keep .env.example committed; .env itself holds real credentials.
 .env
