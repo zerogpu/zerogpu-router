@@ -10,20 +10,12 @@ pnpm-debug.log*
 dist/
 *.tsbuildinfo
 
-# --- Cloudflare / Wrangler local cache ---
-.wrangler/
-.dev.vars
-
 # --- Secrets / local env ---
 # Keep .env.example committed; .env itself holds real credentials.
 .env
 .env.local
 .env.*.local
 .env.bak
-agents/openclaw/mcp/*.local.json
-
-# Local npm pack artifacts (ClawHub publish)
-agents/openclaw/plugin/*.tgz
 
 # --- Test & coverage ---
 coverage/

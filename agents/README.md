@@ -1,10 +1,5 @@
-# Agent integrations
+# Agents
 
-This folder holds **per-agent** packaging for ZeroGPU Router: routing skills and native plugins side by side.
+This repository currently ships only Claude integration artifacts.
 
-| Agent | Folder | Overview |
-|---|---|---|
-| Claude Code | [claude/](claude/) | Marketplace plugin + skill-only `SKILL.md` |
-| OpenClaw | [openclaw/](openclaw/) | Native plugin package + drop-in skill + MCP registration JSON |
-
-Shared backend for all agents: [`../mcp-server/`](../mcp-server/) (MCP Worker / Node server).
+- `claude/` — Claude marketplace definition, plugin manifest, and routing skill.

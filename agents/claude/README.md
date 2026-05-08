@@ -1,34 +1,21 @@
-# Claude Code
+# Claude Code Integration
 
-ZeroGPU routing for Claude Code ships in two complementary forms: a **skill** (routing guidance) and a **marketplace plugin** manifest that loads that skill. You still register the hosted MCP endpoint separately (`claude mcp add`), as in the [root README](../../README.md#quick-start).
+This folder contains both plugin and skill options for Claude Code.
 
-## Plugin (recommended)
+## Plugin option
 
-Install from this repo via Claude’s plugin marketplace UI.
+- Marketplace file: `.claude-plugin/marketplace.json`
+- Plugin package: `plugins/zerogpu/.claude-plugin/plugin.json`
 
-- Marketplace root: **`agents/claude/`** — contains [`./.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json)
-- Packaged plugin: [`./plugins/zerogpu/`](./plugins/zerogpu/) — [`plugin.json`](./plugins/zerogpu/.claude-plugin/plugin.json) lists the skill path
-
-After cloning the repository, add the marketplace (adjust the path to your clone):
+Install from your local clone:
 
 ```text
 /plugin marketplace add <path-to-repo>/agents/claude
-```
-
-Then install the plugin (name matches `marketplace.json`):
-
-```text
 /plugin install zerogpu@zerogpu-local
 ```
 
-## Skill only
+## Skill option
 
-If you only want the routing text without the plugin wrapper, use:
+- Skill file: `plugins/zerogpu/skill/SKILL.md`
 
-- [`plugins/zerogpu/skill/SKILL.md`](./plugins/zerogpu/skill/SKILL.md)
-
-You still need the `zerogpu` MCP server registered in Claude Code so the `zerogpu_*` tools exist.
-
-## See also
-
-- [OpenClaw equivalent](../openclaw/README.md)
+Use this directly if you only want routing guidance text.

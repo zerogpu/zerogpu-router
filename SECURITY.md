@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-Please do not open public issues for suspected credential leaks, authentication bypasses, or vulnerabilities in the hosted MCP endpoint.
+Please do not open public issues for suspected credential leaks or plugin/skill vulnerabilities.
 
 Email the maintainers at `hello@zerogpu.ai` with:
 
@@ -15,9 +15,9 @@ We will acknowledge reports within 72 hours and coordinate a fix before publishi
 
 ## Secrets and Credentials
 
-Never commit real ZeroGPU API keys, project IDs, Cloudflare tokens, Worker secrets, or populated local MCP config files.
+Never commit real ZeroGPU API keys, project IDs, access tokens, or populated local config files.
 
-The public examples in this repository use placeholders such as `<your-api-key>` and `<your-project-id>`. Runtime credentials should be supplied through local environment variables, GitHub Actions secrets, Cloudflare Worker secrets, or private OpenClaw/Claude MCP client configuration.
+The public examples in this repository use placeholders such as `<your-api-key>` and `<your-project-id>`. Runtime credentials should be supplied through local environment variables or private Claude MCP client configuration.
 
 ## Supported Versions
 
