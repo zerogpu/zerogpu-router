@@ -1,6 +1,6 @@
 # Release Guide
 
-This repository publishes one artifact: **`openclaw-package-zerogpu`** from `agents/openclaw/plugin/` — the OpenClaw plugin and routing skill.
+This repository publishes one artifact: **`zerogpu-router`** from `agents/openclaw/plugin/` — the OpenClaw plugin and routing skill.
 
 The hosted MCP server at `https://mcp.zerogpu.ai/mcp` is operated by ZeroGPU and released separately.
 
@@ -34,18 +34,41 @@ Inspect the resulting tarball to confirm `dist/`, `skills/`, `openclaw.plugin.js
 
 ## Publishing the OpenClaw plugin
 
-Publish to ClawHub:
+Publishing uses the `clawhub` CLI (separate from `openclaw`). Install once:
+
+```bash
+npm i -g clawhub
+clawhub login
+clawhub whoami
+```
+
+Build, pack, and publish:
 
 ```bash
 cd agents/openclaw/plugin
+npm install
+npm run build
 npm pack
-openclaw plugins publish ./openclaw-package-zerogpu-<version>.tgz
+clawhub package publish ./zerogpu-router-<version>.tgz --family code-plugin --dry-run
+clawhub package publish ./zerogpu-router-<version>.tgz --family code-plugin
 ```
 
-After publishing, verify the listing at <https://clawhub.ai/plugins/openclaw-package-zerogpu> — the version, integrity hash, and file count should match the local tarball.
-
-Smoke-test the install on a clean machine before announcing:
+After publishing, verify with:
 
 ```bash
-openclaw plugins install clawhub:openclaw-package-zerogpu
+clawhub package inspect zerogpu-router
+```
+
+…or open <https://clawhub.ai/plugins/zerogpu-router>.
+
+Smoke-test the install on a clean OpenClaw / KiloClaw shell:
+
+```bash
+openclaw plugins install clawhub:zerogpu-router
+```
+
+To remove a broken or deprecated package (soft-delete all releases):
+
+```bash
+clawhub package delete <name>
 ```

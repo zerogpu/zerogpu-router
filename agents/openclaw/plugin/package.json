@@ -1,7 +1,7 @@
 {
-  "name": "openclaw-package-zerogpu",
-  "version": "0.1.1",
-  "description": "OpenClaw plugin: offload cheap AI tasks to the ZeroGPU MCP server.",
+  "name": "zerogpu-router",
+  "version": "0.1.0",
+  "description": "ZeroGPU Router plugin for OpenClaw: route trivial AI tasks (summarize, classify, redact PII, extract JSON, follow-ups) to small/nano models via MCP. Cuts agent inference costs without changing your reasoning model.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -10,15 +10,21 @@
     "skills",
     "openclaw.plugin.json"
   ],
+  "author": {
+    "name": "ZeroGPU",
+    "email": "hello@zerogpu.ai",
+    "url": "https://zerogpu.ai"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/zerogpu/ZeroGPU-Router.git",
+    "url": "https://github.com/zerogpu/zerogpu-router.git",
     "directory": "agents/openclaw/plugin"
   },
   "bugs": {
-    "url": "https://github.com/zerogpu/ZeroGPU-Router/issues"
+    "url": "https://github.com/zerogpu/zerogpu-router/issues",
+    "email": "hello@zerogpu.ai"
   },
-  "homepage": "https://github.com/zerogpu/ZeroGPU-Router/tree/main/agents/openclaw#readme",
+  "homepage": "https://zerogpu.ai",
   "keywords": [
     "openclaw",
     "openclaw-plugin",

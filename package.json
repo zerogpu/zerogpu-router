@@ -4,14 +4,20 @@
   "private": true,
   "description": "ZeroGPU Router agent integrations for Claude Code and OpenClaw.",
   "license": "MIT",
+  "author": {
+    "name": "ZeroGPU",
+    "email": "hello@zerogpu.ai",
+    "url": "https://zerogpu.ai"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/zerogpu/ZeroGPU-Router.git"
+    "url": "https://github.com/zerogpu/zerogpu-router.git"
   },
   "bugs": {
-    "url": "https://github.com/zerogpu/ZeroGPU-Router/issues"
+    "url": "https://github.com/zerogpu/zerogpu-router/issues",
+    "email": "hello@zerogpu.ai"
   },
-  "homepage": "https://github.com/zerogpu/ZeroGPU-Router#readme",
+  "homepage": "https://zerogpu.ai",
   "keywords": [
     "mcp",
     "model-context-protocol",
