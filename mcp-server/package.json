@@ -1,0 +1,71 @@
+{
+  "name": "zerogpu-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that exposes the ZeroGPU Orchestration API as task-centric tools. Runs locally over stdio for Claude Code, or hosted on Cloudflare Workers for remote clients.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "zerogpu-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "config"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zerogpu/ZeroGPU-Router.git",
+    "directory": "mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/zerogpu/ZeroGPU-Router/issues"
+  },
+  "homepage": "https://github.com/zerogpu/ZeroGPU-Router#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "zerogpu",
+    "cloudflare-workers",
+    "claude-code",
+    "openclaw",
+    "model-routing",
+    "cost-optimization"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "dev": "tsc -w -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "inspect": "npx @modelcontextprotocol/inspector node --env-file-if-exists=.env dist/index.js",
+    "worker:dev": "wrangler dev",
+    "worker:types": "tsc -p tsconfig.worker.json --noEmit",
+    "kv:seed": "node scripts/seed-kv.mjs",
+    "kv:seed:develop": "node scripts/seed-kv.mjs --env develop",
+    "kv:seed:staging": "node scripts/seed-kv.mjs --env staging",
+    "kv:seed:production": "node scripts/seed-kv.mjs --env production",
+    "deploy:develop": "wrangler deploy --env develop",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
+  },
+  "engines": {
+    "node": ">=22.9.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "agents": "^0.0.80",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250321.0",
+    "@types/node": "^20.14.10",
+    "msw": "^2.6.6",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.5",
+    "wrangler": "^4.87.0"
+  }
+}
