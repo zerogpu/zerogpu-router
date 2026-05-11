@@ -1,5 +1,5 @@
 {
-  "name": "zerogpu",
+  "name": "zerogpu-router",
   "version": "0.1.0",
   "description": "Offload cheap AI tasks (classification, summarization, extraction, follow-ups, small-model chat) to ZeroGPU small/nano models.",
   "skills": [

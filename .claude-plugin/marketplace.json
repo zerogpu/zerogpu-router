@@ -1,0 +1,11 @@
+{
+  "name": "zerogpu-router",
+  "owner": { "name": "zerogpu" },
+  "plugins": [
+    {
+      "name": "zerogpu",
+      "source": "./agents/claude",
+      "description": "Offload cheap AI tasks to ZeroGPU small/nano models."
+    }
+  ]
+}
