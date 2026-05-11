@@ -46,7 +46,7 @@ jobs:
 
       - name: Validate Claude marketplace + plugin manifests
         run: |
-          for f in agents/claude/.claude-plugin/marketplace.json agents/claude/plugins/zerogpu/.claude-plugin/plugin.json; do
+          for f in .claude-plugin/marketplace.json agents/claude/.claude-plugin/plugin.json agents/claude/plugins/zerogpu-router/.claude-plugin/plugin.json; do
             echo "Validating $f"
             python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f"
           done

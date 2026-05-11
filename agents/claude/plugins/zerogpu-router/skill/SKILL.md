@@ -1,5 +1,5 @@
 ---
-name: zerogpu
+name: zerogpu-router
 description: Route cheap AI tasks (classification, summarization, entity/JSON extraction, PII redaction/extraction, follow-up question generation, small-model chat) to ZeroGPU small/nano models instead of spending Claude tokens. Invoke whenever the user asks for one of these tasks and the input is plain text.
 ---
 
