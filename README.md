@@ -3,10 +3,9 @@
 Cut your AI costs. Route trivial tasks — summarize, classify, redact PII, extract JSON, generate follow-ups, short chat — to small/nano models instead of burning frontier-model tokens.
 
 [![Beta](https://img.shields.io/badge/status-beta-blue)](README.md)
-[![CI](https://github.com/zerogpu/zerogpu-router/actions/workflows/ci.yml/badge.svg)](https://github.com/zerogpu/zerogpu-router/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-orange)](agents/claude/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-plugin-black)](agents/openclaw/)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-optional-lightgrey)](agents/claude/)
 
 ![ZeroGPU dashboard](assets/zerogpu-dashboard.gif)
 
@@ -16,37 +15,14 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific to
 
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
-- **Plugs into your agent** — Claude Code or OpenClaw, in three commands.
+- **Plugs into OpenClaw** — register MCP + install **`zerogpu-openclaw-plugin`** (see [agents/openclaw/](agents/openclaw/)); package name and plugin `id` match.
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
 - **Hosted, no infra** — point your agent at `https://mcp.zerogpu.ai/mcp`. We run the routing layer.
 
-## Quick Start
+## OpenClaw quick start
 
 You need a ZeroGPU API key and project ID. Grab them at [platform.zerogpu.ai](https://platform.zerogpu.ai).
-
-### Claude Code
-
-Register the hosted MCP endpoint:
-
-```sh
-claude mcp add --transport http zerogpu \
-  https://mcp.zerogpu.ai/mcp \
-  --header "x-api-key: <your-api-key>" \
-  --header "x-project-id: <your-project-id>"
-```
-
-Install the routing skill so Claude knows *when* to use the tools — see [agents/claude/](agents/claude/).
-
-Restart Claude Code and try:
-
-```text
-summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
-```
-
-Claude will call `zerogpu_summarize` and reply with a summary plus a savings line.
-
-### OpenClaw
 
 Register the hosted MCP endpoint in OpenClaw:
 
@@ -61,9 +37,80 @@ openclaw mcp set zerogpu '{
 }'
 ```
 
-Install the routing skill — full instructions in [agents/openclaw/](agents/openclaw/).
+Install the OpenClaw plugin tarball from npm (published as [`zerogpu-openclaw-plugin`](https://www.npmjs.com/package/zerogpu-openclaw-plugin)):
 
-Then ask your agent the same prompt above. The agent will call `zerogpu_summarize` instead of answering with the host model.
+```sh
+tmpdir=$(mktemp -d) && cd "$tmpdir" && npm pack zerogpu-openclaw-plugin@0.1.8 && tar -xzf zerogpu-openclaw-plugin-*.tgz && cd package && openclaw plugins install ./
+```
+
+Connect OpenClaw to MCP:
+
+```sh
+openclaw mcp set zerogpu '{
+  "url": "https://mcp.zerogpu.ai/mcp",
+  "transport": "streamable-http",
+  "headers": {
+    "x-api-key": "zgpu-api-…",
+    "x-project-id": "id"
+  }
+}'
+```
+
+Restart Gateway:
+
+```sh
+openclaw gateway restart
+```
+
+Try:
+
+```text
+summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
+```
+
+The agent should call `zerogpu_summarize` and return a summary plus savings metadata.
+
+<details>
+<summary>Claude Code (optional)</summary>
+
+Connect to MCP:
+
+```sh
+claude mcp add --transport http zerogpu-router \
+  https://mcp.zerogpu.ai/mcp \
+  --header "x-api-key: zgpu-api-…" \
+  --header "x-project-id: 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a"
+```
+
+Restart Claude session, then verify:
+
+```sh
+claude mcp list
+```
+
+Expected:
+
+```text
+zerogpu: https://mcp.zerogpu.ai/mcp (HTTP) - ✓ Connected
+```
+
+Add routing intelligence with plugin:
+
+```text
+/plugin marketplace add https://github.com/zerogpu/ZeroGPU-Router
+/plugin install zerogpu-router
+/plugin
+```
+
+Or skill-only:
+
+```sh
+mkdir -p ~/.claude/skills/zerogpu
+curl -o ~/.claude/skills/zerogpu/SKILL.md \
+  https://raw.githubusercontent.com/zerogpu/zerogpu-router/main/agents/claude/plugins/zerogpu-router/skill/SKILL.md
+```
+
+</details>
 
 ## Cloud connection
 
@@ -73,7 +120,7 @@ Sign in at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** to:
 - Watch live token usage, latency, and routed-call savings on the dashboard
 - See per-tool savings broken down by agent and time range
 - Manage agents, billing, and team access
-- Follow the step-by-step connect-your-agent guide for Claude Code and OpenClaw
+- Follow the step-by-step connect-your-agent guide (OpenClaw is documented in-repo; Claude Code lives under [agents/claude/](agents/claude/))
 
 The hosted Router at `https://mcp.zerogpu.ai/mcp` is the one your agent talks to. The dashboard at `platform.zerogpu.ai` is where you see what it did.
 
@@ -101,14 +148,14 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 
 | Package | Role |
 |---|---|
-| [agents/claude/](agents/claude/) | Claude Code marketplace plugin + routing skill |
-| [agents/openclaw/](agents/openclaw/) | OpenClaw plugin (`zerogpu-router`) + routing skill + MCP registration JSON |
+| [agents/openclaw/](agents/openclaw/) | **Primary:** OpenClaw package + plugin id **`zerogpu-openclaw-plugin`** + skill + MCP registration JSON |
+| [agents/claude/](agents/claude/) | Optional: Claude Code marketplace plugin + routing skill |
 
 ## Quick Links
 
-- [Claude Code setup](agents/claude/README.md)
 - [OpenClaw setup](agents/openclaw/README.md)
 - [Agent integrations index](agents/README.md)
+- [Claude Code setup](agents/claude/README.md) (optional)
 - [Platform dashboard](https://platform.zerogpu.ai)
 - [Release guide](RELEASE.md)
 - [Contributing](CONTRIBUTING.md)

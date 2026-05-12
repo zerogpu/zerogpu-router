@@ -2,7 +2,7 @@
   "name": "zerogpu-router",
   "version": "0.1.0",
   "private": true,
-  "description": "ZeroGPU Router agent integrations for Claude Code and OpenClaw.",
+  "description": "ZeroGPU Router OpenClaw plugin and integrations (optional Claude Code assets in-repo).",
   "license": "MIT",
   "author": {
     "name": "ZeroGPU",
