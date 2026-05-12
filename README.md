@@ -5,7 +5,7 @@ Cut your AI costs. Route trivial tasks — summarize, classify, redact PII, extr
 [![Beta](https://img.shields.io/badge/status-beta-blue)](README.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-plugin-black)](agents/openclaw/)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-optional-lightgrey)](agents/claude/)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-setup-blue)](agents/claude/)
 
 ![ZeroGPU dashboard](assets/zerogpu-dashboard.gif)
 
@@ -15,7 +15,8 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific to
 
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
-- **Plugs into OpenClaw** — register MCP + install **`zerogpu-openclaw-plugin`** (see [agents/openclaw/](agents/openclaw/)); package name and plugin `id` match.
+- **OpenClaw** — install **`zerogpu-openclaw-plugin`** and register MCP in OpenClaw (see [agents/openclaw/](agents/openclaw/)); package name and plugin `id` match.
+- **Claude Code** — different CLI and plugin flow; use [agents/claude/](agents/claude/) for `claude mcp add`, marketplace plugin, or skill-only install.
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
 - **Hosted, no infra** — point your agent at `https://mcp.zerogpu.ai/mcp`. We run the routing layer.
@@ -23,19 +24,6 @@ Your agent keeps doing the heavy reasoning. The boring stuff gets routed to Zero
 ## OpenClaw quick start
 
 You need a ZeroGPU API key and project ID. Grab them at [platform.zerogpu.ai](https://platform.zerogpu.ai).
-
-Register the hosted MCP endpoint in OpenClaw:
-
-```sh
-openclaw mcp set zerogpu '{
-  "url": "https://mcp.zerogpu.ai/mcp",
-  "transport": "streamable-http",
-  "headers": {
-    "x-api-key": "<your-api-key>",
-    "x-project-id": "<your-project-id>"
-  }
-}'
-```
 
 Install the OpenClaw plugin tarball from npm (published as [`zerogpu-openclaw-plugin`](https://www.npmjs.com/package/zerogpu-openclaw-plugin)):
 
@@ -70,8 +58,9 @@ summarize this paragraph: Renewable energy adoption is accelerating globally, dr
 
 The agent should call `zerogpu_summarize` and return a summary plus savings metadata.
 
-<details>
-<summary>Claude Code (optional)</summary>
+## Claude Code quick start
+
+Claude Code uses its own MCP and plugin commands — not the OpenClaw steps above. Full walkthrough: [agents/claude/README.md](agents/claude/README.md).
 
 Connect to MCP:
 
@@ -110,8 +99,6 @@ curl -o ~/.claude/skills/zerogpu/SKILL.md \
   https://raw.githubusercontent.com/zerogpu/zerogpu-router/main/agents/claude/plugins/zerogpu-router/skill/SKILL.md
 ```
 
-</details>
-
 ## Cloud connection
 
 Sign in at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** to:
@@ -120,7 +107,7 @@ Sign in at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** to:
 - Watch live token usage, latency, and routed-call savings on the dashboard
 - See per-tool savings broken down by agent and time range
 - Manage agents, billing, and team access
-- Follow the step-by-step connect-your-agent guide (OpenClaw is documented in-repo; Claude Code lives under [agents/claude/](agents/claude/))
+- Follow setup for your stack: [OpenClaw](agents/openclaw/README.md) vs [Claude Code](agents/claude/README.md) use different commands
 
 The hosted Router at `https://mcp.zerogpu.ai/mcp` is the one your agent talks to. The dashboard at `platform.zerogpu.ai` is where you see what it did.
 
@@ -148,14 +135,14 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 
 | Package | Role |
 |---|---|
-| [agents/openclaw/](agents/openclaw/) | **Primary:** OpenClaw package + plugin id **`zerogpu-openclaw-plugin`** + skill + MCP registration JSON |
-| [agents/claude/](agents/claude/) | Optional: Claude Code marketplace plugin + routing skill |
+| [agents/openclaw/](agents/openclaw/) | **OpenClaw:** package + plugin id **`zerogpu-openclaw-plugin`** + skill + MCP registration JSON |
+| [agents/claude/](agents/claude/) | **Claude Code:** marketplace plugin + routing skill (`claude mcp`, `/plugin`, or curl skill) |
 
 ## Quick Links
 
 - [OpenClaw setup](agents/openclaw/README.md)
 - [Agent integrations index](agents/README.md)
-- [Claude Code setup](agents/claude/README.md) (optional)
+- [Claude Code setup](agents/claude/README.md)
 - [Platform dashboard](https://platform.zerogpu.ai)
 - [Release guide](RELEASE.md)
 - [Contributing](CONTRIBUTING.md)
