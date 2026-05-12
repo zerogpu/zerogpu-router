@@ -1,34 +1,56 @@
 # Claude Code
 
-ZeroGPU routing for Claude Code ships in two complementary forms: a **skill** (routing guidance) and a **marketplace plugin** manifest that loads that skill. You still register the hosted MCP endpoint separately (`claude mcp add`), as in the [root README](../../README.md#quick-start).
+Use these exact steps in Claude Code.
 
-## Plugin (recommended)
+## Connect to MCP
 
-Install from this repo via Claude’s plugin marketplace UI.
+1. Open Claude Code (terminal or VS Code extension).
+2. Add the ZeroGPU MCP server:
 
-- Marketplace root: **`agents/claude/`** — contains [`./.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json)
-- Packaged plugin: [`./plugins/zerogpu/`](./plugins/zerogpu/) — [`plugin.json`](./plugins/zerogpu/.claude-plugin/plugin.json) lists the skill path
-
-After cloning the repository, add the marketplace (adjust the path to your clone):
-
-```text
-/plugin marketplace add <path-to-repo>/agents/claude
+```sh
+claude mcp add --transport http zerogpu-router https://mcp.zerogpu.ai/mcp \
+  --header "x-api-key: zgpu-api-…" \
+  --header "x-project-id: 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a"
 ```
 
-Then install the plugin (name matches `marketplace.json`):
+3. Restart Claude session.
 
-```text
-/plugin install zerogpu@zerogpu-local
+## Verify MCP connection
+
+Run:
+
+```sh
+claude mcp list
 ```
 
-## Skill only
+Expected output:
 
-If you only want the routing text without the plugin wrapper, use:
+```text
+zerogpu: https://mcp.zerogpu.ai/mcp (HTTP) - ✓ Connected
+```
 
-- [`plugins/zerogpu/skill/SKILL.md`](./plugins/zerogpu/skill/SKILL.md)
+## Add routing intelligence
 
-You still need the `zerogpu` MCP server registered in Claude Code so the `zerogpu_*` tools exist.
+### Plugin (recommended)
 
-## See also
+```text
+/plugin marketplace add https://github.com/zerogpu/ZeroGPU-Router
+/plugin install zerogpu-router
+/plugin
+```
 
-- [OpenClaw equivalent](../openclaw/README.md)
+Expected plugin output includes:
+
+```text
+zerogpu-router — enabled
+```
+
+### Skill (no plugin)
+
+```sh
+mkdir -p ~/.claude/skills/zerogpu
+curl -o ~/.claude/skills/zerogpu/SKILL.md \
+  https://raw.githubusercontent.com/zerogpu/zerogpu-router/main/agents/claude/plugins/zerogpu-router/skill/SKILL.md
+```
+
+Restart Claude session to load the skill.
