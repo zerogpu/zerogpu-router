@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="ZeroGPU" width="160"/>
+  <img src="https://zerogpu.ai/assets/zerogpu-icon-dark-DB2Jfxq2.png" alt="ZeroGPU" width="160"/>
 </p>
 
 <h1 align="center">ZeroGPU Router</h1>
@@ -14,8 +14,8 @@
     <img src="https://img.shields.io/badge/Platform-Dashboard-22c55e?style=for-the-badge" alt="Open ZeroGPU platform" />
   </a>
   &nbsp;
-  <a href="https://www.npmjs.com/package/zerogpu-openclaw-plugin">
-    <img src="https://img.shields.io/npm/v/zerogpu-openclaw-plugin?style=for-the-badge&logo=npm&label=OpenClaw%20plugin&logoColor=white" alt="OpenClaw plugin on npm" />
+  <a href="https://www.zerogpu.ai">
+    <img src="https://img.shields.io/badge/Main-Website-22c55e?style=for-the-badge" alt="Open ZeroGPU platform" />
   </a>
 </p>
 
