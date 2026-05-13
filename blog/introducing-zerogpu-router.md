@@ -77,7 +77,37 @@ openclaw mcp set zerogpu '{
 openclaw gateway restart
 ```
 
-3. **Claude Code:** add the MCP server and install the **`zerogpu-router`** plugin from the marketplace — see the [Claude setup guide](../agents/claude/README.md) in this repo.
+3. **Claude Code:** in the same terminal (or VS Code) where Claude Code runs, wire MCP and the routing plugin.
+
+Add the hosted MCP server (use your real key and project id from the platform):
+
+```sh
+claude mcp add --transport http zerogpu-router https://mcp.zerogpu.ai/mcp \
+  --header "x-api-key: <your-api-key>" \
+  --header "x-project-id: <your-project-id>"
+```
+
+Restart your Claude Code session, then confirm the server is connected:
+
+```sh
+claude mcp list
+```
+
+You should see something like:
+
+```text
+zerogpu: https://mcp.zerogpu.ai/mcp (HTTP) - ✓ Connected
+```
+
+Install routing intelligence via the marketplace plugin (paste these in Claude Code):
+
+```text
+/plugin marketplace add https://github.com/zerogpu/ZeroGPU-Router
+/plugin install zerogpu-router
+/plugin
+```
+
+You want **`zerogpu-router — enabled`** in the plugin list. More detail: [Claude Code setup](../agents/claude/README.md).
 
 Full copy-paste flows also live in the [root README](../README.md).
 
