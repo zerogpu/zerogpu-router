@@ -1,6 +1,6 @@
 {
   "name": "zerogpu-openclaw-plugin",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "ZeroGPU Router plugin for OpenClaw: route trivial AI tasks (summarize, classify, redact PII, extract JSON, follow-ups) to small/nano models via MCP. Cuts agent inference costs without changing your reasoning model.",
   "license": "MIT",
   "type": "module",

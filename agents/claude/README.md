@@ -44,13 +44,3 @@ Expected plugin output includes:
 ```text
 zerogpu-router — enabled
 ```
-
-### Skill (no plugin)
-
-```sh
-mkdir -p ~/.claude/skills/zerogpu
-curl -o ~/.claude/skills/zerogpu/SKILL.md \
-  https://raw.githubusercontent.com/zerogpu/zerogpu-router/main/agents/claude/plugins/zerogpu-router/skill/SKILL.md
-```
-
-Restart Claude session to load the skill.

@@ -6,7 +6,7 @@ Use these exact commands in an OpenClaw terminal to install and connect ZeroGPU 
 
 ```sh
 tmpdir=$(mktemp -d) && cd "$tmpdir" \
-  && npm pack zerogpu-openclaw-plugin@0.1.8 \
+  && npm pack zerogpu-openclaw-plugin@0.1.10 \
   && tar -xzf zerogpu-openclaw-plugin-*.tgz \
   && cd package \
   && openclaw plugins install ./

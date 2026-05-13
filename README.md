@@ -16,7 +16,7 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific to
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
 - **OpenClaw** — install **`zerogpu-openclaw-plugin`** and register MCP in OpenClaw (see [agents/openclaw/](agents/openclaw/)); package name and plugin `id` match.
-- **Claude Code** — different CLI and plugin flow; use [agents/claude/](agents/claude/) for `claude mcp add`, marketplace plugin, or skill-only install.
+- **Claude Code** — different CLI and plugin flow; use [agents/claude/](agents/claude/) for `claude mcp add` and marketplace plugin install.
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
 - **Hosted, no infra** — point your agent at `https://mcp.zerogpu.ai/mcp`. We run the routing layer.
@@ -28,7 +28,7 @@ You need a ZeroGPU API key and project ID. Grab them at [platform.zerogpu.ai](ht
 Install the OpenClaw plugin tarball from npm (published as [`zerogpu-openclaw-plugin`](https://www.npmjs.com/package/zerogpu-openclaw-plugin)):
 
 ```sh
-tmpdir=$(mktemp -d) && cd "$tmpdir" && npm pack zerogpu-openclaw-plugin@0.1.8 && tar -xzf zerogpu-openclaw-plugin-*.tgz && cd package && openclaw plugins install ./
+tmpdir=$(mktemp -d) && cd "$tmpdir" && npm pack zerogpu-openclaw-plugin@0.1.10 && tar -xzf zerogpu-openclaw-plugin-*.tgz && cd package && openclaw plugins install ./
 ```
 
 Connect OpenClaw to MCP:
@@ -91,13 +91,6 @@ Add routing intelligence with plugin:
 /plugin
 ```
 
-Or skill-only:
-
-```sh
-mkdir -p ~/.claude/skills/zerogpu
-curl -o ~/.claude/skills/zerogpu/SKILL.md \
-  https://raw.githubusercontent.com/zerogpu/zerogpu-router/main/agents/claude/plugins/zerogpu-router/skill/SKILL.md
-```
 
 ## Cloud connection
 
@@ -136,7 +129,7 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 | Package | Role |
 |---|---|
 | [agents/openclaw/](agents/openclaw/) | **OpenClaw:** package + plugin id **`zerogpu-openclaw-plugin`** + skill + MCP registration JSON |
-| [agents/claude/](agents/claude/) | **Claude Code:** marketplace plugin + routing skill (`claude mcp`, `/plugin`, or curl skill) |
+| [agents/claude/](agents/claude/) | **Claude Code:** MCP setup + marketplace plugin (`claude mcp` + `/plugin`) |
 
 ## Quick Links
 

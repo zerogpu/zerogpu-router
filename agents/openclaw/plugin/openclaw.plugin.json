@@ -2,7 +2,7 @@
   "id": "zerogpu-openclaw-plugin",
   "name": "ZeroGPU Router",
   "description": "Route trivial AI tasks (classification, summarization, extraction, PII redaction, follow-ups, small-model chat) to ZeroGPU small/nano models via MCP.",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "skills": ["./skills/zerogpu"],
   "configSchema": {
     "type": "object",
