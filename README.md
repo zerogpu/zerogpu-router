@@ -1,11 +1,32 @@
-# ZeroGPU Router
+<p align="center">
+  <img src="assets/logo.svg" alt="ZeroGPU" width="160"/>
+</p>
 
-Cut your AI costs. Route trivial tasks — summarize, classify, redact PII, extract JSON, generate follow-ups, short chat — to small/nano models instead of burning frontier-model tokens.
+<h1 align="center">ZeroGPU Router</h1>
 
-[![Beta](https://img.shields.io/badge/status-beta-blue)](README.md)
-[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
-[![OpenClaw](https://img.shields.io/badge/OpenClaw-plugin-black)](agents/openclaw/)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-setup-blue)](agents/claude/)
+<p align="center">
+  <strong>Cut inference costs without dumbing down your agent.</strong><br/>
+  Route summarize, classify, PII redaction, JSON extraction, follow-ups, and short chat to small/nano models via MCP — hosted at <code>https://mcp.zerogpu.ai/mcp</code>.
+</p>
+
+<p align="center">
+  <a href="https://platform.zerogpu.ai">
+    <img src="https://img.shields.io/badge/Platform-Dashboard-22c55e?style=for-the-badge" alt="Open ZeroGPU platform" />
+  </a>
+  &nbsp;
+  <a href="https://www.npmjs.com/package/zerogpu-openclaw-plugin">
+    <img src="https://img.shields.io/npm/v/zerogpu-openclaw-plugin?style=for-the-badge&logo=npm&label=OpenClaw%20plugin&logoColor=white" alt="OpenClaw plugin on npm" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/zerogpu/zerogpu-router/stargazers"><img src="https://img.shields.io/github/stars/zerogpu/zerogpu-router?style=flat-square" alt="GitHub stars" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="License" /></a>
+  <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" alt="Beta" />
+  <a href="agents/openclaw/"><img src="https://img.shields.io/badge/OpenClaw-plugin-black?style=flat-square" alt="OpenClaw" /></a>
+  <a href="agents/claude/"><img src="https://img.shields.io/badge/Claude_Code-setup-blue?style=flat-square" alt="Claude Code" /></a>
+  <a href="https://zerogpu.ai"><img src="https://img.shields.io/badge/website-zerogpu.ai-111827?style=flat-square" alt="Website" /></a>
+</p>
 
 ![ZeroGPU dashboard](assets/zerogpu-dashboard.gif)
 
