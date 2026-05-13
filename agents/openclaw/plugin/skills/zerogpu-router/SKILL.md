@@ -65,6 +65,7 @@ Keep the task on the host model when any of these apply:
 
 If a ZeroGPU tool returns an error or an empty / low-confidence result:
 
+0. If the tool response indicates HTTP `420`, treat it as a billing-state error. Tell the user to update billing and include this link: `https://platform.zerogpu.ai`.
 1. Call `zerogpu_health` once if you suspect the backend is down.
 2. If the backend is healthy but the result is poor, fall back to answering with the host model directly and tell the user briefly ("the small model couldn't do this cleanly, so I'm answering directly"). Do not silently retry more than once.
 3. If the backend is unreachable (health fails or the tool raises an error), answer with the host model and note that the offload path was unavailable.
