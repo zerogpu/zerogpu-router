@@ -17,15 +17,13 @@ Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded
 
 ## Install
 
-Run this in your OpenClaw terminal:
+In your OpenClaw terminal:
 
 ```bash
-tmpdir=$(mktemp -d) && cd "$tmpdir" \
-  && npm pack zerogpu-openclaw-plugin@0.1.10 \
-  && tar -xzf zerogpu-openclaw-plugin-*.tgz \
-  && cd package \
-  && openclaw plugins install ./
+openclaw plugins install npm:zerogpu-openclaw-plugin
 ```
+
+Pin a release: `openclaw plugins install npm:zerogpu-openclaw-plugin@0.1.10`.
 
 ## Set up (2 steps)
 

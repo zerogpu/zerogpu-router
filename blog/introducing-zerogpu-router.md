@@ -56,10 +56,10 @@ That feedback loop is how you turn “we should use smaller models sometimes” 
 Roughly **minutes**, not hours:
 
 1. Create a project and grab an API key + project id at **[platform.zerogpu.ai](https://platform.zerogpu.ai)**.
-2. **OpenClaw:** install the plugin from npm, then register MCP and restart the gateway. For example:
+2. **OpenClaw:** install the plugin, then register MCP and restart the gateway:
 
 ```sh
-tmpdir=$(mktemp -d) && cd "$tmpdir" && npm pack zerogpu-openclaw-plugin@0.1.10 && tar -xzf zerogpu-openclaw-plugin-*.tgz && cd package && openclaw plugins install ./
+openclaw plugins install npm:zerogpu-openclaw-plugin
 ```
 
 ```sh

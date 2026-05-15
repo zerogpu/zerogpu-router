@@ -46,11 +46,13 @@ Your agent keeps doing the heavy reasoning. The boring stuff gets routed to Zero
 
 You need a ZeroGPU API key and project ID. Grab them at [platform.zerogpu.ai](https://platform.zerogpu.ai).
 
-Install the OpenClaw plugin tarball from npm (published as [`zerogpu-openclaw-plugin`](https://www.npmjs.com/package/zerogpu-openclaw-plugin)):
+Install the plugin from npm ([`zerogpu-openclaw-plugin`](https://www.npmjs.com/package/zerogpu-openclaw-plugin)):
 
 ```sh
-tmpdir=$(mktemp -d) && cd "$tmpdir" && npm pack zerogpu-openclaw-plugin@0.1.10 && tar -xzf zerogpu-openclaw-plugin-*.tgz && cd package && openclaw plugins install ./
+openclaw plugins install npm:zerogpu-openclaw-plugin
 ```
+
+Pin a version if you want a fixed release: `npm:zerogpu-openclaw-plugin@0.1.10`.
 
 Connect OpenClaw to MCP:
 

@@ -1,16 +1,14 @@
 # OpenClaw
 
-Use these exact commands in an OpenClaw terminal to install and connect ZeroGPU Router.
+Use these commands in an OpenClaw terminal to install and connect ZeroGPU Router.
 
-## 1) Run on OpenClaw terminal
+## 1) Install the plugin
 
 ```sh
-tmpdir=$(mktemp -d) && cd "$tmpdir" \
-  && npm pack zerogpu-openclaw-plugin@0.1.10 \
-  && tar -xzf zerogpu-openclaw-plugin-*.tgz \
-  && cd package \
-  && openclaw plugins install ./
+openclaw plugins install npm:zerogpu-openclaw-plugin
 ```
+
+Optional: pin a version — `openclaw plugins install npm:zerogpu-openclaw-plugin@0.1.10`.
 
 ## 2) Connect OpenClaw to MCP
 

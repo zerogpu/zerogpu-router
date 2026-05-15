@@ -53,7 +53,7 @@ First-time publish: ensure the package name `zerogpu-openclaw-plugin` is availab
 openclaw plugins install npm:zerogpu-openclaw-plugin
 ```
 
-Optional: pin a version: `npm:zerogpu-openclaw-plugin@0.1.8`.
+Optional: pin a version: `npm:zerogpu-openclaw-plugin@0.1.10`.
 
 Avoid a bare package name (`zerogpu-openclaw-plugin` without `npm:`): OpenClaw resolves ClawHub first and users may hit spurious checksum or integrity failures. If users install via **`clawhub:…`** (for example a legacy name like `openclaw-package-zerogpu`) and see **ClawHub archive integrity mismatch**, that means the marketplace manifest hash and the served tarball disagree — a **publisher/catalog fix** is required; send them to **`npm:zerogpu-openclaw-plugin`** or the **npm-pack + local path** flow below.
 
@@ -61,7 +61,7 @@ Avoid a bare package name (`zerogpu-openclaw-plugin` without `npm:`): OpenClaw r
 
 ```bash
 tmpdir=$(mktemp -d) && cd "$tmpdir" \
-  && npm pack zerogpu-openclaw-plugin@0.1.8 \
+  && npm pack zerogpu-openclaw-plugin@0.1.10 \
   && tar -xzf zerogpu-openclaw-plugin-*.tgz \
   && cd package \
   && openclaw plugins install ./
