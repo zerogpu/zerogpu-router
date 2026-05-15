@@ -62,6 +62,8 @@ Roughly **minutes**, not hours:
 openclaw plugins install npm:zerogpu-openclaw-plugin
 ```
 
+Or install from GitHub `main` (clone the plugin subdirectory, then path install — see [OpenClaw setup](../agents/openclaw/README.md)).
+
 ```sh
 openclaw mcp set zerogpu '{
   "url": "https://mcp.zerogpu.ai/mcp",

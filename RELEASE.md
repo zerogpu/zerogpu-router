@@ -47,13 +47,22 @@ First-time publish: ensure the package name `zerogpu-openclaw-plugin` is availab
 
 ## How users install (OpenClaw)
 
-**Default (public npm — no repo clone):**
+**Default (public npm — one command):**
 
 ```bash
 openclaw plugins install npm:zerogpu-openclaw-plugin
 ```
 
 Optional: pin a version: `npm:zerogpu-openclaw-plugin@0.1.10`.
+
+**From GitHub:** OpenClaw documents `openclaw plugins install git:github.com/<owner>/<repo>@<ref>`. That installs the **repository root**. This monorepo keeps the plugin under `agents/openclaw/plugin/`, so `git:github.com/zerogpu/zerogpu-router@main` fails (root `package.json` is not the plugin). Users should shallow-clone, build the plugin folder, then path-install:
+
+```bash
+tmpdir=$(mktemp -d)
+git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpdir/repo"
+(cd "$tmpdir/repo/agents/openclaw/plugin" && npm ci && npm run build)
+openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
+```
 
 Avoid a bare package name (`zerogpu-openclaw-plugin` without `npm:`): OpenClaw resolves ClawHub first and users may hit spurious checksum or integrity failures. If users install via **`clawhub:…`** (for example a legacy name like `openclaw-package-zerogpu`) and see **ClawHub archive integrity mismatch**, that means the marketplace manifest hash and the served tarball disagree — a **publisher/catalog fix** is required; send them to **`npm:zerogpu-openclaw-plugin`** or the **npm-pack + local path** flow below.
 

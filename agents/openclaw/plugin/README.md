@@ -17,13 +17,22 @@ Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded
 
 ## Install
 
-In your OpenClaw terminal:
+**npm:**
 
 ```bash
 openclaw plugins install npm:zerogpu-openclaw-plugin
 ```
 
-Pin a release: `openclaw plugins install npm:zerogpu-openclaw-plugin@0.1.10`.
+Pin: `npm:zerogpu-openclaw-plugin@0.1.10`.
+
+**GitHub** (this package lives in the [zerogpu-router](https://github.com/zerogpu/zerogpu-router) monorepo — use a path install, not `git:github.com/zerogpu/zerogpu-router@ref` on the repo root):
+
+```bash
+tmpdir=$(mktemp -d)
+git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpdir/repo"
+(cd "$tmpdir/repo/agents/openclaw/plugin" && npm ci && npm run build)
+openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
+```
 
 ## Set up (2 steps)
 
