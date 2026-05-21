@@ -1,13 +1,12 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "zerogpu-router",
+  "displayName": "ZeroGPU Router",
   "version": "0.1.0",
   "description": "Offload cheap AI tasks (classification, summarization, extraction, follow-ups, small-model chat) to ZeroGPU small/nano models.",
-  "author": { "name": "zerogpu" },
-  "homepage": "https://github.com/zerogpu/zerogpu-router",
+  "author": { "name": "ZeroGPU", "email": "hello@zerogpu.ai", "url": "https://zerogpu.ai" },
+  "homepage": "https://zerogpu.ai",
   "repository": "https://github.com/zerogpu/zerogpu-router",
   "license": "MIT",
-  "keywords": ["zerogpu", "mcp", "router", "classification", "summarization", "extraction"],
-  "skills": [
-    "./plugins/zerogpu-router/skill"
-  ]
+  "keywords": ["zerogpu", "mcp", "router", "classification", "summarization", "extraction", "pii"]
 }

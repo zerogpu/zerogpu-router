@@ -44,3 +44,15 @@ Expected plugin output includes:
 ```text
 zerogpu-router — enabled
 ```
+
+## Commands
+
+The plugin ships these slash commands (in addition to the model-invoked `zerogpu-router` skill):
+
+| Command | Purpose |
+| --- | --- |
+| `/zerogpu-router:health` | Verify the ZeroGPU MCP backend is reachable |
+| `/zerogpu-router:classify <text>` | Route classification through ZeroGPU |
+| `/zerogpu-router:summarize <text>` | Route summarization through ZeroGPU |
+| `/zerogpu-router:extract <text>` | Route entity/JSON extraction through ZeroGPU |
+| `/zerogpu-router:redact <text>` | Route PII redaction through ZeroGPU |
