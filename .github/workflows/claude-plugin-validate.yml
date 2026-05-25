@@ -1,0 +1,104 @@
+name: claude-plugin-validate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.claude-plugin/**'
+      - 'agents/claude/**'
+      - '.github/workflows/claude-plugin-validate.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.claude-plugin/**'
+      - 'agents/claude/**'
+
+concurrency:
+  group: claude-plugin-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate marketplace and plugin
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Print versions (debug)
+        run: |
+          node --version
+          claude --version
+
+      - name: Validate marketplace manifest
+        run: claude plugin validate .
+
+      - name: Validate plugin (agents/claude)
+        run: claude plugin validate ./agents/claude
+
+      - name: Check plugin.json version was bumped
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          BASE_REF="${{ github.base_ref }}"
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+
+          PLUGIN_JSON="agents/claude/.claude-plugin/plugin.json"
+
+          if ! git diff --quiet "origin/$BASE_REF" -- "agents/claude/"; then
+            echo "Plugin files changed in this PR — checking version bump."
+
+            HEAD_VERSION=$(jq -r .version "$PLUGIN_JSON")
+            BASE_VERSION=$(git show "origin/$BASE_REF:$PLUGIN_JSON" | jq -r .version)
+
+            echo "base $BASE_REF version: $BASE_VERSION"
+            echo "PR head version:        $HEAD_VERSION"
+
+            if [ "$HEAD_VERSION" = "$BASE_VERSION" ]; then
+              echo "::error file=$PLUGIN_JSON::Plugin files changed but version is still $HEAD_VERSION. Bump plugin.json version — Claude Code dedupes by version string and existing installs won't pull the update otherwise."
+              exit 1
+            fi
+
+            echo "Version bumped: $BASE_VERSION -> $HEAD_VERSION"
+          else
+            echo "No changes under agents/claude/ — version bump not required."
+          fi
+
+      - name: Check CHANGELOG.md updated for new version
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          BASE_REF="${{ github.base_ref }}"
+
+          PLUGIN_JSON="agents/claude/.claude-plugin/plugin.json"
+          CHANGELOG="agents/claude/CHANGELOG.md"
+
+          # Only enforce when plugin files (excluding the changelog itself) changed.
+          if git diff --quiet "origin/$BASE_REF" -- "agents/claude/" ":(exclude)$CHANGELOG"; then
+            echo "No plugin changes under agents/claude/ — CHANGELOG update not required."
+            exit 0
+          fi
+
+          if git diff --quiet "origin/$BASE_REF" -- "$CHANGELOG"; then
+            echo "::error file=$CHANGELOG::Plugin files changed but $CHANGELOG was not updated. Add a section for the new version describing what shipped."
+            exit 1
+          fi
+
+          HEAD_VERSION=$(jq -r .version "$PLUGIN_JSON")
+          # Heading must look like `## <version>` (optionally followed by space + extra text, e.g. a date).
+          if ! grep -Eq "^##[[:space:]]+${HEAD_VERSION}([[:space:]]|$)" "$CHANGELOG"; then
+            echo "::error file=$CHANGELOG::No '## $HEAD_VERSION' heading found in $CHANGELOG. The CHANGELOG entry must match the version in plugin.json."
+            exit 1
+          fi
+
+          echo "CHANGELOG.md updated and contains '## $HEAD_VERSION' heading."

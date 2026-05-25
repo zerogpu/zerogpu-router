@@ -1,13 +1,12 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "zerogpu-router",
-  "version": "0.1.0",
-  "description": "Offload cheap AI tasks (classification, summarization, extraction, follow-ups, small-model chat) to ZeroGPU small/nano models.",
-  "author": { "name": "zerogpu" },
-  "homepage": "https://github.com/zerogpu/zerogpu-router",
+  "displayName": "ZeroGPU Router",
+  "version": "1.0.0",
+  "description": "Offload cheap AI tasks (classification, summarization, entity/PII/JSON extraction, follow-ups, small-model chat) to ZeroGPU small/nano models. Ships 14 auto-invoked skills.",
+  "author": { "name": "ZeroGPU", "email": "hello@zerogpu.ai", "url": "https://zerogpu.ai" },
+  "homepage": "https://zerogpu.ai",
   "repository": "https://github.com/zerogpu/zerogpu-router",
   "license": "MIT",
-  "keywords": ["zerogpu", "mcp", "router", "classification", "summarization", "extraction"],
-  "skills": [
-    "./plugins/zerogpu-router/skill"
-  ]
+  "keywords": ["zerogpu", "classification", "summarization", "extraction", "pii", "ner", "nlp", "cost-optimization", "small-models", "claude-code"]
 }

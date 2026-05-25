@@ -37,7 +37,7 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific to
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
 - **OpenClaw** — install **`zerogpu-openclaw-plugin`** and register MCP in OpenClaw (see [agents/openclaw/](agents/openclaw/)); package name and plugin `id` match.
-- **Claude Code** — different CLI and plugin flow; use [agents/claude/](agents/claude/) for `claude mcp add` and marketplace plugin install.
+- **Claude Code** — no MCP setup. Install the `zerogpu` CLI plus the marketplace plugin and you get 14 auto-invoked skills (see [agents/claude/](agents/claude/)).
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
 - **Hosted, no infra** — point your agent at `https://mcp.zerogpu.ai/mcp`. We run the routing layer.
@@ -94,36 +94,57 @@ The agent should call `zerogpu_summarize` and return a summary plus savings meta
 
 ## Claude Code quick start
 
-Claude Code uses its own MCP and plugin commands — not the OpenClaw steps above. Full walkthrough: [agents/claude/README.md](agents/claude/README.md).
+The Claude Code plugin ships 14 skills (one per `zerogpu` CLI command) that Claude auto-invokes when your request matches — "summarize this", "redact the PII", "classify by sentiment and topic". You can also call any skill manually with `/zerogpu-router:<name>`.
 
-Connect to MCP:
+Grab a ZeroGPU API key and project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
-```sh
-claude mcp add --transport http zerogpu-router \
-  https://mcp.zerogpu.ai/mcp \
-  --header "x-api-key: zgpu-api-…" \
-  --header "x-project-id: 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a"
-```
-
-Restart Claude session, then verify:
+**1. Install the `zerogpu` CLI** (the plugin shells out to it):
 
 ```sh
-claude mcp list
+npm install -g zerogpu-cli
 ```
 
-Expected:
+**2. Authenticate:**
+
+```sh
+zerogpu login
+```
+
+You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
+
+**3. Install the Claude Code plugin** — inside a Claude Code session:
 
 ```text
-zerogpu: https://mcp.zerogpu.ai/mcp (HTTP) - ✓ Connected
+/plugin marketplace add github.com/zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
 ```
 
-Add routing intelligence with plugin:
+**4. Try it:**
 
 ```text
-/plugin marketplace add https://github.com/zerogpu/ZeroGPU-Router
-/plugin install zerogpu-router
-/plugin
+Summarize this article:
+
+Renewable energy adoption accelerated sharply in 2024, with global installed solar
+capacity crossing 2 terawatts for the first time and onshore wind additions hitting
+a five-year high. The International Energy Agency attributes most of the growth to
+a 38% year-over-year drop in utility-scale solar module prices, driven by Chinese
+overcapacity and improving cell efficiencies that now routinely exceed 23% in
+commercial monocrystalline panels. Battery storage deployments roughly doubled,
+reaching 175 GWh of new annual capacity, which the IEA says is finally large
+enough to materially shift grid economics in markets like California, Texas,
+Australia, and southern Europe. Hydrogen and offshore wind, by contrast,
+underperformed projections — offshore wind because of supply-chain bottlenecks
+and rising financing costs, and green hydrogen because most announced electrolyzer
+projects remain stuck at the final-investment-decision stage. Analysts at BloombergNEF
+expect 2025 to see the first year in which renewables plus storage are the cheapest
+new-build option in every G20 country, though grid interconnection queues and
+permitting delays in the US and Germany remain the single biggest bottleneck to
+faster deployment.
 ```
+
+Claude routes to `/zerogpu-router:summarize` automatically and returns a short condensed summary — that's the `t5-small` edge model doing the work, not Claude.
+
+Full walkthrough — prerequisites, every skill documented in detail, troubleshooting: **[agents/claude/README.md](agents/claude/README.md)**.
 
 
 ## Cloud connection
@@ -134,7 +155,7 @@ Sign in at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** to:
 - Watch live token usage, latency, and routed-call savings on the dashboard
 - See per-tool savings broken down by agent and time range
 - Manage agents, billing, and team access
-- Follow setup for your stack: [OpenClaw](agents/openclaw/README.md) vs [Claude Code](agents/claude/README.md) use different commands
+- Follow setup for your stack: [OpenClaw](agents/openclaw/README.md) (MCP-based) vs [Claude Code](agents/claude/README.md) (CLI + plugin, no MCP)
 
 The hosted Router at `https://mcp.zerogpu.ai/mcp` is the one your agent talks to. The dashboard at `platform.zerogpu.ai` is where you see what it did.
 
@@ -163,7 +184,7 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 | Package | Role |
 |---|---|
 | [agents/openclaw/](agents/openclaw/) | **OpenClaw:** package + plugin id **`zerogpu-openclaw-plugin`** + skill + MCP registration JSON |
-| [agents/claude/](agents/claude/) | **Claude Code:** MCP setup + marketplace plugin (`claude mcp` + `/plugin`) |
+| [agents/claude/](agents/claude/) | **Claude Code:** `zerogpu-cli` + marketplace plugin (`/plugin install zerogpu-router@zerogpu`) — no MCP setup |
 
 ## Quick Links
 

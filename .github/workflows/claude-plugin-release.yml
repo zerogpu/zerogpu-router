@@ -1,0 +1,82 @@
+name: claude-plugin-release
+
+on:
+  push:
+    tags:
+      - 'zerogpu-router--v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Resolve version from tag
+        id: version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#zerogpu-router--v}"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "$TAG" ]; then
+            echo "::error::Tag '$TAG' does not match expected pattern 'zerogpu-router--v<version>'"
+            exit 1
+          fi
+          echo "tag=$TAG"         >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify plugin.json version matches tag
+        run: |
+          set -euo pipefail
+          PLUGIN_VERSION=$(jq -r .version agents/claude/.claude-plugin/plugin.json)
+          if [ "$PLUGIN_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error file=agents/claude/.claude-plugin/plugin.json::plugin.json version ($PLUGIN_VERSION) does not match tag version (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+
+      - name: Extract CHANGELOG section to file
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          CHANGELOG="agents/claude/CHANGELOG.md"
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+
+          # Grab lines from `## <version>` (exclusive) up to the next `## ` heading (exclusive),
+          # then strip leading/trailing blank lines. Write directly to a file so the notes
+          # never round-trip through shell interpolation.
+          awk -v ver="$VERSION" '
+            $0 ~ "^## +" ver "( |$)" { capture=1; next }
+            capture && /^## / { exit }
+            capture { print }
+          ' "$CHANGELOG" \
+            | awk 'NF{found=1} found{print}' \
+            | awk '{lines[NR]=$0} END{n=NR; while(n>0 && lines[n]==""){n--}; for(i=1;i<=n;i++) print lines[i]}' \
+            > "$NOTES_FILE"
+
+          if [ ! -s "$NOTES_FILE" ]; then
+            echo "::error file=$CHANGELOG::No '## $VERSION' section found in $CHANGELOG"
+            exit 1
+          fi
+
+          echo "NOTES_FILE=$NOTES_FILE" >> "$GITHUB_ENV"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" \
+            --title "zerogpu-router $VERSION" \
+            --notes-file "$NOTES_FILE" \
+            --verify-tag
