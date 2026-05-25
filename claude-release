@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# claude-release [patch|minor|major]
+#
+# Bumps agents/claude/.claude-plugin/plugin.json, commits, tags as
+# claude-v<new-version>, and pushes the commit + tag to origin/main.
+#
+# Default bump: patch.
+
+set -euo pipefail
+
+BUMP="${1:-patch}"
+case "$BUMP" in
+  patch|minor|major) ;;
+  *)
+    echo "error: bump must be one of patch|minor|major (got '$BUMP')" >&2
+    exit 2
+    ;;
+esac
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$REPO_ROOT"
+
+PLUGIN_JSON="agents/claude/.claude-plugin/plugin.json"
+CHANGELOG="agents/claude/CHANGELOG.md"
+
+# Preconditions.
+command -v jq >/dev/null || { echo "error: jq is required" >&2; exit 1; }
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "error: working tree is dirty — commit or stash before releasing" >&2
+  git status --short >&2
+  exit 1
+fi
+
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "error: must be on 'main' to release (currently on '$CURRENT_BRANCH')" >&2
+  exit 1
+fi
+
+git fetch --no-tags origin main
+LOCAL="$(git rev-parse HEAD)"
+REMOTE="$(git rev-parse origin/main)"
+if [ "$LOCAL" != "$REMOTE" ]; then
+  echo "error: local main is not in sync with origin/main" >&2
+  echo "  local:  $LOCAL" >&2
+  echo "  remote: $REMOTE" >&2
+  exit 1
+fi
+
+# Compute new version.
+CURRENT="$(jq -r .version "$PLUGIN_JSON")"
+IFS='.' read -r MAJOR MINOR PATCH <<<"$CURRENT"
+case "$BUMP" in
+  major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+  minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+  patch) PATCH=$((PATCH + 1)) ;;
+esac
+NEW="${MAJOR}.${MINOR}.${PATCH}"
+TAG="claude-v${NEW}"
+
+echo "Releasing claude plugin: $CURRENT -> $NEW  (tag: $TAG)"
+
+if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+  echo "error: tag $TAG already exists locally" >&2
+  exit 1
+fi
+if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+  echo "error: tag $TAG already exists on origin" >&2
+  exit 1
+fi
+
+# Warn if CHANGELOG has no heading for the new version (CI will block anyway,
+# but failing fast here is friendlier than a rejected push).
+if ! grep -Eq "^##[[:space:]]+${NEW}([[:space:]]|$)" "$CHANGELOG"; then
+  echo "warning: no '## $NEW' heading found in $CHANGELOG" >&2
+  read -r -p "Continue anyway? [y/N] " ans
+  case "$ans" in
+    y|Y|yes|YES) ;;
+    *) echo "aborted."; exit 1 ;;
+  esac
+fi
+
+# Bump plugin.json in place.
+tmp="$(mktemp)"
+jq --arg v "$NEW" '.version = $v' "$PLUGIN_JSON" >"$tmp"
+mv "$tmp" "$PLUGIN_JSON"
+
+git add "$PLUGIN_JSON"
+git commit -m "claude: release v${NEW}"
+git tag -a "$TAG" -m "claude plugin v${NEW}"
+
+echo "Pushing commit and tag to origin/main..."
+git push origin main
+git push origin "$TAG"
+
+echo "Released $TAG."
