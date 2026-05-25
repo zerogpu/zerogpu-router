@@ -1,5 +1,5 @@
 ---
-name: zerogpu-classify-iab-enriched
+name: classify-iab-enriched
 description: Enriched IAB classification — returns audience categories plus topics, keywords, and inferred intent. Use when the user wants richer ad/audience signals than plain IAB labels (e.g. "give me topics, keywords, and intent for this passage").
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu classify_iab_enriched*)

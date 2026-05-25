@@ -45,14 +45,25 @@ Expected plugin output includes:
 zerogpu-router — enabled
 ```
 
-## Commands
+## Skills
 
-The plugin ships these slash commands (in addition to the model-invoked `zerogpu-router` skill):
+The plugin ships one skill per `zerogpu` CLI command. Inference skills auto-invoke when the user's request matches (e.g. "summarize this …"), and every skill can also be triggered manually with `/<skill-name>`.
 
-| Command | Purpose |
+| Skill | Purpose |
 | --- | --- |
-| `/zerogpu-router:health` | Verify the ZeroGPU MCP backend is reachable |
-| `/zerogpu-router:classify <text>` | Route classification through ZeroGPU |
-| `/zerogpu-router:summarize <text>` | Route summarization through ZeroGPU |
-| `/zerogpu-router:extract <text>` | Route entity/JSON extraction through ZeroGPU |
-| `/zerogpu-router:redact <text>` | Route PII redaction through ZeroGPU |
+| `/zerogpu-router:login` | Sign in and persist API key + Project ID (manual only) |
+| `/zerogpu-router:status` | Show current sign-in status (manual only) |
+| `/zerogpu-router:chat <text>` | Short chat reply via `LFM2.5-1.2B-Instruct` |
+| `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (returns reasoning) |
+| `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification |
+| `/zerogpu-router:classify-iab-enriched <text>` | IAB + topics/keywords/intent |
+| `/zerogpu-router:classify-zero-shot <text> -l …` | Zero-shot against custom labels |
+| `/zerogpu-router:classify-structured <text> -s '…'` | Schema-based multi-axis classification |
+| `/zerogpu-router:extract-entities <text> -l …` | Custom-label NER |
+| `/zerogpu-router:extract-pii <text>` | Extract PII entities |
+| `/zerogpu-router:redact-pii <text>` | Mask PII in-line in the text |
+| `/zerogpu-router:extract-json <text> -s '…'` | Schema-driven JSON extraction |
+| `/zerogpu-router:summarize <text>` | Summarize with `t5-small` |
+| `/zerogpu-router:generate-followups <text>` | Generate follow-up questions |
+
+Each skill wraps the corresponding `zerogpu` CLI command — see [`docs/DOCUMENTATION.md`](../../docs/DOCUMENTATION.md) for flags and examples.
