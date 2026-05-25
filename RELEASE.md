@@ -1,10 +1,15 @@
 # Release Guide
 
-This repository publishes one artifact: **`zerogpu-openclaw-plugin`** from `agents/openclaw/plugin/` — the OpenClaw plugin and routing skill. The **npm package name** and the plugin **`id`** in `openclaw.plugin.json` / `src/index.ts` are both `zerogpu-openclaw-plugin`.
+This repository publishes two artifacts on independent release tracks:
+
+- **`zerogpu-openclaw-plugin`** — OpenClaw plugin from `agents/openclaw/plugin/`. Distributed via npm and/or git install. Tags: `v<version>`. See the [OpenClaw plugin release](#openclaw-plugin-release) section.
+- **`zerogpu-router`** — Claude Code plugin from `agents/claude/`. Distributed via the in-repo Claude Code marketplace at `.claude-plugin/marketplace.json`. Tags: `claude-v<version>`. See the [Claude Code plugin release](#claude-code-plugin-release) section.
 
 The hosted MCP server at `https://mcp.zerogpu.ai/mcp` is operated by ZeroGPU and released separately.
 
-**Distribution:** use the **public npm registry** and/or **install from this GitHub repo**. ClawHub is not part of this project’s release path.
+**OpenClaw distribution:** use the **public npm registry** and/or **install from this GitHub repo**. ClawHub is not part of this project’s release path.
+
+## OpenClaw plugin release
 
 ## Pre-release checklist
 
@@ -103,3 +108,32 @@ Use npm deprecate when a version should no longer be used:
 ```bash
 npm deprecate zerogpu-openclaw-plugin@0.1.x "use >=0.1.y; reason…"
 ```
+
+## Claude Code plugin release
+
+The Claude Code plugin lives under `agents/claude/` and ships via the in-repo marketplace at `.claude-plugin/marketplace.json` (marketplace `zerogpu`, plugin `zerogpu-router`). No npm publish — the release artifact is the commit + tag on `main`.
+
+- **Version source**: `agents/claude/.claude-plugin/plugin.json` → `version`.
+- **Changelog**: `agents/claude/CHANGELOG.md`, one `## <version>` heading per release.
+- **Tag format**: `claude-v<version>`.
+
+### Cut a release
+
+Merge your PR to `main` with `claude-plugin-validate` green (it enforces the version bump and a matching `## <version>` CHANGELOG heading), then from the repo root:
+
+```bash
+./claude-release           # patch (default)
+./claude-release minor
+./claude-release major
+```
+
+The script bumps `plugin.json`, commits, tags `claude-v<new>`, and pushes commit + tag to `origin/main`. The `claude-plugin-release` workflow then fires on the tag push, slices the matching `## <version>` section from the CHANGELOG, and creates the GitHub release. No manual `gh release create` needed.
+
+### How users install
+
+```
+/plugin marketplace add github.com/zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
+Claude Code dedupes installs by `plugin.json` `version` — this is why the validate workflow blocks PRs touching `agents/claude/` without a bump.
