@@ -51,7 +51,7 @@ Inside a Claude Code session, add this repo as a marketplace and install:
 
 ```text
 /plugin marketplace add github.com/zerogpu/zerogpu-router
-/plugin install zerogpu-router@zerogpu-router
+/plugin install zerogpu-router@zerogpu
 ```
 
 Confirm it's loaded:

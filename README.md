@@ -116,7 +116,7 @@ You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
 
 ```text
 /plugin marketplace add github.com/zerogpu/zerogpu-router
-/plugin install zerogpu-router@zerogpu-router
+/plugin install zerogpu-router@zerogpu
 ```
 
 **4. Try it:**
@@ -184,7 +184,7 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 | Package | Role |
 |---|---|
 | [agents/openclaw/](agents/openclaw/) | **OpenClaw:** package + plugin id **`zerogpu-openclaw-plugin`** + skill + MCP registration JSON |
-| [agents/claude/](agents/claude/) | **Claude Code:** `zerogpu-cli` + marketplace plugin (`/plugin install zerogpu-router@zerogpu-router`) — no MCP setup |
+| [agents/claude/](agents/claude/) | **Claude Code:** `zerogpu-cli` + marketplace plugin (`/plugin install zerogpu-router@zerogpu`) — no MCP setup |
 
 ## Quick Links
 

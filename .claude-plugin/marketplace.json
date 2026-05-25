@@ -1,15 +1,15 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "zerogpu-router",
+  "name": "zerogpu",
   "description": "ZeroGPU plugins for Claude Code.",
   "owner": { "name": "ZeroGPU", "email": "hello@zerogpu.ai" },
   "plugins": [
     {
       "name": "zerogpu-router",
       "source": "./agents/claude",
-      "description": "Offload cheap AI tasks to ZeroGPU small/nano models.",
+      "description": "Route classification, summarization, entity/PII/JSON extraction, follow-ups, and short chat to ZeroGPU small/nano models — 14 auto-invoked skills.",
       "category": "productivity",
-      "tags": ["mcp", "router", "cost-optimization"]
+      "tags": ["nlp", "classification", "summarization", "extraction", "pii", "ner", "cost-optimization", "small-models"]
     }
   ]
 }
