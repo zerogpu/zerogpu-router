@@ -3,7 +3,7 @@
 This repository publishes two artifacts on independent release tracks:
 
 - **`zerogpu-openclaw-plugin`** — OpenClaw plugin from `agents/openclaw/plugin/`. Distributed via npm and/or git install. Tags: `v<version>`. See the [OpenClaw plugin release](#openclaw-plugin-release) section.
-- **`zerogpu-router`** — Claude Code plugin from `agents/claude/`. Distributed via the in-repo Claude Code marketplace at `.claude-plugin/marketplace.json`. Tags: `claude-v<version>`. See the [Claude Code plugin release](#claude-code-plugin-release) section.
+- **`zerogpu-router`** — Claude Code plugin from `agents/claude/`. Distributed via the in-repo Claude Code marketplace at `.claude-plugin/marketplace.json`. Tags: `zerogpu-router--v<version>` (the format Claude Code's dependency resolver expects — see `docs/plugin-dependencies.md`). See the [Claude Code plugin release](#claude-code-plugin-release) section.
 
 The hosted MCP server at `https://mcp.zerogpu.ai/mcp` is operated by ZeroGPU and released separately.
 
@@ -115,7 +115,7 @@ The Claude Code plugin lives under `agents/claude/` and ships via the in-repo ma
 
 - **Version source**: `agents/claude/.claude-plugin/plugin.json` → `version`.
 - **Changelog**: `agents/claude/CHANGELOG.md`, one `## <version>` heading per release.
-- **Tag format**: `claude-v<version>`.
+- **Tag format**: `zerogpu-router--v<version>` (required by Claude Code's dependency resolver, which filters marketplace tags by `{plugin-name}--v` prefix; see `docs/plugin-dependencies.md`).
 
 ### Cut a release
 
@@ -127,7 +127,7 @@ Merge your PR to `main` with `claude-plugin-validate` green (it enforces the ver
 ./claude-release major
 ```
 
-The script bumps `plugin.json`, commits, tags `claude-v<new>`, and pushes commit + tag to `origin/main`. The `claude-plugin-release` workflow then fires on the tag push, slices the matching `## <version>` section from the CHANGELOG, and creates the GitHub release. No manual `gh release create` needed.
+The script bumps `plugin.json`, commits, tags `zerogpu-router--v<new>`, and pushes commit + tag to `origin/main`. The `claude-plugin-release` workflow then fires on the tag push, slices the matching `## <version>` section from the CHANGELOG, and creates the GitHub release. No manual `gh release create` needed.
 
 ### How users install
 

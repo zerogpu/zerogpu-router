@@ -3,7 +3,7 @@ name: claude-plugin-release
 on:
   push:
     tags:
-      - 'claude-v*'
+      - 'zerogpu-router--v*'
 
 permissions:
   contents: write
@@ -23,9 +23,9 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG#claude-v}"
+          VERSION="${TAG#zerogpu-router--v}"
           if [ -z "$VERSION" ] || [ "$VERSION" = "$TAG" ]; then
-            echo "::error::Tag '$TAG' does not match expected pattern 'claude-v<version>'"
+            echo "::error::Tag '$TAG' does not match expected pattern 'zerogpu-router--v<version>'"
             exit 1
           fi
           echo "tag=$TAG"         >> "$GITHUB_OUTPUT"

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # claude-release [patch|minor|major]
 #
-# Bumps agents/claude/.claude-plugin/plugin.json, commits, tags as
-# claude-v<new-version>, and pushes the commit + tag to origin/main.
+# Bumps agents/claude/.claude-plugin/plugin.json, commits, pushes the commit to
+# origin/main, then hands off to `claude plugin tag --push` (the official CLI)
+# to create and push the spec-conformant tag `zerogpu-router--v<new-version>`
+# — see docs/plugin-dependencies.md.
 #
 # Default bump: patch.
 
@@ -24,7 +26,8 @@ PLUGIN_JSON="agents/claude/.claude-plugin/plugin.json"
 CHANGELOG="agents/claude/CHANGELOG.md"
 
 # Preconditions.
-command -v jq >/dev/null || { echo "error: jq is required" >&2; exit 1; }
+command -v jq >/dev/null     || { echo "error: jq is required" >&2; exit 1; }
+command -v claude >/dev/null || { echo "error: claude CLI is required (npm install -g @anthropic-ai/claude-code)" >&2; exit 1; }
 
 if [ -n "$(git status --porcelain)" ]; then
   echo "error: working tree is dirty — commit or stash before releasing" >&2
@@ -57,7 +60,7 @@ case "$BUMP" in
   patch) PATCH=$((PATCH + 1)) ;;
 esac
 NEW="${MAJOR}.${MINOR}.${PATCH}"
-TAG="claude-v${NEW}"
+TAG="zerogpu-router--v${NEW}"
 
 echo "Releasing claude plugin: $CURRENT -> $NEW  (tag: $TAG)"
 
@@ -88,10 +91,11 @@ mv "$tmp" "$PLUGIN_JSON"
 
 git add "$PLUGIN_JSON"
 git commit -m "claude: release v${NEW}"
-git tag -a "$TAG" -m "claude plugin v${NEW}"
 
-echo "Pushing commit and tag to origin/main..."
+echo "Pushing commit to origin/main..."
 git push origin main
-git push origin "$TAG"
+
+echo "Tagging via 'claude plugin tag --push' (validates plugin and pushes tag)..."
+( cd agents/claude && claude plugin tag --push )
 
 echo "Released $TAG."
