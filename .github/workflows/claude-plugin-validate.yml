@@ -73,3 +73,32 @@ jobs:
           else
             echo "No changes under agents/claude/ — version bump not required."
           fi
+
+      - name: Check CHANGELOG.md updated for new version
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          BASE_REF="${{ github.base_ref }}"
+
+          PLUGIN_JSON="agents/claude/.claude-plugin/plugin.json"
+          CHANGELOG="agents/claude/CHANGELOG.md"
+
+          # Only enforce when plugin files (excluding the changelog itself) changed.
+          if git diff --quiet "origin/$BASE_REF" -- "agents/claude/" ":(exclude)$CHANGELOG"; then
+            echo "No plugin changes under agents/claude/ — CHANGELOG update not required."
+            exit 0
+          fi
+
+          if git diff --quiet "origin/$BASE_REF" -- "$CHANGELOG"; then
+            echo "::error file=$CHANGELOG::Plugin files changed but $CHANGELOG was not updated. Add a section for the new version describing what shipped."
+            exit 1
+          fi
+
+          HEAD_VERSION=$(jq -r .version "$PLUGIN_JSON")
+          # Heading must look like `## <version>` (optionally followed by space + extra text, e.g. a date).
+          if ! grep -Eq "^##[[:space:]]+${HEAD_VERSION}([[:space:]]|$)" "$CHANGELOG"; then
+            echo "::error file=$CHANGELOG::No '## $HEAD_VERSION' heading found in $CHANGELOG. The CHANGELOG entry must match the version in plugin.json."
+            exit 1
+          fi
+
+          echo "CHANGELOG.md updated and contains '## $HEAD_VERSION' heading."
