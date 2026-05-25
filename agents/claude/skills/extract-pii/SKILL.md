@@ -1,7 +1,7 @@
 ---
 name: extract-pii
 description: Extract PII entities from text (gliner-multi-pii-v1). Use when the user wants to find personally identifiable information — names, emails, phones, addresses, financial identifiers — grouped by category, without modifying the source text.
-argument-hint: "<text> [-t <threshold>] [-c <categories>]"
+argument-hint: "<text> [-t <threshold>] [(-c | --categories) <list>]"
 allowed-tools: Bash(zerogpu extract_pii*)
 ---
 

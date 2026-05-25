@@ -412,7 +412,7 @@ Extract personally identifiable information entities, grouped by category, **wit
 **Synopsis**
 
 ```
-/zerogpu-router:extract-pii <text> [-t <threshold>] [-c <categories>]
+/zerogpu-router:extract-pii <text> [-t <threshold>] [(-c | --categories) <list>]
 ```
 
 **Arguments**

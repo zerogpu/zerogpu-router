@@ -2,7 +2,7 @@
 name: chat
 description: Short chat reply via the ZeroGPU edge model (LFM2.5-1.2B-Instruct). Use when the user wants a quick, single-turn answer that does not need Claude-level reasoning, prior conversation context, or code generation. Optional system instructions via -i.
 argument-hint: "<text> [-i <instructions>]"
-allowed-tools: Bash(zerogpu chat*)
+allowed-tools: Bash(zerogpu chat *)
 ---
 
 Call the ZeroGPU chat model:
