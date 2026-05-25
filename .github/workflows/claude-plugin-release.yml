@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Resolve version from tag
         id: version
@@ -40,40 +42,41 @@ jobs:
             exit 1
           fi
 
-      - name: Extract CHANGELOG section
-        id: notes
+      - name: Extract CHANGELOG section to file
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          VERSION="${{ steps.version.outputs.version }}"
           CHANGELOG="agents/claude/CHANGELOG.md"
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
 
-          # Grab lines from `## <version>` (exclusive) up to the next `## ` heading (exclusive).
-          notes=$(awk -v ver="$VERSION" '
+          # Grab lines from `## <version>` (exclusive) up to the next `## ` heading (exclusive),
+          # then strip leading/trailing blank lines. Write directly to a file so the notes
+          # never round-trip through shell interpolation.
+          awk -v ver="$VERSION" '
             $0 ~ "^## +" ver "( |$)" { capture=1; next }
             capture && /^## / { exit }
             capture { print }
-          ' "$CHANGELOG")
+          ' "$CHANGELOG" \
+            | awk 'NF{found=1} found{print}' \
+            | awk '{lines[NR]=$0} END{n=NR; while(n>0 && lines[n]==""){n--}; for(i=1;i<=n;i++) print lines[i]}' \
+            > "$NOTES_FILE"
 
-          # Trim leading/trailing blank lines.
-          notes=$(printf '%s\n' "$notes" | awk 'NF{found=1} found{print}' | awk '{lines[NR]=$0} END{n=NR; while(n>0 && lines[n]==""){n--}; for(i=1;i<=n;i++) print lines[i]}')
-
-          if [ -z "$notes" ]; then
+          if [ ! -s "$NOTES_FILE" ]; then
             echo "::error file=$CHANGELOG::No '## $VERSION' section found in $CHANGELOG"
             exit 1
           fi
 
-          {
-            echo "notes<<__RELEASE_NOTES_EOF__"
-            echo "$notes"
-            echo "__RELEASE_NOTES_EOF__"
-          } >> "$GITHUB_OUTPUT"
+          echo "NOTES_FILE=$NOTES_FILE" >> "$GITHUB_ENV"
 
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          gh release create "${{ steps.version.outputs.tag }}" \
-            --title "zerogpu-router ${{ steps.version.outputs.version }}" \
-            --notes "${{ steps.notes.outputs.notes }}" \
+          gh release create "$TAG" \
+            --title "zerogpu-router $VERSION" \
+            --notes-file "$NOTES_FILE" \
             --verify-tag

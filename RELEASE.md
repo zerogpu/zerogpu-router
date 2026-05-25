@@ -127,7 +127,9 @@ Merge your PR to `main` with `claude-plugin-validate` green (it enforces the ver
 ./claude-release major
 ```
 
-The script bumps `plugin.json`, commits, tags `zerogpu-router--v<new>`, and pushes commit + tag to `origin/main`. The `claude-plugin-release` workflow then fires on the tag push, slices the matching `## <version>` section from the CHANGELOG, and creates the GitHub release. No manual `gh release create` needed.
+The script bumps `plugin.json`, commits, pushes the commit to `origin/main`, then runs `claude plugin tag --push` (the official Claude Code CLI command) from `agents/claude/`. The CLI derives the tag name from the manifest, validates the plugin contents, checks that `plugin.json` and the marketplace entry agree on the version, and pushes the tag — producing `zerogpu-router--v<new>` in the spec-conformant format. The `claude-plugin-release` workflow then fires on the tag push, slices the matching `## <version>` section from the CHANGELOG, and creates the GitHub release. No manual `gh release create` needed.
+
+Requires the `claude` CLI on PATH: `npm install -g @anthropic-ai/claude-code`.
 
 ### How users install
 
