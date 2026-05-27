@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.1.2
+
+Bug-fix patch. All ten text-accepting skills passed `$ARGUMENTS` directly into the `!` auto-exec block, so any input containing shell metacharacters (newlines, parens, `$`, `&`, `;`, `*`, backticks, quotes) was parsed by zsh and produced errors like `no matches found: (...)` or `command not found: <word>` before reaching the CLI. The fix wraps text in a single-quoted heredoc so the shell treats it as opaque data.
+
+### Changed
+
+- `skills/redact-pii/SKILL.md`, `skills/chat-thinking/SKILL.md`, `skills/classify-iab/SKILL.md`, `skills/classify-iab-enriched/SKILL.md`: text-only skills now capture `$ARGUMENTS` into `$ZGPU_TEXT` via a single-quoted heredoc and pass it as `"$ZGPU_TEXT"`. The model passes raw text — no escaping required, any input is shell-safe.
+- `skills/chat/SKILL.md`, `skills/classify-structured/SKILL.md`, `skills/classify-zero-shot/SKILL.md`, `skills/extract-entities/SKILL.md`, `skills/extract-json/SKILL.md`, `skills/extract-pii/SKILL.md`: flag-mixed skills keep `zerogpu … $ARGUMENTS` but add a required "Quoting" section directing the model to wrap the text portion as `"$(cat <<'ZGPU_T' … ZGPU_T )"` with flags following. Plain `"…"` quoting is now explicitly disallowed.
+- `agents/claude/.claude-plugin/plugin.json`: version `1.1.1` → `1.1.2`.
+
+### Unchanged
+
+- `skills/login/SKILL.md`, `skills/status/SKILL.md`: no text input, no change needed.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.1.1
 
 Docs-only patch. Rewrites the `redact-pii` quickstart example so it matches what `gliner-multi-pii-v1` actually masks — the previous passage claimed names, emails, phones, internal hostnames, IPs, card last-fours, and addresses would all come back redacted, but the model only reliably catches names, emails, phones, social handles, and street addresses. The example now uses only PII the model is tuned for, and a callout points to `extract-entities` with custom labels for project-specific identifiers.
