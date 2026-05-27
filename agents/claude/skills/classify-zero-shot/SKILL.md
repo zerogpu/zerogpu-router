@@ -11,4 +11,13 @@ Run zero-shot classification:
 zerogpu classify_zero_shot $ARGUMENTS
 ```
 
-At least one label is required. Either repeat `-l <label>` or pass `--labels a,b,c`. Quote the input text as a single positional argument.
+**Quoting (required, to survive shell parsing of arbitrary user text):** format `$ARGUMENTS` with the input text wrapped via heredoc command substitution, then flags after. Inside the heredoc, paste the user's text verbatim — do not escape:
+
+```
+"$(cat <<'ZGPU_T'
+<the input text, verbatim, multi-line and special chars all OK>
+ZGPU_T
+)" --labels a,b,c
+```
+
+At least one label is required. Either repeat `-l <label>` or pass `--labels a,b,c`.

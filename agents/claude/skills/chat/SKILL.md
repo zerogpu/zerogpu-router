@@ -11,4 +11,13 @@ Call the ZeroGPU chat model:
 zerogpu chat $ARGUMENTS
 ```
 
-Argument shape: a single quoted prompt string, optionally followed by `-i "<system instructions>"`. Pass the user's prompt verbatim — do not paraphrase.
+**Quoting (required, to survive shell parsing of arbitrary user text):** format `$ARGUMENTS` with the prompt wrapped via heredoc command substitution, then any flags after. Pass the user's prompt verbatim inside the heredoc — do not paraphrase, do not escape:
+
+```
+"$(cat <<'ZGPU_T'
+<the user's prompt here, verbatim, can span multiple lines and contain quotes/parens/$/etc.>
+ZGPU_T
+)" [-i "<system instructions>"]
+```
+
+Never inline the prompt as a plain `"..."` string — newlines, parens, single quotes, and `$` in the user's text will break shell parsing. The heredoc form is safe for any input.
