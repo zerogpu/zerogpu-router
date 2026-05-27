@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.1.0
+
+Trims the skill surface from 14 to 12. The two HF-Space generation skills (`summarize`, `generate-followups`) were deprecated upstream and have been removed; the quickstart in `agents/claude/README.md` now demonstrates `redact-pii` instead of `summarize`.
+
+### Removed
+
+- `summarize` skill (`skills/summarize/SKILL.md`) — t5-small space deprecated.
+- `generate-followups` skill (`skills/generate-followups/SKILL.md`) — `zlm-v1-followup-questions-edge` space deprecated.
+
+### Changed
+
+- `agents/claude/.claude-plugin/plugin.json`: version `1.0.0` → `1.1.0`; `description` updated (14 → 12 skills, dropped "summarization" and "follow-ups"); `keywords` no longer includes `summarization`.
+- `agents/claude/README.md`: quickstart example switched from `summarize` to `redact-pii`; per-skill sections for the two removed skills deleted.
+- Root `README.md`: install/usage snippets updated; Claude Code install command refreshed.
+- `.gitignore`: ignore local `docs/` working directory.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.0.0
 
 First stable release of the `zerogpu-router` Claude Code plugin. The pre-release routed all offload calls through a single model-invoked skill that called MCP tools; 1.0.0 replaces that with a fan-out of 14 narrowly-scoped skills, each shelling out to the `zerogpu` CLI. Net effect: the model picks one skill per intent instead of one skill picking one tool per intent, and there is no MCP server in the loop.
