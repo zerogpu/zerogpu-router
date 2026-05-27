@@ -11,10 +11,13 @@ Run structured JSON extraction:
 zerogpu extract_json $ARGUMENTS
 ```
 
-Schema shape (required, single-quoted JSON). Each field is `name::type::description`:
+**Quoting (required, to survive shell parsing of arbitrary user text):** format `$ARGUMENTS` with the source text wrapped via heredoc command substitution, then flags after. Inside the heredoc, paste the user's text verbatim — do not escape:
 
 ```
-{"contact":["name::str::Full name","email::str::Email address","phone::str::Phone number"]}
+"$(cat <<'ZGPU_T'
+<the source text, verbatim, multi-line and special chars all OK>
+ZGPU_T
+)" -s '{"contact":["name::str::Full name","email::str::Email address","phone::str::Phone number"]}'
 ```
 
-Output is a JSON object keyed by group, with extracted field values.
+Schema is required, single-quoted JSON. Each field is `name::type::description`. Output is a JSON object keyed by group, with extracted field values.

@@ -5,10 +5,14 @@ argument-hint: "<text>"
 allowed-tools: Bash(zerogpu redact_pii*)
 ---
 
-Mask PII in-line:
+Mask PII in-line. `$ARGUMENTS` is the raw user text — pass it verbatim, no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
 
 ```!
-zerogpu redact_pii $ARGUMENTS
+ZGPU_TEXT=$(cat <<'ZGPU_END_OF_INPUT'
+$ARGUMENTS
+ZGPU_END_OF_INPUT
+)
+zerogpu redact_pii "$ZGPU_TEXT"
 ```
 
 Output is the original text with PII spans replaced by `[LABEL]` placeholders. For extracting (not masking) PII, use `/zerogpu-router:extract-pii`.

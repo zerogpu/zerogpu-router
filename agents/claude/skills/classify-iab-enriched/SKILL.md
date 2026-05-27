@@ -5,10 +5,14 @@ argument-hint: "<text>"
 allowed-tools: Bash(zerogpu classify_iab_enriched*)
 ---
 
-Run enriched IAB classification:
+Run enriched IAB classification. `$ARGUMENTS` is the raw source text — pass it verbatim, no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
 
 ```!
-zerogpu classify_iab_enriched $ARGUMENTS
+ZGPU_TEXT=$(cat <<'ZGPU_END_OF_INPUT'
+$ARGUMENTS
+ZGPU_END_OF_INPUT
+)
+zerogpu classify_iab_enriched "$ZGPU_TEXT"
 ```
 
-Pass the source text as a single quoted argument. Output is a JSON object with `categories`, `topics`, `keywords`, and `intent`.
+Output is a JSON object with `categories`, `topics`, `keywords`, and `intent`.

@@ -11,10 +11,13 @@ Run schema-driven classification:
 zerogpu classify_structured $ARGUMENTS
 ```
 
-Schema shape (required, single-quoted JSON):
+**Quoting (required, to survive shell parsing of arbitrary user text):** format `$ARGUMENTS` with the source text wrapped via heredoc command substitution, then flags after. Inside the heredoc, paste the user's text verbatim — do not escape:
 
 ```
-{"sentiment":["positive","negative","neutral"],"topic":["support","billing","product"]}
+"$(cat <<'ZGPU_T'
+<the source text, verbatim, multi-line and special chars all OK>
+ZGPU_T
+)" -s '{"sentiment":["positive","negative","neutral"],"topic":["support","billing","product"]}'
 ```
 
-Output is a JSON object with one chosen label per category.
+Schema is a single-quoted JSON object mapping each axis to its allowed labels. Output is a JSON object with one chosen label per category.
