@@ -8,7 +8,6 @@ Bug-fix patch. All ten text-accepting skills passed `$ARGUMENTS` directly into t
 
 - `skills/redact-pii/SKILL.md`, `skills/chat-thinking/SKILL.md`, `skills/classify-iab/SKILL.md`, `skills/classify-iab-enriched/SKILL.md`: text-only skills now capture `$ARGUMENTS` into `$ZGPU_TEXT` via a single-quoted heredoc and pass it as `"$ZGPU_TEXT"`. The model passes raw text — no escaping required, any input is shell-safe.
 - `skills/chat/SKILL.md`, `skills/classify-structured/SKILL.md`, `skills/classify-zero-shot/SKILL.md`, `skills/extract-entities/SKILL.md`, `skills/extract-json/SKILL.md`, `skills/extract-pii/SKILL.md`: flag-mixed skills keep `zerogpu … $ARGUMENTS` but add a required "Quoting" section directing the model to wrap the text portion as `"$(cat <<'ZGPU_T' … ZGPU_T )"` with flags following. Plain `"…"` quoting is now explicitly disallowed.
-- `agents/claude/.claude-plugin/plugin.json`: version `1.1.1` → `1.1.2`.
 
 ### Unchanged
 
