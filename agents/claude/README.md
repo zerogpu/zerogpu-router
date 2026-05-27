@@ -47,11 +47,12 @@ zerogpu status
 
 ### 2. Install the Claude Code plugin
 
-Inside a Claude Code session, add this repo as a marketplace and install:
+Start a Claude Code session by running `claude` in your terminal, then add this repo as a marketplace and install:
 
 ```text
-/plugin marketplace add github.com/zerogpu/zerogpu-router
+/plugin marketplace add zerogpu/zerogpu-router
 /plugin install zerogpu-router@zerogpu
+/reload-plugins
 ```
 
 Confirm it's loaded:

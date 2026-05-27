@@ -112,11 +112,12 @@ zerogpu login
 
 You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
 
-**3. Install the Claude Code plugin** — inside a Claude Code session:
+**3. Install the Claude Code plugin** — start a Claude Code session by running `claude` in your terminal, then:
 
 ```text
-/plugin marketplace add github.com/zerogpu/zerogpu-router
+/plugin marketplace add zerogpu/zerogpu-router
 /plugin install zerogpu-router@zerogpu
+/reload-plugins
 ```
 
 **4. Try it:**
