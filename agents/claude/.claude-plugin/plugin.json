@@ -3,10 +3,10 @@
   "name": "zerogpu-router",
   "displayName": "ZeroGPU Router",
   "version": "1.0.0",
-  "description": "Offload cheap AI tasks (classification, summarization, entity/PII/JSON extraction, follow-ups, small-model chat) to ZeroGPU small/nano models. Ships 14 auto-invoked skills.",
+  "description": "Offload cheap AI tasks (classification, entity/PII/JSON extraction, small-model chat) to ZeroGPU small/nano models. Ships 12 auto-invoked skills.",
   "author": { "name": "ZeroGPU", "email": "hello@zerogpu.ai", "url": "https://zerogpu.ai" },
   "homepage": "https://zerogpu.ai",
   "repository": "https://github.com/zerogpu/zerogpu-router",
   "license": "MIT",
-  "keywords": ["zerogpu", "classification", "summarization", "extraction", "pii", "ner", "nlp", "cost-optimization", "small-models", "claude-code"]
+  "keywords": ["zerogpu", "classification", "extraction", "pii", "ner", "nlp", "cost-optimization", "small-models", "claude-code"]
 }

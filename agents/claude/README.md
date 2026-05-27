@@ -1,8 +1,8 @@
 # ZeroGPU Router — Claude Code plugin
 
-Offload cheap, well-defined NLP tasks (classification, summarization, entity & PII extraction, follow-ups, short chat) from Claude to ZeroGPU's edge-optimized small language models — directly from your Claude Code session.
+Offload cheap, well-defined NLP tasks (classification, entity & PII extraction, short chat) from Claude to ZeroGPU's edge-optimized small language models — directly from your Claude Code session.
 
-Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude auto-invokes the right skill when your request matches (e.g. "summarize this article", "redact the PII in this paragraph"), or you can call any of them by name with `/zerogpu-router:<skill>`.
+Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
 
 ---
 
@@ -109,10 +109,6 @@ Classify this support ticket by sentiment and topic:
 ### Manual invocation
 
 Call any skill explicitly with `/zerogpu-router:<name> <args>`:
-
-```text
-/zerogpu-router:summarize "$(cat article.txt)"
-```
 
 ```text
 /zerogpu-router:classify-zero-shot "I love how fast this laptop boots up." -l positive -l negative -l neutral
@@ -519,65 +515,9 @@ Pull specific named fields out of free text into a structured JSON object, defin
 
 ---
 
-### `/zerogpu-router:summarize`
-
-Condense a passage into a short summary.
-
-- **Model:** `t5-small`
-- **Wraps:** `zerogpu summarize`
-- **When Claude auto-invokes:** "summarize", "TL;DR", "give me the gist", "condense this."
-
-**Synopsis**
-
-```
-/zerogpu-router:summarize <text>
-```
-
-**Example**
-
-```text
-/zerogpu-router:summarize "$(cat article.txt)"
-```
-
-**Output:** a single condensed summary string (or a JSON object if the model returns one).
-
----
-
-### `/zerogpu-router:generate-followups`
-
-Generate contextual follow-up questions for a passage or conversation turn.
-
-- **Model:** `zlm-v1-followup-questions-edge`
-- **Wraps:** `zerogpu generate_followups`
-- **When Claude auto-invokes:** "suggest follow-up questions", "what should I ask next?", interview-style prompts.
-
-**Synopsis**
-
-```
-/zerogpu-router:generate-followups <text>
-```
-
-**Example**
-
-```text
-/zerogpu-router:generate-followups "Solar panel adoption increased 35% in the US last year."
-```
-
-**Output (illustrative)**
-
-```json
-[
-  "Which states drove the largest share of the increase?",
-  "How does residential adoption compare to commercial?",
-  "What policy changes contributed to this growth?"
-]
-```
-
----
-
 ## Skills reference
 
-Quick lookup table — all 14 skills at a glance.
+Quick lookup table — all 12 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -593,8 +533,6 @@ Quick lookup table — all 14 skills at a glance.
 | `/zerogpu-router:extract-pii <text>` | Extract PII entities (returns JSON) | `/zerogpu-router:extract-pii "Contact Jane at jane@example.com"` |
 | `/zerogpu-router:redact-pii <text>` | Mask PII in-line with `[LABEL]` placeholders | `/zerogpu-router:redact-pii "Email John at john@acme.com"` |
 | `/zerogpu-router:extract-json <text> -s '…'` | Schema-driven JSON extraction | `/zerogpu-router:extract-json "..." -s '{"contact":["name::str::Full name"]}'` |
-| `/zerogpu-router:summarize <text>` | Summarize with `t5-small` | `/zerogpu-router:summarize "$(cat article.txt)"` |
-| `/zerogpu-router:generate-followups <text>` | Generate follow-up questions | `/zerogpu-router:generate-followups "Solar adoption increased 35% last year."` |
 
 For full flag reference (thresholds, categories, schema syntax), run `zerogpu <command> --help`.
 
