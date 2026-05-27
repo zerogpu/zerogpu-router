@@ -126,17 +126,17 @@ You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
 Redact PII from this support ticket before I paste it into our public bug tracker:
 
 Hi team — this is Sarah Chen (sarah.chen@northwind-labs.com, +1 415-555-0182).
-I'm filing on behalf of our account, contract #NW-2024-8821. Our prod database
-at db-prod-03.northwind.internal (10.42.7.18) started throwing connection
-timeouts around 2:14 AM PT last night. The on-call engineer Marcus Rivera
-(slack: @mrivera, cell 415-555-0934) restarted the pgbouncer pod but the issue
-came back within 20 minutes. Billing for this incident should go to our CFO
-Priya Patel at priya.patel@northwind-labs.com — card on file ends 4417, billing
-address 1455 Market St, Suite 600, San Francisco, CA 94103. Please call me back
-at the number above, or my direct line 415-555-0182 ext. 214.
+Our prod database started throwing connection timeouts around 2:14 AM PT last
+night. The on-call engineer Marcus Rivera (slack: @mrivera) restarted the
+pgbouncer pod but the issue came back within 20 minutes. Billing should go to
+our CFO Priya Patel at priya.patel@northwind-labs.com, billing address 1455
+Market St, Suite 600, San Francisco, CA 94103. Please call me back at the
+number above.
 ```
 
-Claude routes to `/zerogpu-router:redact-pii` automatically and returns the same passage with names, emails, phone numbers, internal hostnames, IPs, card digits, and the street address replaced by `[PERSON]` / `[EMAIL]` / `[PHONE]` / `[ADDRESS]` placeholders — safe to paste into a public tracker. The `gliner-multi-pii-v1` edge model does the masking, not Claude, so the raw PII never enters Claude's context window.
+Claude routes to `/zerogpu-router:redact-pii` automatically and returns the same passage with names, emails, phone numbers, social handles, and street addresses replaced by uppercase label placeholders like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]` — safe to paste into a public tracker. The `gliner-multi-pii-v1` edge model does the masking, not Claude, so the raw PII never enters Claude's context window.
+
+> The model is tuned for the standard PII categories above. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) won't be caught — strip those yourself, or pipe the result through `/zerogpu-router:extract-entities` with your own custom labels.
 
 Full walkthrough — prerequisites, every skill documented in detail, troubleshooting: **[agents/claude/README.md](agents/claude/README.md)**.
 

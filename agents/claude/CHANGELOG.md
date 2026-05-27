@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.1
+
+Docs-only patch. Rewrites the `redact-pii` quickstart example so it matches what `gliner-multi-pii-v1` actually masks — the previous passage claimed names, emails, phones, internal hostnames, IPs, card last-fours, and addresses would all come back redacted, but the model only reliably catches names, emails, phones, social handles, and street addresses. The example now uses only PII the model is tuned for, and a callout points to `extract-entities` with custom labels for project-specific identifiers.
+
+### Changed
+
+- `agents/claude/README.md`: trimmed the `redact-pii` quickstart passage to PII the model masks cleanly; softened placeholder claim (uppercase labels like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]` rather than fixed tag strings); added callout for hostnames/IPs/contract numbers/card digits.
+- Root `README.md`: same edits in the Claude Code quick-start section.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.1.0
 
 Trims the skill surface from 14 to 12. The two HF-Space generation skills (`summarize`, `generate-followups`) were deprecated upstream and have been removed; the quickstart in `agents/claude/README.md` now demonstrates `redact-pii` instead of `summarize`.
