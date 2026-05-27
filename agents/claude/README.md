@@ -80,9 +80,19 @@ Once installed, try any of these directly in Claude Code:
 Claude picks the right skill based on what you say:
 
 ```text
-Summarize this article: <paste text>
+Redact PII from this support ticket before I paste it into our public bug tracker:
+
+Hi team — this is Sarah Chen (sarah.chen@northwind-labs.com, +1 415-555-0182).
+I'm filing on behalf of our account, contract #NW-2024-8821. Our prod database
+at db-prod-03.northwind.internal (10.42.7.18) started throwing connection
+timeouts around 2:14 AM PT last night. The on-call engineer Marcus Rivera
+(slack: @mrivera, cell 415-555-0934) restarted the pgbouncer pod but the issue
+came back within 20 minutes. Billing for this incident should go to our CFO
+Priya Patel at priya.patel@northwind-labs.com — card on file ends 4417, billing
+address 1455 Market St, Suite 600, San Francisco, CA 94103. Please call me back
+at the number above, or my direct line 415-555-0182 ext. 214.
 ```
-→ Claude routes to `summarize`.
+→ Claude routes to `redact-pii`. Names, emails, phone numbers, internal hostnames, IPs, card digits, and the street address come back replaced by `[PERSON]` / `[EMAIL]` / `[PHONE]` / `[ADDRESS]` placeholders — safe to paste into a public tracker, and the raw PII never enters Claude's context window.
 
 ```text
 Pull all the email addresses and phone numbers out of this:
