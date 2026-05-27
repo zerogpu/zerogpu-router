@@ -37,7 +37,7 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific to
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
 - **OpenClaw** — install **`zerogpu-openclaw-plugin`** and register MCP in OpenClaw (see [agents/openclaw/](agents/openclaw/)); package name and plugin `id` match.
-- **Claude Code** — no MCP setup. Install the `zerogpu` CLI plus the marketplace plugin and you get 14 auto-invoked skills (see [agents/claude/](agents/claude/)).
+- **Claude Code** — no MCP setup. Install the `zerogpu` CLI plus the marketplace plugin and you get 12 auto-invoked skills (see [agents/claude/](agents/claude/)).
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
 - **Hosted, no infra** — point your agent at `https://mcp.zerogpu.ai/mcp`. We run the routing layer.
@@ -94,7 +94,7 @@ The agent should call `zerogpu_summarize` and return a summary plus savings meta
 
 ## Claude Code quick start
 
-The Claude Code plugin ships 14 skills (one per `zerogpu` CLI command) that Claude auto-invokes when your request matches — "summarize this", "redact the PII", "classify by sentiment and topic". You can also call any skill manually with `/zerogpu-router:<name>`.
+The Claude Code plugin ships 12 skills (one per `zerogpu` CLI command) that Claude auto-invokes when your request matches — "redact the PII", "extract entities", "classify by sentiment and topic". You can also call any skill manually with `/zerogpu-router:<name>`.
 
 Grab a ZeroGPU API key and project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
@@ -112,37 +112,31 @@ zerogpu login
 
 You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
 
-**3. Install the Claude Code plugin** — inside a Claude Code session:
+**3. Install the Claude Code plugin** — start a Claude Code session by running `claude` in your terminal, then:
 
 ```text
-/plugin marketplace add github.com/zerogpu/zerogpu-router
+/plugin marketplace add zerogpu/zerogpu-router
 /plugin install zerogpu-router@zerogpu
+/reload-plugins
 ```
 
 **4. Try it:**
 
 ```text
-Summarize this article:
+Redact PII from this support ticket before I paste it into our public bug tracker:
 
-Renewable energy adoption accelerated sharply in 2024, with global installed solar
-capacity crossing 2 terawatts for the first time and onshore wind additions hitting
-a five-year high. The International Energy Agency attributes most of the growth to
-a 38% year-over-year drop in utility-scale solar module prices, driven by Chinese
-overcapacity and improving cell efficiencies that now routinely exceed 23% in
-commercial monocrystalline panels. Battery storage deployments roughly doubled,
-reaching 175 GWh of new annual capacity, which the IEA says is finally large
-enough to materially shift grid economics in markets like California, Texas,
-Australia, and southern Europe. Hydrogen and offshore wind, by contrast,
-underperformed projections — offshore wind because of supply-chain bottlenecks
-and rising financing costs, and green hydrogen because most announced electrolyzer
-projects remain stuck at the final-investment-decision stage. Analysts at BloombergNEF
-expect 2025 to see the first year in which renewables plus storage are the cheapest
-new-build option in every G20 country, though grid interconnection queues and
-permitting delays in the US and Germany remain the single biggest bottleneck to
-faster deployment.
+Hi team — this is Sarah Chen (sarah.chen@northwind-labs.com, +1 415-555-0182).
+I'm filing on behalf of our account, contract #NW-2024-8821. Our prod database
+at db-prod-03.northwind.internal (10.42.7.18) started throwing connection
+timeouts around 2:14 AM PT last night. The on-call engineer Marcus Rivera
+(slack: @mrivera, cell 415-555-0934) restarted the pgbouncer pod but the issue
+came back within 20 minutes. Billing for this incident should go to our CFO
+Priya Patel at priya.patel@northwind-labs.com — card on file ends 4417, billing
+address 1455 Market St, Suite 600, San Francisco, CA 94103. Please call me back
+at the number above, or my direct line 415-555-0182 ext. 214.
 ```
 
-Claude routes to `/zerogpu-router:summarize` automatically and returns a short condensed summary — that's the `t5-small` edge model doing the work, not Claude.
+Claude routes to `/zerogpu-router:redact-pii` automatically and returns the same passage with names, emails, phone numbers, internal hostnames, IPs, card digits, and the street address replaced by `[PERSON]` / `[EMAIL]` / `[PHONE]` / `[ADDRESS]` placeholders — safe to paste into a public tracker. The `gliner-multi-pii-v1` edge model does the masking, not Claude, so the raw PII never enters Claude's context window.
 
 Full walkthrough — prerequisites, every skill documented in detail, troubleshooting: **[agents/claude/README.md](agents/claude/README.md)**.
 

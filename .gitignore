@@ -47,3 +47,4 @@ logs/
 # --- Claude Code project-local state ---
 # .claude-plugin/marketplace.json IS the plugin install manifest and must stay committed.
 .claude/
+docs
