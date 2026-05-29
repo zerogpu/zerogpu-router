@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.2.0
+
+Re-introduces the `summarize` skill, taking the surface from 12 to 13. It was dropped in 1.1.0 when its t5-small space was deprecated; it now runs on `llama-3.1-8b-instruct-fast`, which produces fuller, more coherent abstractive summaries than the old model.
+
+### Added
+
+- `summarize` skill (`skills/summarize/SKILL.md`) — condense a passage into a short summary via `llama-3.1-8b-instruct-fast`. Auto-invokes on "summarize", "TL;DR", "give me the gist", "condense this." Captures `$ARGUMENTS` into `$ZGPU_TEXT` through a single-quoted heredoc, consistent with the shell-safe pattern adopted in 1.1.2.
+
+### Changed
+
+- `agents/claude/.claude-plugin/plugin.json`: version `1.1.2` → `1.2.0`; `description` updated (12 → 13 skills, "summarization" restored); `keywords` re-adds `summarization`.
+- `agents/claude/README.md`: added a `summarize` per-skill section with a worked board-meeting example and illustrative output; restored the lookup-table row; intro and skill count updated to 13.
+- Root `README.md`: Claude Code skill count updated to 13; "summarize this" restored to the auto-invoke examples.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.1.2
 
 Bug-fix patch. All ten text-accepting skills passed `$ARGUMENTS` directly into the `!` auto-exec block, so any input containing shell metacharacters (newlines, parens, `$`, `&`, `;`, `*`, backticks, quotes) was parsed by zsh and produced errors like `no matches found: (...)` or `command not found: <word>` before reaching the CLI. The fix wraps text in a single-quoted heredoc so the shell treats it as opaque data.

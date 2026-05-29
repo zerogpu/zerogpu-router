@@ -1,8 +1,8 @@
 # ZeroGPU Router — Claude Code plugin
 
-Offload cheap, well-defined NLP tasks (classification, entity & PII extraction, short chat) from Claude to ZeroGPU's edge-optimized small language models — directly from your Claude Code session.
+Offload cheap, well-defined NLP tasks (classification, summarization, entity & PII extraction, short chat) from Claude to ZeroGPU's edge-optimized small language models — directly from your Claude Code session.
 
-Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
+Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
 
 ---
 
@@ -513,9 +513,45 @@ Pull specific named fields out of free text into a structured JSON object, defin
 
 ---
 
+### `/zerogpu-router:summarize`
+
+Condense a passage into a short summary.
+
+- **Model:** `llama-3.1-8b-instruct-fast`
+- **Wraps:** `zerogpu summarize`
+- **When Claude auto-invokes:** "summarize", "TL;DR", "give me the gist", "condense this."
+
+**Synopsis**
+
+```
+/zerogpu-router:summarize <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:summarize "The board met Thursday to review Q3 results. Revenue rose 18% \
+year-over-year to $42M, driven mainly by enterprise renewals and a strong launch in the EU \
+market. Operating margin slipped to 11% from 14% as headcount grew 30% ahead of the new \
+data-center buildout. The CFO flagged rising cloud costs as the top risk for Q4 and proposed \
+a hiring freeze on non-engineering roles until margins recover. The board approved the freeze \
+and asked for a revised 2025 budget by mid-December."
+```
+
+**Output (illustrative)**
+
+```text
+Q3 revenue grew 18% YoY to $42M on enterprise renewals and EU growth, but operating margin
+fell to 11% due to a 30% headcount increase for the data-center buildout. Citing cloud costs
+as the main Q4 risk, the board approved a hiring freeze on non-engineering roles and requested
+a revised 2025 budget by mid-December.
+```
+
+---
+
 ## Skills reference
 
-Quick lookup table — all 12 skills at a glance.
+Quick lookup table — all 13 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -531,6 +567,7 @@ Quick lookup table — all 12 skills at a glance.
 | `/zerogpu-router:extract-pii <text>` | Extract PII entities (returns JSON) | `/zerogpu-router:extract-pii "Contact Jane at jane@example.com"` |
 | `/zerogpu-router:redact-pii <text>` | Mask PII in-line with `[LABEL]` placeholders | `/zerogpu-router:redact-pii "Email John at john@acme.com"` |
 | `/zerogpu-router:extract-json <text> -s '…'` | Schema-driven JSON extraction | `/zerogpu-router:extract-json "..." -s '{"contact":["name::str::Full name"]}'` |
+| `/zerogpu-router:summarize <text>` | Summarize with `llama-3.1-8b-instruct-fast` | `/zerogpu-router:summarize "The board met Thursday to review Q3 results..."` |
 
 For full flag reference (thresholds, categories, schema syntax), run `zerogpu <command> --help`.
 
