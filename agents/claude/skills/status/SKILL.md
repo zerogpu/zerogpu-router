@@ -11,4 +11,4 @@ Check the sign-in status:
 zerogpu status
 ```
 
-Exit code is `0` when signed in, `1` when not. If not signed in, suggest running `/zerogpu-router:login`.
+Exit code is `0` when signed in, `1` when not. If not signed in, suggest running `/zerogpu-router:signin`.

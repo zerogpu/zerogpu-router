@@ -1,5 +1,5 @@
 ---
-name: login
+name: signin
 description: Sign in to ZeroGPU and persist the API key + Project ID. Use when the user asks to log in, authenticate, or set up ZeroGPU credentials for the first time.
 argument-hint: "[--api-key <key>] [--project-id <id>]"
 disable-model-invocation: true
