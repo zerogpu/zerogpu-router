@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "zerogpu-router",
   "displayName": "ZeroGPU Router",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Offload cheap AI tasks (classification, entity/PII/JSON extraction, small-model chat) to ZeroGPU small/nano models. Ships 12 auto-invoked skills.",
   "author": {
     "name": "ZeroGPU",
