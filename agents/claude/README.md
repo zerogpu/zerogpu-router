@@ -125,9 +125,9 @@ Call any skill explicitly with `/zerogpu-router:<name> <args>`:
 
 ## Skills in detail
 
-Each skill below documents what it does, which ZeroGPU model it runs, how to invoke it, what arguments it accepts, and what the output looks like. All inference skills auto-invoke when Claude detects a matching request; `login` and `status` are manual-only.
+Each skill below documents what it does, which ZeroGPU model it runs, how to invoke it, what arguments it accepts, and what the output looks like. All inference skills auto-invoke when Claude detects a matching request; `signin` and `status` are manual-only.
 
-### `/zerogpu-router:login`
+### `/zerogpu-router:signin`
 
 Sign in to ZeroGPU and persist your credentials so every subsequent skill call works without re-prompting.
 
@@ -137,7 +137,7 @@ Sign in to ZeroGPU and persist your credentials so every subsequent skill call w
 **Synopsis**
 
 ```
-/zerogpu-router:login [--api-key <key>] [--project-id <id>]
+/zerogpu-router:signin [--api-key <key>] [--project-id <id>]
 ```
 
 **Arguments**
@@ -150,7 +150,7 @@ Sign in to ZeroGPU and persist your credentials so every subsequent skill call w
 **Example**
 
 ```text
-/zerogpu-router:login
+/zerogpu-router:signin
 ```
 
 On success the API key + Project ID are written to your config file, and `ZEROGPU_API_KEY` is added to your shell profile so other tools can pick it up.
@@ -170,7 +170,7 @@ Show your current ZeroGPU sign-in status and the masked API key.
 /zerogpu-router:status
 ```
 
-Exit code is `0` when signed in, `1` when not. If you're not signed in, run `/zerogpu-router:login`.
+Exit code is `0` when signed in, `1` when not. If you're not signed in, run `/zerogpu-router:signin`.
 
 ---
 
@@ -555,7 +555,7 @@ Quick lookup table — all 13 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
-| `/zerogpu-router:login` | Sign in and persist API key + Project ID (manual only) | `/zerogpu-router:login` |
+| `/zerogpu-router:signin` | Sign in and persist API key + Project ID (manual only) | `/zerogpu-router:signin` |
 | `/zerogpu-router:status` | Show current sign-in status (manual only) | `/zerogpu-router:status` |
 | `/zerogpu-router:chat <text>` | Short chat reply via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat "Explain WebSockets in two sentences."` |
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (returns reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
@@ -578,9 +578,9 @@ For full flag reference (thresholds, categories, schema syntax), run `zerogpu <c
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | `zerogpu: command not found` | CLI not installed or not on `PATH` | `npm install -g zerogpu-cli`, then restart your shell |
-| Skill returns "You're not signed in yet." | No credentials | Run `/zerogpu-router:login` |
+| Skill returns "You're not signed in yet." | No credentials | Run `/zerogpu-router:signin` |
 | `/zerogpu-router:*` skills don't appear in `/help` | Plugin not enabled | Run `/plugin` and enable `zerogpu-router` |
-| `Request failed with status 401` | Bad / revoked API key | Re-run `/zerogpu-router:login` |
+| `Request failed with status 401` | Bad / revoked API key | Re-run `/zerogpu-router:signin` |
 | `Request failed with status 429` | Rate limited | Back off and retry |
 
 ---

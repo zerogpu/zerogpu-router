@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.2.1
+
+Renames the manual `login` skill to `signin` for clearer intent. The underlying `zerogpu login` CLI subcommand is unchanged — only the skill's name and its slash invocation move from `/zerogpu-router:login` to `/zerogpu-router:signin`. Anyone scripting the old invocation must update it.
+
+### Changed
+
+- `skills/login/` → `skills/signin/` (directory renamed); `SKILL.md` `name:` field `login` → `signin`. The `zerogpu login` body command and `allowed-tools: Bash(zerogpu login*)` are untouched.
+- `agents/claude/README.md`: per-skill heading, synopsis, example, lookup-table row, and troubleshooting steps now reference `/zerogpu-router:signin`; the manual-only intro lists `signin`.
+- `agents/claude/COOKBOOK.md`, `skills/status/SKILL.md`: "not signed in" guidance now points to `/zerogpu-router:signin`.
+- `agents/claude/.claude-plugin/plugin.json`: version `1.2.0` → `1.2.1`.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.2.0
 
 Re-introduces the `summarize` skill, taking the surface from 12 to 13. It was dropped in 1.1.0 when its t5-small space was deprecated; it now runs on `llama-3.1-8b-instruct-fast`, which produces fuller, more coherent abstractive summaries than the old model.
