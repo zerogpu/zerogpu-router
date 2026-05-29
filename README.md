@@ -37,7 +37,7 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific to
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
 - **OpenClaw** — install **`zerogpu-openclaw-plugin`** and register MCP in OpenClaw (see [agents/openclaw/](agents/openclaw/)); package name and plugin `id` match.
-- **Claude Code** — no MCP setup. Install the `zerogpu` CLI plus the marketplace plugin and you get 12 auto-invoked skills (see [agents/claude/](agents/claude/)).
+- **Claude Code** — no MCP setup. Install the `zerogpu` CLI plus the marketplace plugin and you get 13 auto-invoked skills (see [agents/claude/](agents/claude/)).
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
 - **Hosted, no infra** — point your agent at `https://mcp.zerogpu.ai/mcp`. We run the routing layer.
@@ -94,7 +94,7 @@ The agent should call `zerogpu_summarize` and return a summary plus savings meta
 
 ## Claude Code quick start
 
-The Claude Code plugin ships 12 skills (one per `zerogpu` CLI command) that Claude auto-invokes when your request matches — "redact the PII", "extract entities", "classify by sentiment and topic". You can also call any skill manually with `/zerogpu-router:<name>`.
+The Claude Code plugin ships 13 skills (one per `zerogpu` CLI command) that Claude auto-invokes when your request matches — "summarize this", "redact the PII", "classify by sentiment and topic". You can also call any skill manually with `/zerogpu-router:<name>`.
 
 Grab a ZeroGPU API key and project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
