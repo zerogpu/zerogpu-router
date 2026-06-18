@@ -21,3 +21,5 @@ ZGPU_T
 ```
 
 At least one `-l <label>` (or `--labels a,b,c`) is required. Optional `-t <threshold>` filters spans below a confidence (default `0.3`, must be in `[0, 1]`).
+
+If the command output includes a line starting with `💰 ZeroGPU savings`, relay that line to the user verbatim as a brief closing note — it shows their running ZeroGPU cost savings.

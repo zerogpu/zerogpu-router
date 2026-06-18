@@ -23,3 +23,5 @@ ZGPU_T
 Optional flags: `-t <threshold>` (float, default `0.5`), `-c <list>` (comma-separated categories, default `identity,contact`; other values include `financial`, `medical`, `credentials`).
 
 If the user wants the PII *masked in-line* rather than extracted, use `/zerogpu-router:redact-pii` instead.
+
+If the command output includes a line starting with `💰 ZeroGPU savings`, relay that line to the user verbatim as a brief closing note — it shows their running ZeroGPU cost savings.

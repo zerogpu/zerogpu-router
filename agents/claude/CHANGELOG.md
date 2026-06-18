@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.3.0
+
+Adds a cost-savings feature so the value of routing trivial work to ZeroGPU is visible. Every routed call records how many Claude tokens it offloaded and the estimated dollars saved, persisted in `~/.zerogpu/savings.json` (alongside the existing credentials). After some responses, a balanced random note (≈ once every 4–5 calls, never twice in a row) surfaces the running total; the new manual `cost-savings` skill prints the full breakdown on demand.
+
+Requires `zerogpu-cli` ≥ 2.3.0, which computes and stores the savings.
+
+### Added
+
+- `cost-savings` skill (`skills/cost-savings/SKILL.md`, manual-only via `disable-model-invocation: true`) — runs `zerogpu cost_savings` and relays a cumulative report: dollars saved, Claude tokens offloaded, routed-call count, per-model breakdown, and the baseline model used.
+- A `💰 ZeroGPU savings …` note that the CLI emits to stderr on a balanced random cadence after model commands. Token counts are actual (from the API `usage`); dollar figures estimate what the same tokens would have cost on Claude (default baseline `claude-opus-4-8`, overridable via `ZEROGPU_SAVINGS_MODEL`).
+
+### Changed
+
+- The 11 auto-invoked model skills (`chat`, `chat-thinking`, `classify-*`, `extract-*`, `redact-pii`, `summarize`) gained one trailing line instructing Claude to relay the `💰 ZeroGPU savings` note when present.
+- `agents/claude/.claude-plugin/plugin.json`: version `1.2.1` → `1.3.0`; `description` mentions the savings feature.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.2.1
 
 Renames the manual `login` skill to `signin` for clearer intent. The underlying `zerogpu login` CLI subcommand is unchanged — only the skill's name and its slash invocation move from `/zerogpu-router:login` to `/zerogpu-router:signin`. Anyone scripting the old invocation must update it.

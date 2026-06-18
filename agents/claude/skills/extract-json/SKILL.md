@@ -21,3 +21,5 @@ ZGPU_T
 ```
 
 Schema is required, single-quoted JSON. Each field is `name::type::description`. Output is a JSON object keyed by group, with extracted field values.
+
+If the command output includes a line starting with `💰 ZeroGPU savings`, relay that line to the user verbatim as a brief closing note — it shows their running ZeroGPU cost savings.
