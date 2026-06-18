@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.1
+
+Fixes the cost-savings note appearing after **every** routed call. The 1.3.0 relay instruction was loose enough that Claude treated savings as always-relevant and appended a "run `/zerogpu-router:cost-savings`" call-to-action on every response — even though the underlying `💰 ZeroGPU savings` note only fires occasionally (the CLI gates it to roughly 1 in 4–5 calls, emitted on stderr). The cadence was never the problem; the skill prompt was over-surfacing it.
+
+### Changed
+
+- The 11 auto-invoked model skills (`chat`, `chat-thinking`, `classify-*`, `extract-*`, `redact-pii`, `summarize`): tightened the relay line so Claude appends the `💰 ZeroGPU savings …` line **only when it is literally present** in the command output, verbatim, and otherwise says nothing about savings and does not suggest the cost-savings command. Net effect — most responses carry no savings mention; the note shows only on the occasional call where the CLI emits it.
+- `agents/claude/.claude-plugin/plugin.json`: version `1.3.0` → `1.3.1`.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.3.0
 
 Adds a cost-savings feature so the value of routing trivial work to ZeroGPU is visible. Every routed call records how many Claude tokens it offloaded and the estimated dollars saved, persisted in `~/.zerogpu/savings.json` (alongside the existing credentials). After some responses, a balanced random note (≈ once every 4–5 calls, never twice in a row) surfaces the running total; the new manual `cost-savings` skill prints the full breakdown on demand.
