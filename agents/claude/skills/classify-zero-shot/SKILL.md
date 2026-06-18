@@ -21,3 +21,5 @@ ZGPU_T
 ```
 
 At least one label is required. Either repeat `-l <label>` or pass `--labels a,b,c`.
+
+If the command output includes a line starting with `💰 ZeroGPU savings`, relay that line to the user verbatim as a brief closing note — it shows their running ZeroGPU cost savings.

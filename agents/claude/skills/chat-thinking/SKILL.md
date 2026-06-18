@@ -16,3 +16,5 @@ zerogpu chat_thinking "$ZGPU_TEXT"
 ```
 
 The response includes the model's reasoning trace.
+
+If the command output includes a line starting with `💰 ZeroGPU savings`, relay that line to the user verbatim as a brief closing note — it shows their running ZeroGPU cost savings.

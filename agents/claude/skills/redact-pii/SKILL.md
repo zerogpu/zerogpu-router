@@ -16,3 +16,5 @@ zerogpu redact_pii "$ZGPU_TEXT"
 ```
 
 Output is the original text with PII spans replaced by `[LABEL]` placeholders. For extracting (not masking) PII, use `/zerogpu-router:extract-pii`.
+
+If the command output includes a line starting with `💰 ZeroGPU savings`, relay that line to the user verbatim as a brief closing note — it shows their running ZeroGPU cost savings.

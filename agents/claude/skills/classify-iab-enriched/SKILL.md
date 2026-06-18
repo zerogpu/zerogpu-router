@@ -16,3 +16,5 @@ zerogpu classify_iab_enriched "$ZGPU_TEXT"
 ```
 
 Output is a JSON object with `categories`, `topics`, `keywords`, and `intent`.
+
+If the command output includes a line starting with `💰 ZeroGPU savings`, relay that line to the user verbatim as a brief closing note — it shows their running ZeroGPU cost savings.

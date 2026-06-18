@@ -125,7 +125,7 @@ Call any skill explicitly with `/zerogpu-router:<name> <args>`:
 
 ## Skills in detail
 
-Each skill below documents what it does, which ZeroGPU model it runs, how to invoke it, what arguments it accepts, and what the output looks like. All inference skills auto-invoke when Claude detects a matching request; `signin` and `status` are manual-only.
+Each skill below documents what it does, which ZeroGPU model it runs, how to invoke it, what arguments it accepts, and what the output looks like. All inference skills auto-invoke when Claude detects a matching request; `signin`, `status`, and `cost-savings` are manual-only.
 
 ### `/zerogpu-router:signin`
 
@@ -171,6 +171,44 @@ Show your current ZeroGPU sign-in status and the masked API key.
 ```
 
 Exit code is `0` when signed in, `1` when not. If you're not signed in, run `/zerogpu-router:signin`.
+
+---
+
+### `/zerogpu-router:cost-savings`
+
+Show how much you've saved by routing trivial tasks to ZeroGPU instead of Claude.
+
+- **Manual only**
+- **Wraps:** `zerogpu cost_savings`
+
+**Example**
+
+```text
+/zerogpu-router:cost-savings
+```
+
+**Output (illustrative)**
+
+```text
+💰 ZeroGPU Cost Savings
+───────────────────────
+Saved so far:     ~$2.14
+Tokens offloaded: ≈ 430,120 Claude tokens
+Routed calls:     58
+Avg per call:     ~$0.04
+Since:            Apr 12, 2026
+
+By model:
+  llama-3.1-8b-instruct-fast  —  20 calls, ~$1.20, 210K tok
+  gliner2-base-v1             —  18 calls, ~$0.61, 120K tok
+  ...
+```
+
+Every routed call (chat, classify, extract, redact, summarize, …) records the Claude tokens it offloaded and the dollars saved, persisted in `~/.zerogpu/savings.json` alongside your credentials. **Token counts and ZeroGPU costs are actual** (real per-model ZeroGPU rates × the API's usage report). The **dollar savings** is the Claude spend avoided: what those exact tokens would have cost on Claude minus the real ZeroGPU cost. The Claude baseline defaults to `claude-opus-4-8` and is overridable via the `ZEROGPU_SAVINGS_MODEL` environment variable (e.g. `claude-sonnet-4-6`).
+
+You don't have to ask: after some responses a short `💰 ZeroGPU savings so far: …` note appears automatically on a balanced cadence (≈ once every 4–5 routed calls, never twice in a row) so the running total stays visible without nagging.
+
+Pass `--json` for the raw data, or `--reset` to clear the history.
 
 ---
 
@@ -551,12 +589,13 @@ a revised 2025 budget by mid-December.
 
 ## Skills reference
 
-Quick lookup table — all 13 skills at a glance.
+Quick lookup table — all 14 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
 | `/zerogpu-router:signin` | Sign in and persist API key + Project ID (manual only) | `/zerogpu-router:signin` |
 | `/zerogpu-router:status` | Show current sign-in status (manual only) | `/zerogpu-router:status` |
+| `/zerogpu-router:cost-savings` | Show cumulative savings vs. Claude (manual only) | `/zerogpu-router:cost-savings` |
 | `/zerogpu-router:chat <text>` | Short chat reply via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat "Explain WebSockets in two sentences."` |
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (returns reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
 | `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification | `/zerogpu-router:classify-iab "The Lakers signed a new point guard."` |

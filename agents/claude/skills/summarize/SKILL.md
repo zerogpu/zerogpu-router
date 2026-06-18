@@ -16,3 +16,5 @@ zerogpu summarize "$ZGPU_TEXT"
 ```
 
 Output is a short condensed summary string. For files, the user can run `zerogpu summarize "$(cat article.txt)"` directly.
+
+If the command output includes a line starting with `💰 ZeroGPU savings`, relay that line to the user verbatim as a brief closing note — it shows their running ZeroGPU cost savings.
