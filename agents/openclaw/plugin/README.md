@@ -10,22 +10,29 @@
 
 Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded to ZeroGPU's small models — typically 100–1000× cheaper per call.
 
-- 11 task-specific MCP tools (`zerogpu_summarize`, `zerogpu_classify_iab`, `zerogpu_redact_pii`, …)
-- A routing skill that teaches your agent **when** to call each tool
+- 11 task-specific skills (`zerogpu_summarize`, `zerogpu_classify_iab`, `zerogpu_redact_pii`, …)
+- Each skill shells out to the local `zerogpu` CLI via the agent's Bash tools — no MCP server, no hosted endpoint to register
+- A routing skill that teaches your agent **when** to use each one
 - Per-call savings logged with model, latency, and a real `savings_usd` figure
-- Hosted MCP server at `https://mcp.zerogpu.ai/mcp` — no infra to run
 
-## Install
+## Quickstart
 
-**npm:**
+Get an API key + project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 ```bash
-openclaw plugins install npm:zerogpu-openclaw-plugin
+# 1. Install the ZeroGPU CLI (skills shell out to it)
+npm install -g zerogpu-cli
+
+# 2. Log in (prompts for API key + project ID)
+zerogpu login
+
+# 3. Install this plugin
+openclaw plugins install zerogpu-openclaw-plugin
 ```
 
-Pin: `npm:zerogpu-openclaw-plugin@0.1.10`.
+Pin a release: `zerogpu-openclaw-plugin@0.1.10`.
 
-**GitHub** (this package lives in the [zerogpu-router](https://github.com/zerogpu/zerogpu-router) monorepo — use a path install, not `git:github.com/zerogpu/zerogpu-router@ref` on the repo root):
+**From GitHub** (this package lives in the [zerogpu-router](https://github.com/zerogpu/zerogpu-router) monorepo — use a path install, not `git:github.com/zerogpu/zerogpu-router@ref` on the repo root):
 
 ```bash
 tmpdir=$(mktemp -d)
@@ -33,35 +40,6 @@ git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpd
 (cd "$tmpdir/repo/agents/openclaw/plugin" && npm ci && npm run build)
 openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
 ```
-
-## Set up (2 steps)
-
-### 1. Get your API key
-
-Sign in at [platform.zerogpu.ai](https://platform.zerogpu.ai) and create a project to grab an API key + project ID.
-
-### 2. Register the hosted MCP server
-
-In your OpenClaw shell:
-
-```bash
-openclaw mcp set zerogpu '{
-  "url": "https://mcp.zerogpu.ai/mcp",
-  "transport": "streamable-http",
-  "headers": {
-    "x-api-key": "<your-api-key>",
-    "x-project-id": "<your-project-id>"
-  }
-}'
-```
-
-Verify:
-
-```bash
-openclaw mcp show zerogpu --json
-```
-
-That's it. Your agent will now route trivial tasks through ZeroGPU automatically.
 
 ## Try it
 
@@ -71,11 +49,19 @@ Ask your agent:
 summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
 ```
 
-The agent calls `zerogpu_summarize` (running on `t5-small`) instead of the host model and replies with the summary plus a savings line.
+The agent runs the `zerogpu_summarize` skill — executing `zerogpu summarize` locally on `t5-small` — instead of the host model, and replies with the summary plus a savings line.
 
-## The 11 tools you get
+Other examples:
 
-| Tool | Workload | Backing model |
+```text
+redact the PII in this message before I share it: <text>
+extract the people and companies from this: <text>
+classify this ticket as bug, feature, or question: <text>
+```
+
+## The 11 skills you get
+
+| Skill | Workload | Backing model |
 |---|---|---|
 | `zerogpu_classify_iab` | IAB topic classification | `zlm-v1-iab-classify-edge` |
 | `zerogpu_summarize` | TL;DRs, abstracts, meeting summaries | `t5-small` |
@@ -89,7 +75,7 @@ The agent calls `zerogpu_summarize` (running on `t5-small`) instead of the host 
 | `zerogpu_chat` | Short small-model chat replies | `LFM2.5-1.2B-Instruct` / `-Thinking` |
 | `zerogpu_health` | Verify the ZeroGPU backend | — |
 
-Every tool returns `{ <task fields>, model, usage, savings }`.
+Every skill returns `{ <task fields>, model, usage, savings }`.
 
 ## Watch your savings
 

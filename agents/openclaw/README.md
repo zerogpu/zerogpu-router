@@ -1,18 +1,34 @@
 # OpenClaw
 
-Use these commands in an OpenClaw terminal to install and connect ZeroGPU Router.
+Use these commands in an OpenClaw terminal to install and connect ZeroGPU Router. The plugin ships CLI-based skills that run locally through the agent's Bash tools — there is no MCP server to register.
 
-## 1) Install the plugin
+You need a ZeroGPU API key and project ID. Grab them at [platform.zerogpu.ai](https://platform.zerogpu.ai).
 
-**npm (simplest):**
+## 1) Install the `zerogpu` CLI
+
+The plugin's skills shell out to this CLI:
 
 ```sh
-openclaw plugins install npm:zerogpu-openclaw-plugin
+npm install -g zerogpu-cli
 ```
 
-Optional pin: `npm:zerogpu-openclaw-plugin@0.1.10`.
+## 2) Log in
 
-**GitHub** — plugin path is `agents/openclaw/plugin/` in [zerogpu/zerogpu-router](https://github.com/zerogpu/zerogpu-router) (not repo root; do not use `git:github.com/zerogpu/zerogpu-router@main` alone):
+```sh
+zerogpu login
+```
+
+You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
+
+## 3) Install the plugin
+
+```sh
+openclaw plugins install zerogpu-openclaw-plugin
+```
+
+Optional pin: `zerogpu-openclaw-plugin@0.1.10`.
+
+**From GitHub** — plugin path is `agents/openclaw/plugin/` in [zerogpu/zerogpu-router](https://github.com/zerogpu/zerogpu-router) (not repo root; do not use `git:github.com/zerogpu/zerogpu-router@main` alone):
 
 ```sh
 tmpdir=$(mktemp -d)
@@ -21,21 +37,10 @@ git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpd
 openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
 ```
 
-## 2) Connect OpenClaw to MCP
+## 4) Try it
 
-```sh
-openclaw mcp set zerogpu '{
-  "url": "https://mcp.zerogpu.ai/mcp",
-  "transport": "streamable-http",
-  "headers": {
-    "x-api-key": "zgpu-api-…",
-    "x-project-id": "id"
-  }
-}'
+```text
+summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
 ```
 
-## 3) Restart gateway
-
-```sh
-openclaw gateway restart
-```
+The agent runs the `zerogpu_summarize` skill, which executes `zerogpu summarize` locally via its Bash tool, and returns the summary plus a savings line.
