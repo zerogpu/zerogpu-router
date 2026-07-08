@@ -1,0 +1,88 @@
+name: openclaw-plugin-release
+
+on:
+  push:
+    tags:
+      - 'zerogpu-openclaw-plugin--v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create OpenClaw plugin release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+    
+      - name: Resolve version from tag
+        id: version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#zerogpu-openclaw-plugin--v}"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "$TAG" ]; then
+            echo "::error::Tag '$TAG' does not match expected pattern 'zerogpu-openclaw-plugin--v<version>'"
+            exit 1
+          fi
+          echo "tag=$TAG"         >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+    
+      - name: Verify package.json version matches tag
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(jq -r .version agents/openclaw/plugin/package.json)
+          if [ "$PKG_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error file=agents/openclaw/plugin/package.json::Version mismatch ($PKG_VERSION vs ${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+    
+      - name: Install dependencies
+        run: |
+          cd agents/openclaw/plugin
+          npm ci
+    
+      - name: Build plugin
+        run: |
+          cd agents/openclaw/plugin
+          npm run build
+    
+      - name: Dry-run package
+        run: |
+          cd agents/openclaw/plugin
+          npm pack --dry-run
+    
+      - name: Extract CHANGELOG section
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          CHANGELOG="agents/openclaw/CHANGELOG.md"
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+    
+          awk -v ver="$VERSION" '
+            $0 ~ "^## +" ver "( |$)" { capture=1; next }
+            capture && /^## / { exit }
+            capture { print }
+          ' "$CHANGELOG" > "$NOTES_FILE"
+    
+          if [ ! -s "$NOTES_FILE" ]; then
+            echo "::error::No CHANGELOG section for $VERSION"
+            exit 1
+          fi
+    
+          echo "NOTES_FILE=$NOTES_FILE" >> "$GITHUB_ENV"
+    
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "OpenClaw Plugin ${{ steps.version.outputs.version }}" \
+            --notes-file "$NOTES_FILE" \
+            --verify-tag

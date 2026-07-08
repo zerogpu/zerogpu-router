@@ -11,7 +11,7 @@
 Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded to ZeroGPU's small models — typically 100–1000× cheaper per call.
 
 - 11 task-specific skills (`zerogpu_summarize`, `zerogpu_classify_iab`, `zerogpu_redact_pii`, …)
-- Each skill shells out to the local `zerogpu` CLI via the agent's Bash tools — no MCP server, no hosted endpoint to register
+- Each skill shells out to the local `zerogpu` CLI via the agent's Bash tools — nothing to host or register
 - A routing skill that teaches your agent **when** to use each one
 - Per-call savings logged with model, latency, and a real `savings_usd` figure
 
@@ -30,33 +30,28 @@ zerogpu login
 openclaw plugins install zerogpu-openclaw-plugin
 ```
 
-Pin a release: `zerogpu-openclaw-plugin@0.1.10`.
-
-**From GitHub** (this package lives in the [zerogpu-router](https://github.com/zerogpu/zerogpu-router) monorepo — use a path install, not `git:github.com/zerogpu/zerogpu-router@ref` on the repo root):
-
-```bash
-tmpdir=$(mktemp -d)
-git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpdir/repo"
-(cd "$tmpdir/repo/agents/openclaw/plugin" && npm ci && npm run build)
-openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
-```
+Pin a release: `zerogpu-openclaw-plugin@1.4.0`.
 
 ## Try it
 
-Ask your agent:
+Ask your agent in plain language — it picks the right skill, runs the `zerogpu` CLI locally instead of the host model, and replies with the result plus a savings line.
+
+**Summarize**
 
 ```text
 summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
 ```
 
-The agent runs the `zerogpu_summarize` skill — executing `zerogpu summarize` locally on `t5-small` — instead of the host model, and replies with the summary plus a savings line.
-
-Other examples:
+**Classify**
 
 ```text
-redact the PII in this message before I share it: <text>
-extract the people and companies from this: <text>
-classify this ticket as bug, feature, or question: <text>
+classify this ticket as bug, feature, or question: "The export button does nothing on Safari."
+```
+
+**Redact PII**
+
+```text
+redact the PII in this before I share it: "Email Sarah Chen at sarah.chen@northwind-labs.com or call +1 415-555-0182."
 ```
 
 ## The 11 skills you get
@@ -80,6 +75,19 @@ Every skill returns `{ <task fields>, model, usage, savings }`.
 ## Watch your savings
 
 Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** — token usage, latency, per-tool savings, broken down by agent and time range.
+
+## Advanced — install from source
+
+Use this only if you want to test unreleased changes or contribute to the repo.
+
+This package lives at `agents/openclaw/plugin/` in the [zerogpu-router](https://github.com/zerogpu/zerogpu-router) monorepo. Install from a checkout instead of npm — use the plugin path, not `git:github.com/zerogpu/zerogpu-router@ref` on the repo root:
+
+```bash
+tmpdir=$(mktemp -d)
+git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpdir/repo"
+(cd "$tmpdir/repo/agents/openclaw/plugin" && npm ci && npm run build)
+openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
+```
 
 ## Links
 

@@ -66,7 +66,7 @@ You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
 openclaw plugins install zerogpu-openclaw-plugin
 ```
 
-Pin a release: `zerogpu-openclaw-plugin@0.1.10`.
+Pin a release: `zerogpu-openclaw-plugin@1.4.0`.
 
 **4. Try it:**
 
