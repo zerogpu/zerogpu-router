@@ -25,16 +25,13 @@ The `zerogpu-cli` package — which the plugin's skills shell out to for all inf
    npm run release:check
    ```
 
-3. Bump `version` in `agents/openclaw/plugin/package.json` and `agents/openclaw/plugin/openclaw.plugin.json`.
+3. Use the release script to cut a release:
 
-4. Create and push a tag in the format `zerogpu-openclaw-plugin--v<version>`.
-
-Example:
-
-```bash
-git tag zerogpu-openclaw-plugin--v1.4.0
-git push origin zerogpu-openclaw-plugin--v1.4.0
-```
+   ```bash
+   ./openclaw-release patch
+   ./openclaw-release minor
+   ./openclaw-release major
+   ```
 
 The `openclaw-plugin-release` GitHub Actions workflow will:
 - validate the version
