@@ -1,5 +1,5 @@
 ---
-name: zerogpu_summarize
+name: summarize
 description: Summarize a passage using a ZeroGPU edge model. Use when the user asks to summarize, condense, TL;DR, or give the gist of an article, email, transcript, or other plain-text passage.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu summarize *)

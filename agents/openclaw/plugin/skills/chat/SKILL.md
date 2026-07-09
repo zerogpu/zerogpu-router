@@ -1,5 +1,5 @@
 ---
-name: zerogpu_chat
+name: chat
 description: Short chat reply via a ZeroGPU small model. Use when the user wants a quick, single-turn answer that does not need host-level reasoning, prior conversation context, or code generation. Optional system instructions via -i.
 argument-hint: "<text> [-i <instructions>]"
 allowed-tools: Bash(zerogpu chat *)

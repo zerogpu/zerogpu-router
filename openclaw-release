@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# openclaw-release [patch|minor|major]
+
+set -euo pipefail
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "error: working tree is dirty — commit or stash first"
+  exit 1
+fi
+
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "error: must be on 'main' to release"
+  exit 1
+fi
+
+git fetch --no-tags origin main
+
+LOCAL="$(git rev-parse HEAD)"
+REMOTE="$(git rev-parse origin/main)"
+
+if [ "$LOCAL" != "$REMOTE" ]; then
+  echo "error: local main is not in sync with origin/main"
+  echo "  local:  $LOCAL"
+  echo "  remote: $REMOTE"
+  exit 1
+fi
+
+BUMP="${1:-patch}"
+case "$BUMP" in
+  patch|minor|major) ;;
+  *)
+    echo "error: bump must be patch|minor|major"
+    exit 1
+    ;;
+esac
+
+PLUGIN_DIR="agents/openclaw/plugin"
+PKG="$PLUGIN_DIR/package.json"
+PLUGIN_JSON="$PLUGIN_DIR/openclaw.plugin.json"
+CHANGELOG="agents/openclaw/CHANGELOG.md"
+
+command -v jq >/dev/null || { echo "jq required"; exit 1; }
+
+CURRENT="$(jq -r .version "$PKG")"
+IFS='.' read -r MAJOR MINOR PATCH <<<"$CURRENT"
+
+case "$BUMP" in
+  major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+  minor) MINOR=$((MINOR+1)); PATCH=0 ;;
+  patch) PATCH=$((PATCH+1)) ;;
+esac
+
+NEW="${MAJOR}.${MINOR}.${PATCH}"
+TAG="zerogpu-openclaw-plugin--v${NEW}"
+
+# Check tag
+if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+  echo "error: tag $TAG already exists locally"
+  exit 1
+fi
+
+if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+  echo "error: tag $TAG already exists on origin"
+  exit 1
+fi
+
+echo "Releasing OpenClaw plugin: $CURRENT -> $NEW"
+
+# Check CHANGELOG
+if ! grep -Eq "^##[[:space:]]+${NEW}" "$CHANGELOG"; then
+  echo "warning: CHANGELOG missing entry for $NEW"
+  read -r -p "Continue anyway? [y/N] " ans
+  case "$ans" in
+    y|Y) ;;
+    *) echo "aborted"; exit 1 ;;
+  esac
+fi
+
+# Update versions
+tmp="$(mktemp)"
+jq --arg v "$NEW" '.version = $v' "$PKG" >"$tmp" && mv "$tmp" "$PKG"
+
+tmp="$(mktemp)"
+jq --arg v "$NEW" '.version = $v' "$PLUGIN_JSON" >"$tmp" && mv "$tmp" "$PLUGIN_JSON"
+
+git add "$PKG" "$PLUGIN_JSON"
+git commit -m "openclaw: release v${NEW}"
+git push origin main
+
+git tag "$TAG"
+git push origin "$TAG"
+
+echo "Released $TAG"

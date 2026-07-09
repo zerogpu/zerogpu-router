@@ -19,8 +19,6 @@
   },
   "homepage": "https://zerogpu.ai",
   "keywords": [
-    "mcp",
-    "model-context-protocol",
     "openclaw",
     "claude-code",
     "model-routing",

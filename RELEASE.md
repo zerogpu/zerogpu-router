@@ -2,12 +2,12 @@
 
 This repository publishes two artifacts on independent release tracks:
 
-- **`zerogpu-openclaw-plugin`** — OpenClaw plugin from `agents/openclaw/plugin/`. Distributed via npm and/or git install. Tags: `v<version>`. See the [OpenClaw plugin release](#openclaw-plugin-release) section.
+- **`zerogpu-openclaw-plugin`** — OpenClaw plugin from `agents/openclaw/plugin/`. Distributed via npm and/or git install. Tags: `zerogpu-openclaw-plugin--v<version>`. See the [OpenClaw plugin release](#openclaw-plugin-release) section.
 - **`zerogpu-router`** — Claude Code plugin from `agents/claude/`. Distributed via the in-repo Claude Code marketplace at `.claude-plugin/marketplace.json`. Tags: `zerogpu-router--v<version>` (the format Claude Code's dependency resolver expects — see `docs/plugin-dependencies.md`). See the [Claude Code plugin release](#claude-code-plugin-release) section.
 
 The `zerogpu-cli` package — which the plugin's skills shell out to for all inference — is operated by ZeroGPU and released separately on npm.
 
-**OpenClaw distribution:** use the **public npm registry** and/or **install from this GitHub repo**. ClawHub is not part of this project’s release path.
+**OpenClaw distribution:** use the **public npm registry** and/or **ClawHub**.
 
 ## OpenClaw plugin release
 
@@ -27,7 +27,20 @@ The `zerogpu-cli` package — which the plugin's skills shell out to for all inf
 
 3. Bump `version` in `agents/openclaw/plugin/package.json` and `agents/openclaw/plugin/openclaw.plugin.json`.
 
-4. Tag the release and create a GitHub release from the tag (optional but good for changelog + audit trail).
+4. Create and push a tag in the format `zerogpu-openclaw-plugin--v<version>`.
+
+Example:
+
+```bash
+git tag zerogpu-openclaw-plugin--v1.4.0
+git push origin zerogpu-openclaw-plugin--v1.4.0
+```
+
+The `openclaw-plugin-release` GitHub Actions workflow will:
+- validate the version
+- build the plugin
+- create the GitHub release
+- publish to ClawHub
 
 ## Package dry run
 
@@ -37,7 +50,10 @@ npm --prefix agents/openclaw/plugin pack --dry-run
 
 Confirm the tarball lists `dist/`, `skills/`, `openclaw.plugin.json`, and `README.md`.
 
-## Publish to npm (recommended)
+## Publish to npm (optional)
+
+The plugin is automatically published to ClawHub via CI.  
+Publishing to npm is optional but recommended for direct installs.
 
 From `agents/openclaw/plugin` (must be logged into npm with rights to the package scope/name):
 
@@ -70,24 +86,7 @@ Always prefix with `npm:`. A bare package name (`zerogpu-openclaw-plugin` withou
 
 ### Advanced — install from source
 
-OpenClaw documents `openclaw plugins install git:github.com/<owner>/<repo>@<ref>`, which installs the **repository root**. This monorepo keeps the plugin under `agents/openclaw/plugin/`, so `git:github.com/zerogpu/zerogpu-router@main` fails (root `package.json` is not the plugin). Shallow-clone, build the plugin folder, then path-install:
-
-```bash
-tmpdir=$(mktemp -d)
-git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpdir/repo"
-(cd "$tmpdir/repo/agents/openclaw/plugin" && npm ci && npm run build)
-openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
-```
-
-Maintainers / unreleased QA — git checkout, build, then `openclaw plugins install ./`:
-
-```bash
-git clone https://github.com/zerogpu/zerogpu-router.git
-cd zerogpu-router/agents/openclaw/plugin
-npm ci
-npm run build
-openclaw plugins install ./
-```
+For local development and testing, see CONTRIBUTING.md.
 
 ### Alternative — install from npm tarball
 
@@ -102,6 +101,19 @@ tmpdir=$(mktemp -d) && cd "$tmpdir" \
 ```
 
 **GitHub release tarball:** attach `npm pack` output to a release; unpack and `openclaw plugins install ./` in the extracted package root (same as local folder; still no full-repo clone required if you ship the tarball).
+
+## ClawHub publishing
+
+Publishing to ClawHub is handled automatically by CI.
+
+On tag push:
+- the plugin is built
+- validated
+- published to ClawHub using CLAWHUB_TOKEN
+
+Ensure the following secret is configured:
+
+- CLAWHUB_TOKEN (GitHub Actions secret)
 
 ## Post-publish smoke test
 
@@ -120,10 +132,26 @@ tmpdir=$(mktemp -d) && cd "$tmpdir" \
 3. Run a simple summarize test. Ask the agent:
 
    ```text
-   summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
+   summarize this: Following the Q3 board review, the leadership team approved a
+   phased rollout of the new billing platform starting in January. Finance expects
+   the migration to cut invoicing errors by roughly 30% and shorten the collections
+   cycle by about a week. Customer success will run a pilot with ten enterprise
+   accounts before the general release. Any accounts still on the legacy system by
+   April will be migrated automatically.
    ```
 
-   Confirm the `zerogpu_summarize` skill runs the `zerogpu` CLI locally and returns a summary plus a savings line.
+   Expected — a short, slightly mechanical summary plus a savings line, e.g.:
+
+   ```text
+   Leadership approved a phased rollout of the new billing platform starting in
+   January. Finance expects ~30% fewer invoicing errors and a one-week shorter
+   collections cycle. A ten-account enterprise pilot runs first; remaining legacy
+   accounts migrate automatically by April.
+
+   💰 ZeroGPU savings so far: $3.02 (26,410 Claude tokens offloaded)
+   ```
+   Note: the savings line appears intermittently depending on CLI output.
+   Confirm the `summarize` skill invokes `zerogpu summarize` locally and returns a summary plus a savings line.
 
 ## Deprecating an npm version
 

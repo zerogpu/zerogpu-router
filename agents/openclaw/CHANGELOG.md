@@ -18,6 +18,3 @@ npm install -g zerogpu-cli
 zerogpu login
 openclaw plugins install npm:zerogpu-openclaw-plugin
 ```
-
-### Notes
-- No MCP configuration or gateway restart required for ZeroGPU routing

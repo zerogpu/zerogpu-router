@@ -1,5 +1,5 @@
 ---
-name: zerogpu_classify_iab
+name: classify-iab
 description: Classify text against the IAB content/audience taxonomy via ZeroGPU. Use when the user asks for IAB categories, ad-taxonomy labels, or "what topic is this article about" against a standard taxonomy.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu classify_iab *)

@@ -1,53 +1,47 @@
-# OpenClaw
+# OpenClaw Integration
 
-Install and connect ZeroGPU Router to your OpenClaw agent. The plugin ships CLI-based skills that run locally through the agent's Bash tools — all inference goes through the `zerogpu` CLI, so there's nothing to host or register.
+Use ZeroGPU Router with your OpenClaw agent to route routine AI tasks to small models and cut inference costs. This page is a quick entry point — see the plugin README for the full guide.
 
-You need a ZeroGPU API key and project ID. Grab them at [platform.zerogpu.ai](https://platform.zerogpu.ai).
+## Quick start
 
-## Install
+Get an API key + project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 ```sh
-# 1. Install the ZeroGPU CLI (the plugin's skills shell out to it)
 npm install -g zerogpu-cli
-
-# 2. Log in (prompts for API key `zgpu-api-…` and project ID)
 zerogpu login
-
-# 3. Install the plugin
 openclaw plugins install zerogpu-openclaw-plugin
 ```
 
-Pin a release: `zerogpu-openclaw-plugin@1.4.0`.
-
 ## Try it
 
-Ask your agent in plain language — it picks the right skill and runs the `zerogpu` CLI locally. Each reply comes back with the result plus a savings line showing what the routed call cost versus the host model.
-
-**Summarize**
+Ask your agent in plain language — it picks the right skill and runs the `zerogpu` CLI locally:
 
 ```text
-summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
+summarize this: Team, quick recap of today's sync. We agreed to push the mobile
+checkout redesign to the March release because the payments integration slipped a
+sprint. QA flagged two blocker bugs on Android that engineering will prioritize
+this week. Marketing still wants the new pricing page live before the end of the
+quarter, so we will revisit scope on Thursday. Please update your tickets before
+standup tomorrow.
 ```
 
-**Classify**
+Reply:
 
 ```text
-classify this ticket as bug, feature, or question: "The export button does nothing on Safari."
+mobile checkout redesign pushed to march release, payments integration slipped a
+sprint. qa flagged two android blocker bugs, engineering to fix this week.
+marketing wants pricing page live by end of quarter, scope revisited thursday.
+update tickets before standup.
+
+model: llama-3.1-8b-instruct-fast · 78 tokens in / 41 out
+💰 ZeroGPU savings so far: $2.14 (18,730 Claude tokens offloaded)
 ```
 
-**Redact PII**
+## Full documentation
 
-```text
-redact the PII in this before I share it: "Email Sarah Chen at sarah.chen@northwind-labs.com or call +1 415-555-0182."
-```
+See [./plugin/README.md](./plugin/README.md) — the single source of truth for skills, examples, and configuration.
 
-## Advanced — install from source
+## Notes
 
-The plugin lives at `agents/openclaw/plugin/` in the [zerogpu/zerogpu-router](https://github.com/zerogpu/zerogpu-router) monorepo. Install from a checkout instead of npm — use the plugin path, not the repo root:
-
-```sh
-tmpdir=$(mktemp -d)
-git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpdir/repo"
-(cd "$tmpdir/repo/agents/openclaw/plugin" && npm ci && npm run build)
-openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
-```
+- No additional infrastructure or services required.
+- Skills run locally through the `zerogpu` CLI.

@@ -1,5 +1,5 @@
 ---
-name: zerogpu_redact_pii
+name: redact-pii
 description: Detect and mask PII in-line via ZeroGPU, replacing it with label placeholders like [PERSON] and [EMAIL]. Use when the user asks to redact, scrub, mask, anonymize, or sanitize a passage before sharing or logging it.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu redact_pii *)
@@ -15,6 +15,6 @@ ZGPU_END_OF_INPUT
 zerogpu redact_pii "$ZGPU_TEXT"
 ```
 
-Output is the original text with PII spans replaced by `[LABEL]` placeholders. To extract (not mask) PII, use `zerogpu_extract_pii` instead.
+Output is the original text with PII spans replaced by `[LABEL]` placeholders. To extract (not mask) PII, use `extract-pii` instead.
 
 Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings.

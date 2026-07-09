@@ -29,7 +29,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
     
       - name: Install dependencies
         run: |
@@ -45,6 +45,26 @@ jobs:
         run: |
           cd agents/openclaw/plugin
           npm pack --dry-run
+
+      - name: Ensure jq is installed
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Check version consistency
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(jq -r .version agents/openclaw/plugin/package.json)
+          PLUGIN_VERSION=$(jq -r .version agents/openclaw/plugin/openclaw.plugin.json)
+
+          if [ "$PKG_VERSION" != "$PLUGIN_VERSION" ]; then
+            echo "::error::Version mismatch: package.json ($PKG_VERSION) vs openclaw.plugin.json ($PLUGIN_VERSION)"
+            exit 1
+          fi
+
+      - name: Verify build output
+        run: |
+          test -f agents/openclaw/plugin/dist/index.js || (echo "Missing build output" && exit 1)
     
       - name: Check CHANGELOG updated
         if: github.event_name == 'pull_request'

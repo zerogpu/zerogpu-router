@@ -1,5 +1,5 @@
 ---
-name: zerogpu_extract_pii
+name: extract-pii
 description: Extract PII entities from text via ZeroGPU. Use when the user wants to find personally identifiable information — names, emails, phones, addresses, financial identifiers — grouped by category, without modifying the source text.
 argument-hint: "<text> [-t <threshold>] [(-c | --categories) <list>]"
 allowed-tools: Bash(zerogpu extract_pii *)
@@ -20,6 +20,6 @@ ZGPU_T
 )" [-t 0.5] [-c identity,contact]
 ```
 
-Optional flags: `-t <threshold>` (float, default `0.5`), `-c <list>` (comma-separated categories, default `identity,contact`; other values include `financial`, `medical`, `credentials`). To mask PII in-line instead of extracting it, use `zerogpu_redact_pii`.
+Optional flags: `-t <threshold>` (float, default `0.5`), `-c <list>` (comma-separated categories, default `identity,contact`; other values include `financial`, `medical`, `credentials`). To mask PII in-line instead of extracting it, use `redact-pii`.
 
 Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings.

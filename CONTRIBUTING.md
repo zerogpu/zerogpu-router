@@ -2,7 +2,7 @@
 
 Thanks for helping improve ZeroGPU Router.
 
-This repository hosts **OpenClaw-first** agent integrations: the **`zerogpu-openclaw-plugin`** package (same string for npm and plugin `id` in `openclaw.plugin.json` / `src/index.ts`), routing skill, and MCP registration JSON under `agents/openclaw/`. The hosted Router at `https://mcp.zerogpu.ai/mcp` is operated by ZeroGPU. Optional Claude Code assets live under `agents/claude/`. Releases go to **npm** and/or **git** — see [RELEASE.md](RELEASE.md).
+This repository hosts **OpenClaw-first** agent integrations: the **`zerogpu-openclaw-plugin`** package (same string for npm and plugin `id` in `openclaw.plugin.json` / `src/index.ts`) and its CLI-based skills under `agents/openclaw/`. Optional Claude Code assets live under `agents/claude/`. Releases go to **npm** and/or **git** — see [RELEASE.md](RELEASE.md).
 
 ## Development Setup
 
@@ -26,7 +26,7 @@ npm --prefix agents/openclaw/plugin run build
 
 ## Repository Layout
 
-- `agents/openclaw/` — **main workstream:** OpenClaw package `zerogpu-openclaw-plugin` + drop-in skill + MCP registration JSON.
+- `agents/openclaw/` — **main workstream:** OpenClaw package `zerogpu-openclaw-plugin` + CLI-based skills.
 - `agents/claude/` — optional Claude Code marketplace plugin + routing skill.
 - Routing rules live in `agents/openclaw/plugin/skills/zerogpu/SKILL.md` (OpenClaw). If you also change Claude behavior, keep `agents/claude/plugins/zerogpu/skill/SKILL.md` aligned when practical.
 
@@ -34,7 +34,7 @@ npm --prefix agents/openclaw/plugin run build
 
 - Keep runtime behavior changes and documentation changes clearly separated when possible.
 - When changing routing rules, start from `agents/openclaw/plugin/skills/zerogpu/SKILL.md`. Update the Claude skill copy only if you care about parity for `agents/claude/`.
-- Do not commit generated build output, `.env` files, populated MCP credential JSON, or real API credentials.
+- Do not commit generated build output, `.env` files, or real API credentials.
 - If you change the OpenClaw plugin's manifest or skill, bump the version in `agents/openclaw/plugin/package.json` and `agents/openclaw/plugin/openclaw.plugin.json`.
 
 ## Testing changes end-to-end
@@ -42,6 +42,6 @@ npm --prefix agents/openclaw/plugin run build
 To smoke-test a routing change locally:
 
 1. Get an API key and project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai).
-2. Register the hosted Router with OpenClaw (see the [root README](README.md#openclaw-quick-start)).
+2. Install and authenticate the `zerogpu` CLI (`npm install -g zerogpu-cli && zerogpu login`).
 3. Install the plugin from this branch (`cd agents/openclaw/plugin && openclaw plugins install ./`).
-4. Run a few prompts and confirm the agent calls the expected `zerogpu_*` tool.
+4. Run a few prompts and confirm the agent runs the expected `zerogpu` CLI command.

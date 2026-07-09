@@ -1,5 +1,5 @@
 ---
-name: zerogpu_classify_zero_shot
+name: classify-zero-shot
 description: Zero-shot classification against a caller-supplied list of candidate labels via ZeroGPU. Use when the user wants to classify text into a custom set of labels they provide (e.g. "is this positive, negative, or neutral?", "tag this as bug, feature, or question").
 argument-hint: "<text> (-l <label>... | --labels a,b,c) [-t <0..1>]"
 allowed-tools: Bash(zerogpu classify_zero_shot *)

@@ -36,7 +36,7 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific sk
 
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
-- **OpenClaw** — install the `zerogpu` CLI plus **`zerogpu-openclaw-plugin`** (see [agents/openclaw/](agents/openclaw/)); no MCP setup. Skills run locally through your agent's Bash tools.
+- **OpenClaw** — install the `zerogpu` CLI plus **`zerogpu-openclaw-plugin`** (see [agents/openclaw/](agents/openclaw/)). Skills run locally through your agent's Bash tools.
 - **Claude Code** — install the `zerogpu` CLI plus the marketplace plugin and you get 11 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
@@ -71,10 +71,24 @@ Pin a release: `zerogpu-openclaw-plugin@1.4.0`.
 **4. Try it:**
 
 ```text
-summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
+summarize this account note: Renewal call with Acme Corp went well overall. They
+are happy with uptime but frustrated by slow support response times over the last
+two months. Their VP hinted at evaluating a competitor if the SLA does not improve
+before the December renewal. They also asked about volume pricing for a second
+team of about 40 seats. Action items: loop in support leadership and send an
+updated enterprise quote by Friday.
 ```
 
-The agent runs the `zerogpu_summarize` skill — which executes `zerogpu summarize` locally via its Bash tool — and returns a summary plus a savings line.
+The agent runs the `summarize` skill — which executes `zerogpu summarize` locally via its Bash tool — and returns a concise, slightly mechanical summary plus a savings line, for example:
+
+```text
+Positive Acme Corp renewal call — happy with uptime, frustrated by slow support
+the last two months. VP may evaluate a competitor if the SLA does not improve
+before the December renewal; also asked about volume pricing for ~40 more seats.
+Next: loop in support leadership, send an updated enterprise quote by Friday.
+
+💰 ZeroGPU savings so far: $1.87 (16,320 Claude tokens offloaded)
+```
 
 ## Claude Code quick start
 
@@ -120,7 +134,7 @@ number above.
 
 Claude routes to `/zerogpu-router:redact-pii` automatically and returns the same passage with names, emails, phone numbers, social handles, and street addresses replaced by uppercase label placeholders like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]` — safe to paste into a public tracker. The `gliner-multi-pii-v1` edge model does the masking, not Claude, so the raw PII never enters Claude's context window.
 
-> The model is tuned for the standard PII categories above. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) won't be caught — strip those yourself, or pipe the result through `/zerogpu-router:extract-entities` with your own custom labels.
+The model is tuned for the standard PII categories above. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) won't be caught — strip those yourself, or pipe the result through `/zerogpu-router:extract-entities` with your own custom labels.
 
 Full walkthrough — prerequisites, every skill documented in detail, troubleshooting: **[agents/claude/README.md](agents/claude/README.md)**.
 
@@ -133,7 +147,7 @@ Sign in at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** to:
 - Watch live token usage, latency, and routed-call savings on the dashboard
 - See per-tool savings broken down by agent and time range
 - Manage agents, billing, and team access
-- Follow setup for your stack: [OpenClaw](agents/openclaw/README.md) and [Claude Code](agents/claude/README.md) — both use the `zerogpu` CLI plus a plugin, no MCP
+- Follow setup for your stack: [OpenClaw](agents/openclaw/README.md) and [Claude Code](agents/claude/README.md) — both use the `zerogpu` CLI plus a plugin
 
 The `zerogpu` CLI runs on your machine and talks to the hosted ZeroGPU models. The dashboard at `platform.zerogpu.ai` is where you see what it did.
 

@@ -1,5 +1,5 @@
 ---
-name: zerogpu_extract_json
+name: extract-json
 description: Schema-driven structured JSON extraction via ZeroGPU. Use when the user wants to pull specific named fields out of free text into a JSON object — contact info, invoice details, order data, profile attributes — defined by a per-field type/description schema.
 argument-hint: "<text> -s '<json schema>'"
 allowed-tools: Bash(zerogpu extract_json *)
