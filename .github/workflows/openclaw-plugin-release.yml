@@ -92,33 +92,37 @@ jobs:
     name: Publish to ClawHub
     needs: release
     runs-on: ubuntu-latest
-  
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-  
-      - name: Install CLI
-        run: npm install -g @openclaw/clawhub-cli
-  
-      - name: Copy skills to root
+
+      - name: Prepare skills
         run: |
           mkdir skills
           cp -r agents/openclaw/plugin/skills/* skills/
-  
-      - name: Login
+
+          echo "📦 Skills:"
+          ls -R skills
+
+      - name: Publish each skill
         env:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
-        run: clawhub login --token "$CLAWHUB_TOKEN"
-  
-      - name: Publish each skill
         run: |
+          if [ ! -d "skills" ] || [ -z "$(ls -A skills)" ]; then
+            echo "No skills found"
+            exit 1
+          fi
+
           for dir in skills/*; do
             if [ -d "$dir" ]; then
               slug=$(basename "$dir")
               echo "Publishing $slug"
-              clawhub skill publish "$dir" \
+
+              npx --yes clawhub skill publish "$dir" \
                 --slug "$slug" \
                 --name "$slug" \
-                --owner zerogpu
+                --owner zerogpu \
+                --token "$CLAWBHUB_TOKEN"
             fi
           done
