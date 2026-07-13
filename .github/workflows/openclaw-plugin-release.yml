@@ -117,8 +117,8 @@ jobs:
           echo "Skills:"
           ls -R skills
         
-          # Login via npx 
-          npx --yes clawhub login --token "$CLAWBHUB_TOKEN"
+          # 🔐 Correct variable name
+          npx --yes clawhub login --token "$CLAWHUB_TOKEN"
         
           for dir in skills/*/; do
             slug=$(basename "$dir")
