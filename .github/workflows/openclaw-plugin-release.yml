@@ -109,20 +109,23 @@ jobs:
         env:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
         run: |
-          if [ ! -d "skills" ] || [ -z "$(ls -A skills)" ]; then
-            echo "No skills found"
-            exit 1
-          fi
-
-          for dir in skills/*; do
-            if [ -d "$dir" ]; then
-              slug=$(basename "$dir")
-              echo "Publishing $slug"
-
-              npx --yes clawhub skill publish "$dir" \
-                --slug "$slug" \
-                --name "$slug" \
-                --owner zerogpu \
-                --token "$CLAWBHUB_TOKEN"
-            fi
+          set -euo pipefail
+        
+          mkdir -p skills
+          cp -r agents/openclaw/plugin/skills/* skills/
+        
+          echo "Skills:"
+          ls -R skills
+        
+          # Login via npx 
+          npx --yes clawhub login --token "$CLAWBHUB_TOKEN"
+        
+          for dir in skills/*/; do
+            slug=$(basename "$dir")
+            echo "Publishing $slug"
+        
+            npx --yes clawhub skill publish "$dir" \
+              --slug "$slug" \
+              --name "$slug" \
+              --owner zerogpu
           done
