@@ -122,6 +122,12 @@ jobs:
         
           for dir in skills/*/; do
             slug=$(basename "$dir")
+            
+            if [ "$slug" = "signin" ] || [ "$slug" = "status" ]; then
+              echo "⚠ Skipping reserved skill: $slug"
+              continue
+            fi
+
             echo "Publishing $slug"
         
             npx --yes clawhub skill publish "$dir" \
