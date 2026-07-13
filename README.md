@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Cut inference costs without dumbing down your agent.</strong><br/>
-  Route summarize, classify, PII redaction, JSON extraction, follow-ups, and short chat to small/nano models via MCP — hosted at <code>https://mcp.zerogpu.ai/mcp</code>.
+  Route summarize, classify, PII redaction, JSON extraction, follow-ups, and short chat to small/nano models via the <code>zerogpu</code> CLI — executed locally by your agent's Bash tools.
 </p>
 
 <p align="center">
@@ -32,65 +32,63 @@
 
 ## What is ZeroGPU Router?
 
-ZeroGPU Router is a smart task router for AI agents. It exposes task-specific tools — summarize, classify, redact PII, extract JSON, and more — via the Model Context Protocol (MCP), backed by small language models that run for a fraction of the cost of a frontier model.
+ZeroGPU Router is a smart task router for AI agents. It exposes task-specific skills — summarize, classify, redact PII, extract JSON, and more — that shell out to the local `zerogpu` CLI, backed by small language models that run for a fraction of the cost of a frontier model.
 
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
-- **OpenClaw** — install **`zerogpu-openclaw-plugin`** and register MCP in OpenClaw (see [agents/openclaw/](agents/openclaw/)); package name and plugin `id` match.
-- **Claude Code** — no MCP setup. Install the `zerogpu` CLI plus the marketplace plugin and you get 11 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
+- **OpenClaw** — install the `zerogpu` CLI plus **`zerogpu-openclaw-plugin`** (see [agents/openclaw/](agents/openclaw/)). Skills run locally through your agent's Bash tools.
+- **Claude Code** — install the `zerogpu` CLI plus the marketplace plugin and you get 11 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
-- **Hosted, no infra** — point your agent at `https://mcp.zerogpu.ai/mcp`. We run the routing layer.
+- **CLI, no infra** — the `zerogpu` CLI talks to the hosted models for you. Nothing to run or host yourself.
 
 ## OpenClaw quick start
 
 You need a ZeroGPU API key and project ID. Grab them at [platform.zerogpu.ai](https://platform.zerogpu.ai).
 
-Install the plugin ([`zerogpu-openclaw-plugin`](https://www.npmjs.com/package/zerogpu-openclaw-plugin)):
-
-**From npm (one command):**
+**1. Install the `zerogpu` CLI** (the plugin's skills shell out to it):
 
 ```sh
-openclaw plugins install npm:zerogpu-openclaw-plugin
+npm install -g zerogpu-cli
 ```
 
-Pin a release: `npm:zerogpu-openclaw-plugin@0.1.10`.
-
-**From GitHub** — OpenClaw supports `git:github.com/<owner>/<repo>@<ref>`, but this repo is a **monorepo**: the plugin package is at `agents/openclaw/plugin/`, not the repository root, so `git:github.com/zerogpu/zerogpu-router@main` will not install correctly. Clone and install that folder instead (pin `main` or a tag with `-b`):
+**2. Authenticate:**
 
 ```sh
-tmpdir=$(mktemp -d)
-git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpdir/repo"
-(cd "$tmpdir/repo/agents/openclaw/plugin" && npm ci && npm run build)
-openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
+zerogpu login
 ```
 
-Connect OpenClaw to MCP:
+You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
+
+**3. Install the OpenClaw plugin** ([`zerogpu-openclaw-plugin`](https://www.npmjs.com/package/zerogpu-openclaw-plugin)):
 
 ```sh
-openclaw mcp set zerogpu '{
-  "url": "https://mcp.zerogpu.ai/mcp",
-  "transport": "streamable-http",
-  "headers": {
-    "x-api-key": "zgpu-api-…",
-    "x-project-id": "id"
-  }
-}'
+openclaw plugins install zerogpu-openclaw-plugin
 ```
 
-Restart Gateway:
+Pin a release: `zerogpu-openclaw-plugin@1.4.0`.
 
-```sh
-openclaw gateway restart
-```
-
-Try:
+**4. Try it:**
 
 ```text
-summarize this paragraph: Renewable energy adoption is accelerating globally, driven by falling solar and wind costs.
+summarize this account note: Renewal call with Acme Corp went well overall. They
+are happy with uptime but frustrated by slow support response times over the last
+two months. Their VP hinted at evaluating a competitor if the SLA does not improve
+before the December renewal. They also asked about volume pricing for a second
+team of about 40 seats. Action items: loop in support leadership and send an
+updated enterprise quote by Friday.
 ```
 
-The agent should call `zerogpu_summarize` and return a summary plus savings metadata.
+The agent runs the `summarize` skill — which executes `zerogpu summarize` locally via its Bash tool — and returns a concise, slightly mechanical summary plus a savings line, for example:
+
+```text
+Positive Acme Corp renewal call — happy with uptime, frustrated by slow support
+the last two months. VP may evaluate a competitor if the SLA does not improve
+before the December renewal; also asked about volume pricing for ~40 more seats.
+Next: loop in support leadership, send an updated enterprise quote by Friday.
+
+💰 ZeroGPU savings so far: $1.87 (16,320 Claude tokens offloaded)
+```
 
 ## Claude Code quick start
 
@@ -136,7 +134,7 @@ number above.
 
 Claude routes to `/zerogpu-router:redact-pii` automatically and returns the same passage with names, emails, phone numbers, social handles, and street addresses replaced by uppercase label placeholders like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]` — safe to paste into a public tracker. The `gliner-multi-pii-v1` edge model does the masking, not Claude, so the raw PII never enters Claude's context window.
 
-> The model is tuned for the standard PII categories above. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) won't be caught — strip those yourself, or pipe the result through `/zerogpu-router:extract-entities` with your own custom labels.
+The model is tuned for the standard PII categories above. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) won't be caught — strip those yourself, or pipe the result through `/zerogpu-router:extract-entities` with your own custom labels.
 
 Full walkthrough — prerequisites, every skill documented in detail, troubleshooting: **[agents/claude/README.md](agents/claude/README.md)**.
 
@@ -149,9 +147,9 @@ Sign in at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** to:
 - Watch live token usage, latency, and routed-call savings on the dashboard
 - See per-tool savings broken down by agent and time range
 - Manage agents, billing, and team access
-- Follow setup for your stack: [OpenClaw](agents/openclaw/README.md) (MCP-based) vs [Claude Code](agents/claude/README.md) (CLI + plugin, no MCP)
+- Follow setup for your stack: [OpenClaw](agents/openclaw/README.md) and [Claude Code](agents/claude/README.md) — both use the `zerogpu` CLI plus a plugin
 
-The hosted Router at `https://mcp.zerogpu.ai/mcp` is the one your agent talks to. The dashboard at `platform.zerogpu.ai` is where you see what it did.
+The `zerogpu` CLI runs on your machine and talks to the hosted ZeroGPU models. The dashboard at `platform.zerogpu.ai` is where you see what it did.
 
 ## Routes
 
@@ -177,8 +175,8 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 
 | Package | Role |
 |---|---|
-| [agents/openclaw/](agents/openclaw/) | **OpenClaw:** package + plugin id **`zerogpu-openclaw-plugin`** + skill + MCP registration JSON |
-| [agents/claude/](agents/claude/) | **Claude Code:** `zerogpu-cli` + marketplace plugin (`/plugin install zerogpu-router@zerogpu`) — no MCP setup |
+| [agents/openclaw/](agents/openclaw/) | **OpenClaw:** `zerogpu-cli` + package/plugin id **`zerogpu-openclaw-plugin`** + CLI-based skills |
+| [agents/claude/](agents/claude/) | **Claude Code:** `zerogpu-cli` + marketplace plugin (`/plugin install zerogpu-router@zerogpu`) |
 
 ## Quick Links
 

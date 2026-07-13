@@ -1,41 +1,47 @@
-# OpenClaw
+# OpenClaw Integration
 
-Use these commands in an OpenClaw terminal to install and connect ZeroGPU Router.
+Use ZeroGPU Router with your OpenClaw agent to route routine AI tasks to small models and cut inference costs. This page is a quick entry point — see the plugin README for the full guide.
 
-## 1) Install the plugin
+## Quick start
 
-**npm (simplest):**
-
-```sh
-openclaw plugins install npm:zerogpu-openclaw-plugin
-```
-
-Optional pin: `npm:zerogpu-openclaw-plugin@0.1.10`.
-
-**GitHub** — plugin path is `agents/openclaw/plugin/` in [zerogpu/zerogpu-router](https://github.com/zerogpu/zerogpu-router) (not repo root; do not use `git:github.com/zerogpu/zerogpu-router@main` alone):
+Get an API key + project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 ```sh
-tmpdir=$(mktemp -d)
-git clone --depth 1 -b main https://github.com/zerogpu/zerogpu-router.git "$tmpdir/repo"
-(cd "$tmpdir/repo/agents/openclaw/plugin" && npm ci && npm run build)
-openclaw plugins install "$tmpdir/repo/agents/openclaw/plugin"
+npm install -g zerogpu-cli
+zerogpu login
+openclaw plugins install zerogpu-openclaw-plugin
 ```
 
-## 2) Connect OpenClaw to MCP
+## Try it
 
-```sh
-openclaw mcp set zerogpu '{
-  "url": "https://mcp.zerogpu.ai/mcp",
-  "transport": "streamable-http",
-  "headers": {
-    "x-api-key": "zgpu-api-…",
-    "x-project-id": "id"
-  }
-}'
+Ask your agent in plain language — it picks the right skill and runs the `zerogpu` CLI locally:
+
+```text
+summarize this: Team, quick recap of today's sync. We agreed to push the mobile
+checkout redesign to the March release because the payments integration slipped a
+sprint. QA flagged two blocker bugs on Android that engineering will prioritize
+this week. Marketing still wants the new pricing page live before the end of the
+quarter, so we will revisit scope on Thursday. Please update your tickets before
+standup tomorrow.
 ```
 
-## 3) Restart gateway
+Reply:
 
-```sh
-openclaw gateway restart
+```text
+mobile checkout redesign pushed to march release, payments integration slipped a
+sprint. qa flagged two android blocker bugs, engineering to fix this week.
+marketing wants pricing page live by end of quarter, scope revisited thursday.
+update tickets before standup.
+
+model: llama-3.1-8b-instruct-fast · 78 tokens in / 41 out
+💰 ZeroGPU savings so far: $2.14 (18,730 Claude tokens offloaded)
 ```
+
+## Full documentation
+
+See [./plugin/README.md](./plugin/README.md) — the single source of truth for skills, examples, and configuration.
+
+## Notes
+
+- No additional infrastructure or services required.
+- Skills run locally through the `zerogpu` CLI.

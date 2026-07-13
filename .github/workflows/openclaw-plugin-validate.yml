@@ -1,0 +1,88 @@
+name: openclaw-plugin-validate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'agents/openclaw/**'
+      - '.github/workflows/openclaw-plugin-validate.yml'
+
+  push:
+    branches: [main]
+    paths:
+     - 'agents/openclaw/**'
+
+concurrency:
+   group: openclaw-plugin-validate-${{ github.ref }}
+   cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate OpenClaw plugin
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+    
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+    
+      - name: Install dependencies
+        run: |
+          cd agents/openclaw/plugin
+          npm ci
+    
+      - name: Build plugin
+        run: |
+          cd agents/openclaw/plugin
+          npm run build
+    
+      - name: Validate package contents
+        run: |
+          cd agents/openclaw/plugin
+          npm pack --dry-run
+
+      - name: Ensure jq is installed
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Check version consistency
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(jq -r .version agents/openclaw/plugin/package.json)
+          PLUGIN_VERSION=$(jq -r .version agents/openclaw/plugin/openclaw.plugin.json)
+
+          if [ "$PKG_VERSION" != "$PLUGIN_VERSION" ]; then
+            echo "::error::Version mismatch: package.json ($PKG_VERSION) vs openclaw.plugin.json ($PLUGIN_VERSION)"
+            exit 1
+          fi
+
+      - name: Verify build output
+        run: |
+          test -f agents/openclaw/plugin/dist/index.js || (echo "Missing build output" && exit 1)
+    
+      - name: Check CHANGELOG updated
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          BASE_REF="${{ github.base_ref }}"
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+    
+          CHANGELOG="agents/openclaw/CHANGELOG.md"
+    
+          if git diff --quiet "origin/$BASE_REF" -- "agents/openclaw/" ":(exclude)$CHANGELOG"; then
+            echo "No plugin changes — CHANGELOG update not required."
+            exit 0
+          fi
+    
+          if git diff --quiet "origin/$BASE_REF" -- "$CHANGELOG"; then
+            echo "::error file=$CHANGELOG::OpenClaw plugin changed but CHANGELOG not updated."
+            exit 1
+          fi
+    
+          echo "CHANGELOG updated."
