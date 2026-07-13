@@ -91,12 +91,34 @@ jobs:
   publish:
     name: Publish to ClawHub
     needs: release
-
-    uses: openclaw/clawhub/.github/workflows/skill-publish.yml@main
-
-    with:
-      owner: zerogpu   # Need actual owner name
-      dry_run: false
-
-    secrets:
-      clawhub_token: ${{ secrets.CLAWHUB_TOKEN }} # Replace with actual ClawHub token
+    runs-on: ubuntu-latest
+  
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+  
+      - name: Install CLI
+        run: npm install -g @openclaw/clawhub-cli
+  
+      - name: Copy skills to root
+        run: |
+          mkdir skills
+          cp -r agents/openclaw/plugin/skills/* skills/
+  
+      - name: Login
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: clawhub login --token "$CLAWHUB_TOKEN"
+  
+      - name: Publish each skill
+        run: |
+          for dir in skills/*; do
+            if [ -d "$dir" ]; then
+              slug=$(basename "$dir")
+              echo "Publishing $slug"
+              clawhub skill publish "$dir" \
+                --slug "$slug" \
+                --name "$slug" \
+                --owner zerogpu
+            fi
+          done
