@@ -1,16 +1,33 @@
 #!/usr/bin/env bash
-# claude-release [patch|minor|major]
+# agents/claude/release.sh [patch|minor|major]
 #
 # Bumps agents/claude/.claude-plugin/plugin.json, commits, pushes the commit to
 # origin/main, then hands off to `claude plugin tag --push` (the official CLI)
 # to create and push the spec-conformant tag `zerogpu-router--v<new-version>`
 # — see docs/plugin-dependencies.md.
 #
+# Run from anywhere in the repo; paths resolve against the git root.
 # Default bump: patch.
 
 set -euo pipefail
 
-BUMP="${1:-patch}"
+BUMP="${1:-}"
+if [ -z "$BUMP" ]; then
+  echo "Select release type:"
+  echo "  1) patch"
+  echo "  2) minor"
+  echo "  3) major"
+  read -r -p "Enter choice [1-3] (default 1): " choice
+  case "$choice" in
+    ""|1|patch) BUMP="patch" ;;
+    2|minor)    BUMP="minor" ;;
+    3|major)    BUMP="major" ;;
+    *)
+      echo "error: invalid choice '$choice'" >&2
+      exit 2
+      ;;
+  esac
+fi
 case "$BUMP" in
   patch|minor|major) ;;
   *)
@@ -19,7 +36,7 @@ case "$BUMP" in
     ;;
 esac
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 PLUGIN_JSON="agents/claude/.claude-plugin/plugin.json"
@@ -73,15 +90,13 @@ if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; the
   exit 1
 fi
 
-# Warn if CHANGELOG has no heading for the new version (CI will block anyway,
-# but failing fast here is friendlier than a rejected push).
+# Require a CHANGELOG heading for the new version. This section becomes the
+# GitHub release body verbatim, so releasing without it is never correct — fail
+# hard here rather than pushing a commit/tag the release workflow would reject.
 if ! grep -Eq "^##[[:space:]]+${NEW}([[:space:]]|$)" "$CHANGELOG"; then
-  echo "warning: no '## $NEW' heading found in $CHANGELOG" >&2
-  read -r -p "Continue anyway? [y/N] " ans
-  case "$ans" in
-    y|Y|yes|YES) ;;
-    *) echo "aborted."; exit 1 ;;
-  esac
+  echo "error: no '## $NEW' heading found in $CHANGELOG" >&2
+  echo "  Add a '## $NEW' section describing what shipped, commit it, then re-run." >&2
+  exit 1
 fi
 
 # Bump plugin.json in place.
