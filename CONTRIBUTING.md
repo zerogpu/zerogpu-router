@@ -2,7 +2,7 @@
 
 Thanks for helping improve ZeroGPU Router.
 
-This repository hosts **OpenClaw-first** agent integrations: the **`zerogpu-openclaw-plugin`** package (same string for npm and plugin `id` in `openclaw.plugin.json` / `src/index.ts`) and its CLI-based skills under `agents/openclaw/`. Optional Claude Code assets live under `agents/claude/`. Releases go to **npm** and/or **git** — see [OPENCLAW_RELEASE.md](OPENCLAW_RELEASE.md) (Claude Code plugin releases: [docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md](docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md)).
+This repository hosts **OpenClaw-first** agent integrations: the **`zerogpu-router`** plugin (package name + plugin `id` in `openclaw.plugin.json` / `src/index.ts`) and its CLI-based skills under `agents/openclaw/`. Optional Claude Code assets live under `agents/claude/`. The OpenClaw plugin publishes to **ClawHub** — see [docs/OPENCLAW_PLUGIN_RELEASE_GUIDE.md](docs/OPENCLAW_PLUGIN_RELEASE_GUIDE.md) (Claude Code plugin releases: [docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md](docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md)).
 
 ## Development Setup
 
@@ -26,7 +26,7 @@ npm --prefix agents/openclaw/plugin run build
 
 ## Repository Layout
 
-- `agents/openclaw/` — **main workstream:** OpenClaw package `zerogpu-openclaw-plugin` + CLI-based skills.
+- `agents/openclaw/` — **main workstream:** OpenClaw plugin `zerogpu-router` + CLI-based skills.
 - `agents/claude/` — optional Claude Code marketplace plugin + routing skill.
 - Routing rules live in `agents/openclaw/plugin/skills/zerogpu/SKILL.md` (OpenClaw). If you also change Claude behavior, keep `agents/claude/plugins/zerogpu/skill/SKILL.md` aligned when practical.
 

@@ -1,7 +1,7 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 
 export default definePluginEntry({
-  id: "zerogpu-openclaw-plugin",
+  id: "zerogpu-router",
   name: "ZeroGPU Router",
   description: "Route trivial AI tasks to ZeroGPU small/nano models via ZeroGPU CLI.",
   register() {

@@ -36,7 +36,7 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific sk
 
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
-- **OpenClaw** — install the `zerogpu` CLI plus **`zerogpu-openclaw-plugin`** (see [agents/openclaw/](agents/openclaw/)). Skills run locally through your agent's Bash tools.
+- **OpenClaw** — install the `zerogpu` CLI plus **`zerogpu-router`** (see [agents/openclaw/](agents/openclaw/)). Skills run locally through your agent's Bash tools.
 - **Claude Code** — install the `zerogpu` CLI plus the marketplace plugin and you get 11 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
@@ -46,11 +46,13 @@ Your agent keeps doing the heavy reasoning. The boring stuff gets routed to Zero
 
 You need a ZeroGPU API key and project ID. Grab them at [platform.zerogpu.ai](https://platform.zerogpu.ai).
 
-**1. Install the `zerogpu` CLI** (the plugin's skills shell out to it):
+**1. Install the OpenClaw plugin** ([`zerogpu-router`](https://clawhub.ai/zerogpu/plugins/zerogpu-router)):
 
 ```sh
-npm install -g zerogpu-cli
+openclaw plugins install clawhub:zerogpu-router
 ```
+
+The plugin's skills provision the `zerogpu` CLI automatically on first use (via a `node` install spec), so there's no separate global install — you just need a package manager (npm by default) available.
 
 **2. Authenticate:**
 
@@ -60,13 +62,7 @@ zerogpu login
 
 You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
 
-**3. Install the OpenClaw plugin** ([`zerogpu-openclaw-plugin`](https://www.npmjs.com/package/zerogpu-openclaw-plugin)):
-
-```sh
-openclaw plugins install zerogpu-openclaw-plugin
-```
-
-Pin a release: `zerogpu-openclaw-plugin@1.4.0`.
+Pin a release: `clawhub:zerogpu-router@2.0.0`.
 
 **4. Try it:**
 
@@ -175,7 +171,7 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 
 | Package | Role |
 |---|---|
-| [agents/openclaw/](agents/openclaw/) | **OpenClaw:** `zerogpu-cli` + package/plugin id **`zerogpu-openclaw-plugin`** + CLI-based skills |
+| [agents/openclaw/](agents/openclaw/) | **OpenClaw:** `zerogpu-cli` + package/plugin id **`zerogpu-router`** + CLI-based skills |
 | [agents/claude/](agents/claude/) | **Claude Code:** `zerogpu-cli` + marketplace plugin (`/plugin install zerogpu-router@zerogpu`) |
 
 ## Quick Links
@@ -184,7 +180,7 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 - [Agent integrations index](agents/README.md)
 - [Claude Code setup](agents/claude/README.md)
 - [Platform dashboard](https://platform.zerogpu.ai)
-- [OpenClaw release guide](OPENCLAW_RELEASE.md)
+- [OpenClaw release guide](docs/OPENCLAW_PLUGIN_RELEASE_GUIDE.md)
 - [Claude Code release guide](docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)

@@ -89,7 +89,7 @@ jobs:
             --verify-tag
 
   publish:
-    name: Publish to ClawHub
+    name: Publish plugin to ClawHub
     needs: release
     runs-on: ubuntu-latest
 
@@ -97,41 +97,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare skills
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build plugin
         run: |
-          mkdir skills
-          cp -r agents/openclaw/plugin/skills/* skills/
+          cd agents/openclaw/plugin
+          npm ci
+          npm run build
 
-          echo "📦 Skills:"
-          ls -R skills
-
-      - name: Publish each skill
+      - name: Publish plugin package to ClawHub
         env:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
         run: |
           set -euo pipefail
-        
-          mkdir -p skills
-          cp -r agents/openclaw/plugin/skills/* skills/
-        
-          echo "Skills:"
-          ls -R skills
-        
-          # 🔐 Correct variable name
-          npx --yes clawhub login --token "$CLAWHUB_TOKEN"
-        
-          for dir in skills/*/; do
-            slug=$(basename "$dir")
-            
-            if [ "$slug" = "signin" ] || [ "$slug" = "status" ]; then
-              echo "⚠ Skipping reserved skill: $slug"
-              continue
-            fi
-
-            echo "Publishing $slug"
-        
-            npx --yes clawhub skill publish "$dir" \
-              --slug "$slug" \
-              --name "$slug" \
-              --owner zerogpu
-          done
+          npx --yes clawhub@latest login --token "$CLAWHUB_TOKEN"
+          npx --yes clawhub@latest package publish agents/openclaw/plugin \
+            --family code-plugin --owner zerogpu --dry-run
+          npx --yes clawhub@latest package publish agents/openclaw/plugin \
+            --family code-plugin --owner zerogpu

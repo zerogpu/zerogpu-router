@@ -19,17 +19,19 @@ Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded
 Get an API key + project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 ```bash
-# 1. Install the ZeroGPU CLI (skills shell out to it)
-npm install -g zerogpu-cli
+# 1. Install the plugin — OpenClaw provisions the `zerogpu` CLI automatically on first use
+openclaw plugins install clawhub:zerogpu-router
 
 # 2. Log in (prompts for API key + project ID)
 zerogpu login
-
-# 3. Install this plugin
-openclaw plugins install zerogpu-openclaw-plugin
 ```
 
-Pin a release: `zerogpu-openclaw-plugin@1.4.0`.
+Pin a release: `clawhub:zerogpu-router@2.0.0`.
+
+> The skills declare the `zerogpu` CLI as a dependency (`requires.bins`) with a `node` install
+> spec, so OpenClaw installs `zerogpu-cli` for you on first use — no manual global install. You
+> just need a package manager (npm by default) available, then a one-time `zerogpu login`. In
+> sandboxed/Docker agents, make sure `zerogpu` is available inside the container.
 
 ## Try it
 

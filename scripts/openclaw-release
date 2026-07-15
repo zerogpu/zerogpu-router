@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
-# openclaw-release [patch|minor|major]
+# scripts/openclaw-release [patch|minor|major]  — releases the OpenClaw plugin (agents/openclaw)
+#
+# Bumps agents/openclaw/plugin/{package.json,openclaw.plugin.json} (+ syncs the plugin
+# lockfile), commits, pushes to origin/main, then tags `zerogpu-openclaw-plugin--v<new>` and
+# pushes it. The tag fires .github/workflows/openclaw-plugin-release.yml, which creates the
+# GitHub release and publishes the `zerogpu-router` code-plugin to ClawHub.
+# See docs/OPENCLAW_PLUGIN_RELEASE_GUIDE.md.
+#
+# Run from anywhere in the repo; paths resolve against the git root. Default bump: patch.
 
 set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
 
 if [ -n "$(git status --porcelain)" ]; then
   echo "error: working tree is dirty — commit or stash first"
@@ -40,7 +51,8 @@ PKG="$PLUGIN_DIR/package.json"
 PLUGIN_JSON="$PLUGIN_DIR/openclaw.plugin.json"
 CHANGELOG="agents/openclaw/CHANGELOG.md"
 
-command -v jq >/dev/null || { echo "jq required"; exit 1; }
+command -v jq  >/dev/null || { echo "error: jq is required"; exit 1; }
+command -v npm >/dev/null || { echo "error: npm is required (used to sync the plugin lockfile)"; exit 1; }
 
 CURRENT="$(jq -r .version "$PKG")"
 IFS='.' read -r MAJOR MINOR PATCH <<<"$CURRENT"
@@ -67,14 +79,13 @@ fi
 
 echo "Releasing OpenClaw plugin: $CURRENT -> $NEW"
 
-# Check CHANGELOG
-if ! grep -Eq "^##[[:space:]]+${NEW}" "$CHANGELOG"; then
-  echo "warning: CHANGELOG missing entry for $NEW"
-  read -r -p "Continue anyway? [y/N] " ans
-  case "$ans" in
-    y|Y) ;;
-    *) echo "aborted"; exit 1 ;;
-  esac
+# Require a CHANGELOG heading for the new version. The release workflow slices this section
+# into the GitHub release body, so releasing without it is never correct — fail hard here
+# rather than pushing a commit/tag the release workflow would reject.
+if ! grep -Eq "^##[[:space:]]+${NEW}([[:space:]]|$)" "$CHANGELOG"; then
+  echo "error: no '## $NEW' heading found in $CHANGELOG" >&2
+  echo "  Add a '## $NEW' section describing what shipped, commit it, then re-run." >&2
+  exit 1
 fi
 
 # Update versions
@@ -84,7 +95,10 @@ jq --arg v "$NEW" '.version = $v' "$PKG" >"$tmp" && mv "$tmp" "$PKG"
 tmp="$(mktemp)"
 jq --arg v "$NEW" '.version = $v' "$PLUGIN_JSON" >"$tmp" && mv "$tmp" "$PLUGIN_JSON"
 
-git add "$PKG" "$PLUGIN_JSON"
+# Keep the plugin lockfile version in sync with package.json so CI `npm ci` does not fail.
+npm --prefix "$PLUGIN_DIR" install --package-lock-only >/dev/null
+
+git add "$PKG" "$PLUGIN_JSON" "$PLUGIN_DIR/package-lock.json"
 git commit -m "openclaw: release v${NEW}"
 git push origin main
 

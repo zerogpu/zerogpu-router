@@ -4,6 +4,14 @@ description: Sign in to ZeroGPU and persist the API key + Project ID. Use when t
 argument-hint: "[--api-key <key>] [--project-id <id>]"
 disable-model-invocation: true
 allowed-tools: Bash(zerogpu login*)
+metadata:
+  openclaw:
+    requires:
+      bins: [zerogpu]
+    install:
+      - kind: node
+        package: zerogpu-cli
+        bins: [zerogpu]
 ---
 
 Run the ZeroGPU login flow:

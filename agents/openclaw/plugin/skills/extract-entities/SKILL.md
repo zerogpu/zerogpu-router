@@ -1,8 +1,16 @@
 ---
 name: extract-entities
-description: Custom-label named-entity recognition via ZeroGPU. Use when the user wants to extract entities with their own labels — people, organizations, locations, products, dates, or any caller-defined entity types — from a passage.
+description: Custom-label named-entity recognition (gliner2-base-v1). Use when the user wants to extract entities with their own labels — people, organizations, locations, products, dates, or any caller-defined entity types — from a passage.
 argument-hint: "<text> (-l <label>... | --labels a,b,c) [-t <0..1>]"
-allowed-tools: Bash(zerogpu extract_entities *)
+allowed-tools: Bash(zerogpu extract_entities*)
+metadata:
+  openclaw:
+    requires:
+      bins: [zerogpu]
+    install:
+      - kind: node
+        package: zerogpu-cli
+        bins: [zerogpu]
 ---
 
 Run custom-label NER:
@@ -22,4 +30,4 @@ ZGPU_T
 
 At least one `-l <label>` (or `--labels a,b,c`) is required. Optional `-t <threshold>` filters spans below a confidence (default `0.3`, must be in `[0, 1]`).
 
-Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings.
+Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest the `cost-savings` skill — this note is intentionally occasional, not shown every time.

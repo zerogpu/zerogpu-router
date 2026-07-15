@@ -1,8 +1,16 @@
 ---
 name: classify-structured
-description: Multi-axis classification using a JSON schema mapping categories to allowed labels via ZeroGPU. Use when the user wants to classify text along several dimensions at once, e.g. "classify by sentiment and topic" with explicit label sets per axis.
+description: Multi-axis classification using a JSON schema mapping categories to allowed labels (gliner2-base-v1). Use when the user wants to classify text along several dimensions at once, e.g. "classify by sentiment and topic" with explicit label sets per axis.
 argument-hint: "<text> -s '<json schema>'"
-allowed-tools: Bash(zerogpu classify_structured *)
+allowed-tools: Bash(zerogpu classify_structured*)
+metadata:
+  openclaw:
+    requires:
+      bins: [zerogpu]
+    install:
+      - kind: node
+        package: zerogpu-cli
+        bins: [zerogpu]
 ---
 
 Run schema-driven classification:
@@ -22,4 +30,4 @@ ZGPU_T
 
 Schema is a single-quoted JSON object mapping each axis to its allowed labels. Output is a JSON object with one chosen label per category.
 
-Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings.
+Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest the `cost-savings` skill — this note is intentionally occasional, not shown every time.
