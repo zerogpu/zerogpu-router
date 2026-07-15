@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.4.0
+
+Maintenance release: the plugin now carries its own release workflow. The release script and its guide live alongside the plugin under `agents/claude/`, the script gained an interactive version-bump prompt and a hard changelog gate, and CI no longer forces a changelog edit on every PR. **None of the 11 model skills or their outputs change** — installing this is behavior-identical to 1.3.1.
+
+### Changed
+
+- **Release script** — added `agents/claude/release.sh` (relocated from the repo-root `claude-release`). Run with no argument it prompts for `patch | minor | major`; it resolves paths from the git root so it runs from any directory; and it now **hard-fails before bumping or pushing** if `agents/claude/CHANGELOG.md` has no `## <version>` heading for the release being cut.
+- **Release guide** — added `agents/claude/RELEASE.md` (relocated from the repo-root release guide) documenting the end-to-end flow.
+- **CI** — `claude-plugin-validate` no longer requires a CHANGELOG edit on every PR touching `agents/claude/`, and skips CHANGELOG-only changes. The changelog is enforced once, at release time, so several PRs can share a single release section.
+- `agents/claude/.claude-plugin/plugin.json`: version `1.3.1` → `1.4.0`.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.3.1
 
 Fixes the cost-savings note appearing after **every** routed call. The 1.3.0 relay instruction was loose enough that Claude treated savings as always-relevant and appended a "run `/zerogpu-router:cost-savings`" call-to-action on every response — even though the underlying `💰 ZeroGPU savings` note only fires occasionally (the CLI gates it to roughly 1 in 4–5 calls, emitted on stderr). The cadence was never the problem; the skill prompt was over-surfacing it.
