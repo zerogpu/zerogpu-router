@@ -7,9 +7,8 @@ Use ZeroGPU Router with your OpenClaw agent to route routine AI tasks to small m
 Get an API key + project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 ```sh
-npm install -g zerogpu-cli
+openclaw plugins install clawhub:zerogpu-router   # provisions the zerogpu CLI on first use
 zerogpu login
-openclaw plugins install zerogpu-openclaw-plugin
 ```
 
 ## Try it

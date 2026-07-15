@@ -1,8 +1,16 @@
 ---
 name: chat
-description: Short chat reply via a ZeroGPU small model. Use when the user wants a quick, single-turn answer that does not need host-level reasoning, prior conversation context, or code generation. Optional system instructions via -i.
+description: Short chat reply via the ZeroGPU edge model (LFM2.5-1.2B-Instruct). Use when the user wants a quick, single-turn answer that does not need host-level reasoning, prior conversation context, or code generation. Optional system instructions via -i.
 argument-hint: "<text> [-i <instructions>]"
 allowed-tools: Bash(zerogpu chat *)
+metadata:
+  openclaw:
+    requires:
+      bins: [zerogpu]
+    install:
+      - kind: node
+        package: zerogpu-cli
+        bins: [zerogpu]
 ---
 
 Call the ZeroGPU chat model:
@@ -22,4 +30,4 @@ ZGPU_T
 
 Never inline the prompt as a plain `"..."` string — newlines, parens, single quotes, and `$` in the user's text will break shell parsing. The heredoc form is safe for any input.
 
-Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings.
+Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest the `cost-savings` skill — this note is intentionally occasional, not shown every time.

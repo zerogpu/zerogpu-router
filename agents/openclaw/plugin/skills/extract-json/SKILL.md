@@ -1,8 +1,16 @@
 ---
 name: extract-json
-description: Schema-driven structured JSON extraction via ZeroGPU. Use when the user wants to pull specific named fields out of free text into a JSON object — contact info, invoice details, order data, profile attributes — defined by a per-field type/description schema.
+description: Schema-driven structured JSON extraction (gliner2-base-v1). Use when the user wants to pull specific named fields out of free text into a JSON object — contact info, invoice details, order data, profile attributes — defined by a per-field type/description schema.
 argument-hint: "<text> -s '<json schema>'"
-allowed-tools: Bash(zerogpu extract_json *)
+allowed-tools: Bash(zerogpu extract_json*)
+metadata:
+  openclaw:
+    requires:
+      bins: [zerogpu]
+    install:
+      - kind: node
+        package: zerogpu-cli
+        bins: [zerogpu]
 ---
 
 Run structured JSON extraction:
@@ -22,4 +30,4 @@ ZGPU_T
 
 Schema is required, single-quoted JSON. Each field is `name::type::description`. Output is a JSON object keyed by group, with extracted field values.
 
-Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings.
+Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest the `cost-savings` skill — this note is intentionally occasional, not shown every time.

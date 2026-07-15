@@ -3,6 +3,14 @@ name: cost-savings
 description: Show how much you've saved by routing tasks to ZeroGPU instead of the host model — cumulative dollars and tokens offloaded. Use when the user asks how much they've saved, their ZeroGPU savings, or to see the cost-savings summary.
 disable-model-invocation: true
 allowed-tools: Bash(zerogpu cost_savings*)
+metadata:
+  openclaw:
+    requires:
+      bins: [zerogpu]
+    install:
+      - kind: node
+        package: zerogpu-cli
+        bins: [zerogpu]
 ---
 
 Show the ZeroGPU cost-savings summary:

@@ -1,8 +1,16 @@
 ---
 name: classify-iab
-description: Classify text against the IAB content/audience taxonomy via ZeroGPU. Use when the user asks for IAB categories, ad-taxonomy labels, or "what topic is this article about" against a standard taxonomy.
+description: Classify text against the IAB content/audience taxonomy. Use when the user asks for IAB categories, ad-taxonomy labels, or "what topic is this article about" against a standard taxonomy.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu classify_iab *)
+metadata:
+  openclaw:
+    requires:
+      bins: [zerogpu]
+    install:
+      - kind: node
+        package: zerogpu-cli
+        bins: [zerogpu]
 ---
 
 Run IAB classification. `$ARGUMENTS` is the raw source text — pass it verbatim, no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
@@ -17,4 +25,4 @@ zerogpu classify_iab "$ZGPU_TEXT"
 
 Output is a JSON list of IAB categories with confidence scores.
 
-Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings.
+Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest the `cost-savings` skill — this note is intentionally occasional, not shown every time.
