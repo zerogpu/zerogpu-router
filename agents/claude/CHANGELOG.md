@@ -6,8 +6,8 @@ Maintenance release: the plugin now carries its own release workflow. The releas
 
 ### Changed
 
-- **Release script** — added `agents/claude/release.sh` (relocated from the repo-root `claude-release`). Run with no argument it prompts for `patch | minor | major`; it resolves paths from the git root so it runs from any directory; and it now **hard-fails before bumping or pushing** if `agents/claude/CHANGELOG.md` has no `## <version>` heading for the release being cut.
-- **Release guide** — added `agents/claude/RELEASE.md` (relocated from the repo-root release guide) documenting the end-to-end flow.
+- **Release script** — added `scripts/claude-release` (was a repo-root script). Run with no argument it prompts for `patch | minor | major`; it resolves paths from the git root so it runs from any directory; and it now **hard-fails before bumping or pushing** if `agents/claude/CHANGELOG.md` has no `## <version>` heading for the release being cut.
+- **Release guide** — added `docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md` documenting the end-to-end flow.
 - **CI** — `claude-plugin-validate` no longer requires a CHANGELOG edit on every PR touching `agents/claude/`, and skips CHANGELOG-only changes. The changelog is enforced once, at release time, so several PRs can share a single release section.
 - `agents/claude/.claude-plugin/plugin.json`: version `1.3.1` → `1.4.0`.
 
