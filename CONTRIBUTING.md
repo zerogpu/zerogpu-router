@@ -2,7 +2,7 @@
 
 Thanks for helping improve ZeroGPU Router.
 
-This repository hosts **OpenClaw-first** agent integrations: the **`zerogpu-openclaw-plugin`** package (same string for npm and plugin `id` in `openclaw.plugin.json` / `src/index.ts`) and its CLI-based skills under `agents/openclaw/`. Optional Claude Code assets live under `agents/claude/`. Releases go to **npm** and/or **git** — see [OPENCLAW_RELEASE.md](OPENCLAW_RELEASE.md) (Claude Code plugin releases: [agents/claude/RELEASE.md](agents/claude/RELEASE.md)).
+This repository hosts **OpenClaw-first** agent integrations: the **`zerogpu-openclaw-plugin`** package (same string for npm and plugin `id` in `openclaw.plugin.json` / `src/index.ts`) and its CLI-based skills under `agents/openclaw/`. Optional Claude Code assets live under `agents/claude/`. Releases go to **npm** and/or **git** — see [OPENCLAW_RELEASE.md](OPENCLAW_RELEASE.md) (Claude Code plugin releases: [docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md](docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md)).
 
 ## Development Setup
 

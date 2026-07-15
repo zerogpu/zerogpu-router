@@ -185,7 +185,7 @@ Every route returns `{ <task fields>, model, usage, savings }`.
 - [Claude Code setup](agents/claude/README.md)
 - [Platform dashboard](https://platform.zerogpu.ai)
 - [OpenClaw release guide](OPENCLAW_RELEASE.md)
-- [Claude Code release guide](agents/claude/RELEASE.md)
+- [Claude Code release guide](docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
 - [License](LICENSE)

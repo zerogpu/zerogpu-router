@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# agents/claude/release.sh [patch|minor|major]
+# scripts/claude-release [patch|minor|major]  — releases the Claude Code plugin (agents/claude)
 #
 # Bumps agents/claude/.claude-plugin/plugin.json, commits, pushes the commit to
 # origin/main, then hands off to `claude plugin tag --push` (the official CLI)

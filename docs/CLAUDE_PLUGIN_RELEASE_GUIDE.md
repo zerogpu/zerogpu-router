@@ -17,9 +17,9 @@ From a clean `main` that's in sync with `origin/main`:
 
 ```bash
 git checkout main && git pull
-agents/claude/release.sh          # prompts: 1) patch  2) minor  3) major
-agents/claude/release.sh minor    # or pass the bump directly
-agents/claude/release.sh major
+scripts/claude-release          # prompts: 1) patch  2) minor  3) major
+scripts/claude-release minor    # or pass the bump directly
+scripts/claude-release major
 ```
 
 Run it from anywhere in the repo — it resolves paths against the git root.
