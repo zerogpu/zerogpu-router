@@ -1,108 +1,127 @@
 #!/usr/bin/env bash
 # scripts/openclaw-release [patch|minor|major]  — releases the OpenClaw plugin (agents/openclaw)
 #
-# Bumps agents/openclaw/plugin/{package.json,openclaw.plugin.json} (+ syncs the plugin
-# lockfile), commits, pushes to origin/main, then tags `zerogpu-openclaw-plugin--v<new>` and
-# pushes it. The tag fires .github/workflows/openclaw-plugin-release.yml, which creates the
-# GitHub release and publishes the `zerogpu-router` code-plugin to ClawHub.
-# See docs/OPENCLAW_PLUGIN_RELEASE_GUIDE.md.
+# Bumps agents/openclaw/plugin/{package.json,openclaw.plugin.json} and syncs the plugin
+# lockfile, commits, pushes the commit to origin/main, then creates and pushes the tag
+# `zerogpu-openclaw-plugin--v<new-version>`. The tag fires
+# .github/workflows/openclaw-plugin-release.yml, which creates the GitHub release and
+# publishes the `zerogpu-router` code-plugin to ClawHub.
+# — see docs/OPENCLAW_PLUGIN_RELEASE_GUIDE.md.
 #
-# Run from anywhere in the repo; paths resolve against the git root. Default bump: patch.
+# Run from anywhere in the repo; paths resolve against the git root.
+# Default bump: patch.
 
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-cd "$REPO_ROOT"
-
-if [ -n "$(git status --porcelain)" ]; then
-  echo "error: working tree is dirty — commit or stash first"
-  exit 1
+BUMP="${1:-}"
+if [ -z "$BUMP" ]; then
+  echo "Select release type:"
+  echo "  1) patch"
+  echo "  2) minor"
+  echo "  3) major"
+  read -r -p "Enter choice [1-3] (default 1): " choice
+  case "$choice" in
+    ""|1|patch) BUMP="patch" ;;
+    2|minor)    BUMP="minor" ;;
+    3|major)    BUMP="major" ;;
+    *)
+      echo "error: invalid choice '$choice'" >&2
+      exit 2
+      ;;
+  esac
 fi
-
-CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-if [ "$CURRENT_BRANCH" != "main" ]; then
-  echo "error: must be on 'main' to release"
-  exit 1
-fi
-
-git fetch --no-tags origin main
-
-LOCAL="$(git rev-parse HEAD)"
-REMOTE="$(git rev-parse origin/main)"
-
-if [ "$LOCAL" != "$REMOTE" ]; then
-  echo "error: local main is not in sync with origin/main"
-  echo "  local:  $LOCAL"
-  echo "  remote: $REMOTE"
-  exit 1
-fi
-
-BUMP="${1:-patch}"
 case "$BUMP" in
   patch|minor|major) ;;
   *)
-    echo "error: bump must be patch|minor|major"
-    exit 1
+    echo "error: bump must be one of patch|minor|major (got '$BUMP')" >&2
+    exit 2
     ;;
 esac
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
 
 PLUGIN_DIR="agents/openclaw/plugin"
 PKG="$PLUGIN_DIR/package.json"
 PLUGIN_JSON="$PLUGIN_DIR/openclaw.plugin.json"
 CHANGELOG="agents/openclaw/CHANGELOG.md"
 
-command -v jq  >/dev/null || { echo "error: jq is required"; exit 1; }
-command -v npm >/dev/null || { echo "error: npm is required (used to sync the plugin lockfile)"; exit 1; }
+# Preconditions.
+command -v jq  >/dev/null || { echo "error: jq is required" >&2; exit 1; }
+command -v npm >/dev/null || { echo "error: npm is required (used to sync the plugin lockfile)" >&2; exit 1; }
 
+if [ -n "$(git status --porcelain)" ]; then
+  echo "error: working tree is dirty — commit or stash before releasing" >&2
+  git status --short >&2
+  exit 1
+fi
+
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "error: must be on 'main' to release (currently on '$CURRENT_BRANCH')" >&2
+  exit 1
+fi
+
+git fetch --no-tags origin main
+LOCAL="$(git rev-parse HEAD)"
+REMOTE="$(git rev-parse origin/main)"
+if [ "$LOCAL" != "$REMOTE" ]; then
+  echo "error: local main is not in sync with origin/main" >&2
+  echo "  local:  $LOCAL" >&2
+  echo "  remote: $REMOTE" >&2
+  exit 1
+fi
+
+# Compute new version (package.json is the source of truth).
 CURRENT="$(jq -r .version "$PKG")"
 IFS='.' read -r MAJOR MINOR PATCH <<<"$CURRENT"
-
 case "$BUMP" in
-  major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
-  minor) MINOR=$((MINOR+1)); PATCH=0 ;;
-  patch) PATCH=$((PATCH+1)) ;;
+  major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+  minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+  patch) PATCH=$((PATCH + 1)) ;;
 esac
-
 NEW="${MAJOR}.${MINOR}.${PATCH}"
 TAG="zerogpu-openclaw-plugin--v${NEW}"
 
-# Check tag
+echo "Releasing openclaw plugin: $CURRENT -> $NEW  (tag: $TAG)"
+
 if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-  echo "error: tag $TAG already exists locally"
+  echo "error: tag $TAG already exists locally" >&2
   exit 1
 fi
-
 if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-  echo "error: tag $TAG already exists on origin"
+  echo "error: tag $TAG already exists on origin" >&2
   exit 1
 fi
 
-echo "Releasing OpenClaw plugin: $CURRENT -> $NEW"
-
-# Require a CHANGELOG heading for the new version. The release workflow slices this section
-# into the GitHub release body, so releasing without it is never correct — fail hard here
-# rather than pushing a commit/tag the release workflow would reject.
+# Require a CHANGELOG heading for the new version. This section becomes the
+# GitHub release body verbatim, so releasing without it is never correct — fail
+# hard here rather than pushing a commit/tag the release workflow would reject.
 if ! grep -Eq "^##[[:space:]]+${NEW}([[:space:]]|$)" "$CHANGELOG"; then
   echo "error: no '## $NEW' heading found in $CHANGELOG" >&2
   echo "  Add a '## $NEW' section describing what shipped, commit it, then re-run." >&2
   exit 1
 fi
 
-# Update versions
+# Bump both manifests in place, then sync the plugin lockfile so CI `npm ci` stays valid.
 tmp="$(mktemp)"
-jq --arg v "$NEW" '.version = $v' "$PKG" >"$tmp" && mv "$tmp" "$PKG"
+jq --arg v "$NEW" '.version = $v' "$PKG" >"$tmp"
+mv "$tmp" "$PKG"
 
 tmp="$(mktemp)"
-jq --arg v "$NEW" '.version = $v' "$PLUGIN_JSON" >"$tmp" && mv "$tmp" "$PLUGIN_JSON"
+jq --arg v "$NEW" '.version = $v' "$PLUGIN_JSON" >"$tmp"
+mv "$tmp" "$PLUGIN_JSON"
 
-# Keep the plugin lockfile version in sync with package.json so CI `npm ci` does not fail.
 npm --prefix "$PLUGIN_DIR" install --package-lock-only >/dev/null
 
 git add "$PKG" "$PLUGIN_JSON" "$PLUGIN_DIR/package-lock.json"
 git commit -m "openclaw: release v${NEW}"
+
+echo "Pushing commit to origin/main..."
 git push origin main
 
+echo "Tagging $TAG and pushing..."
 git tag "$TAG"
 git push origin "$TAG"
 
-echo "Released $TAG"
+echo "Released $TAG."
