@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0
+
+Metadata-only release. **No skill behavior or output changes** — installing this is
+behavior-identical to 2.0.1.
+
+### Added
+- Plugin icon (`openclaw.plugin.json`), shown in the ClawHub plugin listing.
+
 ## 2.0.1
 
 Docs and metadata fixes. **No skill behavior or output changes** — installing this is
