@@ -84,7 +84,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ steps.version.outputs.tag }}" \
-            --title "OpenClaw Plugin ${{ steps.version.outputs.version }}" \
+            --title "zerogpu-openclaw-plugin ${{ steps.version.outputs.version }}" \
             --notes-file "$NOTES_FILE" \
             --verify-tag
 

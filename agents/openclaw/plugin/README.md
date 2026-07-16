@@ -1,6 +1,6 @@
 # ZeroGPU Router
 
-Cut your OpenClaw agent's inference costs. Route trivial AI tasks — summarize, classify, redact PII, extract JSON, generate follow-ups, short chat — to small/nano models instead of burning frontier-model tokens.
+Cut your OpenClaw agent's inference costs. Route trivial AI tasks — summarize, classify, redact PII, extract JSON, short chat — to small/nano models instead of burning frontier-model tokens.
 
 [![Website](https://img.shields.io/badge/website-zerogpu.ai-22c55e)](https://zerogpu.ai)
 [![Dashboard](https://img.shields.io/badge/dashboard-platform.zerogpu.ai-blue)](https://platform.zerogpu.ai)

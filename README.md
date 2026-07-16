@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Cut inference costs without dumbing down your agent.</strong><br/>
-  Route summarize, classify, PII redaction, JSON extraction, follow-ups, and short chat to small/nano models via the <code>zerogpu</code> CLI — executed locally by your agent's Bash tools.
+  Route summarize, classify, PII redaction, JSON extraction, and short chat to small/nano models via the <code>zerogpu</code> CLI — executed locally by your agent's Bash tools.
 </p>
 
 <p align="center">
@@ -139,16 +139,16 @@ ZeroGPU Router exposes eleven task-specific routes:
 | Route | Workload | Model |
 |---|---|---|
 | `zerogpu_classify_iab` | IAB topic classification | `zlm-v1-iab-classify-edge` |
-| `zerogpu_summarize` | TL;DRs, abstracts, meeting note summaries | `t5-small` |
+| `zerogpu_classify_iab_enriched` | IAB categories plus topics, keywords, intent | `zlm-v1-iab-classify-edge-enriched` |
+| `zerogpu_summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
 | `zerogpu_classify_zero_shot` | Classify against a flat label list | `deberta-v3-small` |
+| `zerogpu_classify_structured` | Multi-axis schema classification | `gliner2-base-v1` |
 | `zerogpu_extract_entities` | Extract people, places, companies, dates, custom entities | `gliner2-base-v1` |
 | `zerogpu_extract_json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
-| `zerogpu_classify_structured` | Multi-axis schema classification | `gliner2-base-v1` |
 | `zerogpu_redact_pii` | Mask emails, phones, names, addresses, other PII | `gliner-multi-pii-v1` |
 | `zerogpu_extract_pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
-| `zerogpu_generate_followups` | Generate follow-up questions from a passage | `zlm-v1-followup-questions-edge` |
-| `zerogpu_chat` | Short small-model chat replies | `LFM2.5-1.2B-Instruct` / `-Thinking` |
-| `zerogpu_health` | Verify ZeroGPU backend health | — |
+| `zerogpu_chat` | Short small-model chat replies | `LFM2.5-1.2B-Instruct` |
+| `zerogpu_chat_thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 
 Every route returns `{ <task fields>, model, usage, savings }`.
 
