@@ -4,7 +4,7 @@ Use ZeroGPU Router with your OpenClaw agent to route routine AI tasks to small m
 
 ## Quick start
 
-Get an API key + project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
+Get an API key at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 ```sh
 openclaw plugins install clawhub:zerogpu-router   # provisions the zerogpu CLI on first use

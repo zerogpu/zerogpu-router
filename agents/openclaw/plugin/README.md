@@ -16,13 +16,13 @@ Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded
 
 ## Quickstart
 
-Get an API key + project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
+Get an API key at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 ```bash
 # 1. Install the plugin — OpenClaw provisions the `zerogpu` CLI automatically on first use
 openclaw plugins install clawhub:zerogpu-router
 
-# 2. Log in (prompts for API key + project ID)
+# 2. Log in (prompts for API key)
 zerogpu login
 ```
 
@@ -120,7 +120,7 @@ Note the card last-four is left untouched — the PII model covers standard cate
 | `chat` | Short small-model chat replies | `LFM2.5-1.2B-Instruct` |
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 | `cost-savings` | Cumulative dollars and tokens offloaded to ZeroGPU | — |
-| `signin` | Sign in and persist API key + Project ID | — |
+| `signin` | Sign in and persist API key | — |
 | `status` | Show current sign-in status | — |
 
 Every skill returns `{ <task fields>, model, usage, savings }`.
