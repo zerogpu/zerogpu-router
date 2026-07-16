@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.5.0
+
+Skill refresh: the zero-shot classifier gains a confidence threshold, and sign-in drops the retired Project ID. **The other 10 model skills and their outputs are unchanged.**
+
+### Changed
+
+- `classify-zero-shot` — added an optional `-t <0..1>` threshold flag that filters out labels below a confidence (handy for multi-label output). Existing single-label usage is unchanged.
+- `signin` — removed the `--project-id` flag and the Project ID prompt. `zerogpu login` now takes just the API key.
+- `agents/claude/.claude-plugin/plugin.json`: version `1.4.0` → `1.5.0`.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.4.0
 
 Maintenance release: the plugin now carries its own release workflow. The release script and its guide live alongside the plugin under `agents/claude/`, the script gained an interactive version-bump prompt and a hard changelog gate, and CI no longer forces a changelog edit on every PR. **None of the 11 model skills or their outputs change** — installing this is behavior-identical to 1.3.1.
