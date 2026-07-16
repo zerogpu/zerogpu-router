@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.1
+
+Docs and metadata fixes. **No skill behavior or output changes** — installing this is
+behavior-identical to 2.0.0.
+
+### Fixed
+- Removed a stray reference to a nonexistent "follow-ups" skill from the plugin description
+  (`package.json`, `openclaw.plugin.json`) and the plugin README. The plugin ships 14 skills;
+  there is no follow-ups route.
+
 ## 2.0.0
 
 ### Changed
