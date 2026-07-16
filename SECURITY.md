@@ -15,9 +15,9 @@ We will acknowledge reports within 72 hours and coordinate a fix before publishi
 
 ## Secrets and Credentials
 
-Never commit real ZeroGPU API keys, project IDs, Cloudflare tokens, or Worker secrets.
+Never commit real ZeroGPU API keys, Cloudflare tokens, or Worker secrets.
 
-The public examples in this repository use placeholders such as `<your-api-key>` and `<your-project-id>`. Runtime credentials should be supplied through the `zerogpu` CLI login, local environment variables, GitHub Actions secrets, or Cloudflare Worker secrets.
+The public examples in this repository use placeholders such as `<your-api-key>`. Runtime credentials should be supplied through the `zerogpu` CLI login, local environment variables, GitHub Actions secrets, or Cloudflare Worker secrets.
 
 ## Supported Versions
 

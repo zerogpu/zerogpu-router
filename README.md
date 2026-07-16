@@ -28,8 +28,6 @@
   <a href="https://zerogpu.ai"><img src="https://img.shields.io/badge/website-zerogpu.ai-111827?style=flat-square" alt="Website" /></a>
 </p>
 
-![ZeroGPU dashboard](assets/zerogpu-dashboard.gif)
-
 ## What is ZeroGPU Router?
 
 ZeroGPU Router is a smart task router for AI agents. It exposes task-specific skills — summarize, classify, redact PII, extract JSON, and more — that shell out to the local `zerogpu` CLI, backed by small language models that run for a fraction of the cost of a frontier model.
@@ -40,11 +38,11 @@ Your agent keeps doing the heavy reasoning. The boring stuff gets routed to Zero
 - **Claude Code** — install the `zerogpu` CLI plus the marketplace plugin and you get 11 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
 - **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
-- **CLI, no infra** — the `zerogpu` CLI talks to the hosted models for you. Nothing to run or host yourself.
+- **CLI, no infra** — everything runs through the local `zerogpu` CLI your agent already calls. No servers, MCP endpoints, or infra to stand up.
 
 ## OpenClaw quick start
 
-You need a ZeroGPU API key and project ID. Grab them at [platform.zerogpu.ai](https://platform.zerogpu.ai).
+You need a ZeroGPU API key. Grab it at [platform.zerogpu.ai](https://platform.zerogpu.ai).
 
 **1. Install the OpenClaw plugin** ([`zerogpu-router`](https://clawhub.ai/zerogpu/plugins/zerogpu-router)):
 
@@ -60,7 +58,7 @@ The plugin's skills provision the `zerogpu` CLI automatically on first use (via 
 zerogpu login
 ```
 
-You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
+You'll be prompted for your API key (`zgpu-api-…`).
 
 Pin a release: `clawhub:zerogpu-router@2.0.0`.
 
@@ -90,7 +88,7 @@ Next: loop in support leadership, send an updated enterprise quote by Friday.
 
 The Claude Code plugin ships 14 skills — 11 inference skills that Claude auto-invokes when your request matches ("summarize this", "redact the PII", "classify by sentiment and topic"), plus the manual `signin`, `status`, and `cost-savings` skills. You can also call any skill manually with `/zerogpu-router:<name>`. Run `/zerogpu-router:cost-savings` anytime to see how much you've saved by routing trivial work to ZeroGPU.
 
-Grab a ZeroGPU API key and project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
+Grab a ZeroGPU API key at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 **1. Install the `zerogpu` CLI** (the plugin shells out to it):
 
@@ -104,7 +102,7 @@ npm install -g zerogpu-cli
 zerogpu login
 ```
 
-You'll be prompted for your API key (`zgpu-api-…`) and project ID (UUID).
+You'll be prompted for your API key (`zgpu-api-…`).
 
 **3. Install the Claude Code plugin** — start a Claude Code session by running `claude` in your terminal, then:
 
@@ -133,19 +131,6 @@ Claude routes to `/zerogpu-router:redact-pii` automatically and returns the same
 The model is tuned for the standard PII categories above. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) won't be caught — strip those yourself, or pipe the result through `/zerogpu-router:extract-entities` with your own custom labels.
 
 Full walkthrough — prerequisites, every skill documented in detail, troubleshooting: **[agents/claude/README.md](agents/claude/README.md)**.
-
-
-## Cloud connection
-
-Sign in at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** to:
-
-- Generate API keys and project IDs
-- Watch live token usage, latency, and routed-call savings on the dashboard
-- See per-tool savings broken down by agent and time range
-- Manage agents, billing, and team access
-- Follow setup for your stack: [OpenClaw](agents/openclaw/README.md) and [Claude Code](agents/claude/README.md) — both use the `zerogpu` CLI plus a plugin
-
-The `zerogpu` CLI runs on your machine and talks to the hosted ZeroGPU models. The dashboard at `platform.zerogpu.ai` is where you see what it did.
 
 ## Routes
 

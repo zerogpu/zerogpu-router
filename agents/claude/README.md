@@ -15,7 +15,7 @@ Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude aut
 | **Node.js ≥ 20** | Runs the `zerogpu` CLI | [nodejs.org](https://nodejs.org) |
 | **Claude Code** | Hosts the plugin | `npm install -g @anthropic-ai/claude-code` |
 | **`zerogpu` CLI** | Skills shell out to it | `npm install -g zerogpu-cli` |
-| **ZeroGPU account** | API key + Project ID | [zerogpu.ai](https://zerogpu.ai) |
+| **ZeroGPU account** | API key | [zerogpu.ai](https://zerogpu.ai) |
 
 Verify the CLI is on your `PATH`:
 
@@ -29,14 +29,13 @@ zerogpu --version
 zerogpu login
 ```
 
-You'll be prompted (masked) for your **API key** (`zgpu-api-…`) and **Project ID** (UUID). Credentials are persisted locally and `ZEROGPU_API_KEY` is added to your shell profile.
+You'll be prompted (masked) for your **API key** (`zgpu-api-…`). Credentials are persisted locally and `ZEROGPU_API_KEY` is added to your shell profile.
 
 For CI / non-interactive setups:
 
 ```sh
 zerogpu login \
-  --api-key zgpu-api-XXXXXXXXXXXXXXXXXX \
-  --project-id 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a
+  --api-key zgpu-api-XXXXXXXXXXXXXXXXXX
 ```
 
 Check status anytime:
@@ -137,7 +136,7 @@ Sign in to ZeroGPU and persist your credentials so every subsequent skill call w
 **Synopsis**
 
 ```
-/zerogpu-router:signin [--api-key <key>] [--project-id <id>]
+/zerogpu-router:signin [--api-key <key>]
 ```
 
 **Arguments**
@@ -145,7 +144,6 @@ Sign in to ZeroGPU and persist your credentials so every subsequent skill call w
 | Flag | Required | Description |
 | --- | --- | --- |
 | `--api-key <key>` | optional | API key. Must start with `zgpu-api-`. If omitted, you'll be prompted (masked). |
-| `--project-id <id>` | optional | Project ID (UUID v4). If omitted, you'll be prompted. |
 
 **Example**
 
@@ -153,7 +151,7 @@ Sign in to ZeroGPU and persist your credentials so every subsequent skill call w
 /zerogpu-router:signin
 ```
 
-On success the API key + Project ID are written to your config file, and `ZEROGPU_API_KEY` is added to your shell profile so other tools can pick it up.
+On success the API key is written to your config file, and `ZEROGPU_API_KEY` is added to your shell profile so other tools can pick it up.
 
 ---
 
@@ -593,7 +591,7 @@ Quick lookup table — all 14 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
-| `/zerogpu-router:signin` | Sign in and persist API key + Project ID (manual only) | `/zerogpu-router:signin` |
+| `/zerogpu-router:signin` | Sign in and persist API key (manual only) | `/zerogpu-router:signin` |
 | `/zerogpu-router:status` | Show current sign-in status (manual only) | `/zerogpu-router:status` |
 | `/zerogpu-router:cost-savings` | Show cumulative savings vs. Claude (manual only) | `/zerogpu-router:cost-savings` |
 | `/zerogpu-router:chat <text>` | Short chat reply via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat "Explain WebSockets in two sentences."` |

@@ -41,7 +41,7 @@ npm --prefix agents/openclaw/plugin run build
 
 To smoke-test a routing change locally:
 
-1. Get an API key and project ID at [platform.zerogpu.ai](https://platform.zerogpu.ai).
+1. Get an API key at [platform.zerogpu.ai](https://platform.zerogpu.ai).
 2. Install and authenticate the `zerogpu` CLI (`npm install -g zerogpu-cli && zerogpu login`).
 3. Install the plugin from this branch (`cd agents/openclaw/plugin && openclaw plugins install ./`).
 4. Run a few prompts and confirm the agent runs the expected `zerogpu` CLI command.
