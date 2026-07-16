@@ -17,6 +17,10 @@ zerogpu login
 - The release pipeline now publishes the **plugin package** to ClawHub
   (`clawhub package publish`) instead of publishing individual skills. All 14 skills
   ship bundled inside the plugin.
+- `signin` no longer requires a Project ID — `zerogpu login` now takes just the API key.
+- Skill copy polish — restored per-skill backing-model names in descriptions and the
+  "savings note is occasional" guidance, so skills no longer over-surface the
+  `cost-savings` skill.
 
 ## 1.4.0
 
