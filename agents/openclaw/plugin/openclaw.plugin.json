@@ -2,7 +2,7 @@
   "id": "zerogpu-router",
   "name": "ZeroGPU Router",
   "description": "Route trivial AI tasks (classification, summarization, extraction, PII redaction, small-model chat) to ZeroGPU small/nano models via ZeroGPU CLI.",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "skills": [
     "./skills/chat",
     "./skills/chat-thinking",
