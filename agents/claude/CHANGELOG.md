@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.5.1
+
+Cost-savings copy is now host-neutral, and the dollar figure is a rounded estimate. The `💰 ZeroGPU savings` note and the `cost-savings` report previously said "Claude" for the pricing baseline — the same word as the agent host, so "Claude savings" was ambiguous. They now compare against **"your frontier model"** and count **"frontier-model tokens offloaded."** **The 11 auto-invoked model skills and their outputs are unchanged** — they still relay whatever the CLI emits, verbatim.
+
+Requires `zerogpu-cli` ≥ 3.2.1, which carries the reworded, rounded output.
+
+### Changed
+
+- `cost-savings` skill copy — describes savings against "your frontier model" (not "Claude") and calls the dollar figure a **rounded estimate**.
+- Savings output (emitted by the CLI, relayed here) — the dollar total now rounds to whole dollars (`≈ $2`, or `under $1` below a dollar) instead of showing cents, and drops the per-model and avg-per-call dollar breakdowns. Token counts stay exact. The baseline is still shown explicitly (`vs baseline claude-opus-4-8`) and remains overridable via `ZEROGPU_SAVINGS_MODEL`.
+- `README.md` — updated the illustrative cost-savings output to the new wording and layout.
+- `agents/claude/.claude-plugin/plugin.json`: version `1.5.0` → `1.5.1`.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.5.0
 
 Skill refresh: the zero-shot classifier gains a confidence threshold, and sign-in drops the retired Project ID. **The other 10 model skills and their outputs are unchanged.**
