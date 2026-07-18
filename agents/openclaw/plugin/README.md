@@ -59,7 +59,7 @@ marketing wants pricing page live by end of quarter, scope revisited thursday.
 update tickets before standup.
 
 model: llama-3.1-8b-instruct-fast · 78 tokens in / 41 out
-💰 ZeroGPU savings so far: $2.14 (18,730 Claude tokens offloaded)
+💰 ZeroGPU savings so far: ≈ $2 (18,730 frontier-model tokens offloaded)
 ```
 
 **Classify** — triage a support ticket against your own labels:
@@ -82,7 +82,7 @@ Reply:
 ]
 
 model: deberta-v3-small · 61 tokens in
-💰 ZeroGPU savings so far: $2.21 (19,180 Claude tokens offloaded)
+💰 ZeroGPU savings so far: ≈ $2 (19,180 frontier-model tokens offloaded)
 ```
 
 **Redact PII** — scrub a CRM note before sharing it:
@@ -101,7 +101,7 @@ Call with [PERSON] ([EMAIL], [PHONE_NUMBER]) on Tue. Send the enterprise quote t
 their AP team at [ADDRESS]. Card on file ends 4412 — do not reference it in email.
 
 model: gliner-multi-pii-v1 · 5 spans masked
-💰 ZeroGPU savings so far: $2.28 (19,650 Claude tokens offloaded)
+💰 ZeroGPU savings so far: ≈ $2 (19,650 frontier-model tokens offloaded)
 ```
 
 Note the card last-four is left untouched — the PII model covers standard categories (names, emails, phones, addresses), not project-specific identifiers. Strip those yourself.

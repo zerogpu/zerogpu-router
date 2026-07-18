@@ -34,7 +34,7 @@ marketing wants pricing page live by end of quarter, scope revisited thursday.
 update tickets before standup.
 
 model: llama-3.1-8b-instruct-fast · 78 tokens in / 41 out
-💰 ZeroGPU savings so far: $2.14 (18,730 Claude tokens offloaded)
+💰 ZeroGPU savings so far: ≈ $2 (18,730 frontier-model tokens offloaded)
 ```
 
 ## Full documentation
