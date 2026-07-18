@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.1.1
+
+Docs fix. **No skill behavior or output changes** — installing this is
+behavior-identical to 2.1.0.
+
+### Fixed
+- Quickstart now installs the `zerogpu` CLI explicitly (`npm install -g zerogpu-cli`) and runs
+  `zerogpu login` *before* `openclaw plugins install` (`README.md`, `plugin/README.md`).
+  Installing the plugin does not provision the CLI — the `requires.bins` install spec only runs
+  when a skill executes inside an agent turn, so a bare `zerogpu login` in the terminal failed
+  with `command not found` on a fresh machine.
+- Dropped the "OpenClaw provisions the CLI automatically on first use — no manual global install"
+  guidance from both READMEs, which contradicted the terminal login step.
+
 ## 2.1.0
 
 Metadata-only release. **No skill behavior or output changes** — installing this is
