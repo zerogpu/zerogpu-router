@@ -190,19 +190,13 @@ Show how much you've saved by routing trivial tasks to ZeroGPU instead of Claude
 ```text
 💰 ZeroGPU Cost Savings
 ───────────────────────
-Saved so far:     ~$2.14
-Tokens offloaded: ≈ 430,120 Claude tokens
+Saved so far:     ≈ $2  (vs baseline claude-opus-4-8)
+Tokens offloaded: ≈ 430,120 frontier-model tokens
 Routed calls:     58
-Avg per call:     ~$0.04
 Since:            Apr 12, 2026
-
-By model:
-  llama-3.1-8b-instruct-fast  —  20 calls, ~$1.20, 210K tok
-  gliner2-base-v1             —  18 calls, ~$0.61, 120K tok
-  ...
 ```
 
-Every routed call (chat, classify, extract, redact, summarize, …) records the Claude tokens it offloaded and the dollars saved, persisted in `~/.zerogpu/savings.json` alongside your credentials. **Token counts and ZeroGPU costs are actual** (real per-model ZeroGPU rates × the API's usage report). The **dollar savings** is the Claude spend avoided: what those exact tokens would have cost on Claude minus the real ZeroGPU cost. The Claude baseline defaults to `claude-opus-4-8` and is overridable via the `ZEROGPU_SAVINGS_MODEL` environment variable (e.g. `claude-sonnet-4-6`).
+Every routed call (chat, classify, extract, redact, summarize, …) records the frontier-model tokens it offloaded and the estimated dollars saved, persisted in `~/.zerogpu/savings.json` alongside your credentials. **Token counts are actual** (the API's usage report). The **dollar figure is a rounded estimate** of the frontier-model spend avoided: what those exact tokens would have cost on the baseline model minus the real ZeroGPU cost. The baseline defaults to `claude-opus-4-8` and is overridable via the `ZEROGPU_SAVINGS_MODEL` environment variable (e.g. `claude-sonnet-4-6`).
 
 You don't have to ask: after some responses a short `💰 ZeroGPU savings so far: …` note appears automatically on a balanced cadence (≈ once every 4–5 routed calls, never twice in a row) so the running total stays visible without nagging.
 
