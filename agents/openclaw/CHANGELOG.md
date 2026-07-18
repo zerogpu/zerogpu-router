@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.1.2
+
+Cost-savings output is now host-neutral, and the dollar figure is a rounded estimate. The `💰 ZeroGPU savings` note (and the `cost_savings` report) previously said "Claude" — misleading in OpenClaw, where Claude isn't the agent host but the pricing baseline used to value the savings. It now reads **"frontier-model tokens offloaded"** / **"instead of your frontier model."**
+
+Requires `zerogpu-cli` ≥ 3.2.1, which emits the reworded, rounded output. **No skill routing or logic changes.**
+
+### Changed
+- Savings output wording — "Claude" → "frontier model" in the running-total note and the `cost_savings` report, removing the ambiguity between the agent host and the pricing baseline. The dollar figure now rounds to whole dollars (`≈ $2`, or `under $1` below a dollar); token counts stay exact; the baseline is still shown explicitly (`vs baseline claude-opus-4-8`) and overridable via `ZEROGPU_SAVINGS_MODEL`.
+- `README.md`, `plugin/README.md` — updated the illustrative savings lines (`$2.14` → `≈ $2`, "Claude tokens offloaded" → "frontier-model tokens offloaded").
+- `openclaw.plugin.json`, `package.json`: version `2.1.1` → `2.1.2`.
+
 ## 2.1.1
 
 Docs fix. **No skill behavior or output changes** — installing this is
