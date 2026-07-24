@@ -13,6 +13,8 @@ metadata:
         bins: [zerogpu]
 ---
 
+> **Sends the raw, un-redacted text to ZeroGPU's hosted API** — detection runs server-side, so the PII reaches the third-party service *before* it is masked. This reduces what you forward downstream, not what reaches ZeroGPU. Don't submit regulated data you aren't cleared to share with a third party. See the plugin README's "Data & privacy" section.
+
 Mask PII in-line. `$ARGUMENTS` is the raw user text — pass it verbatim, no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
 
 ```!

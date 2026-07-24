@@ -13,6 +13,8 @@ metadata:
         bins: [zerogpu]
 ---
 
+> **Sends the raw text to ZeroGPU's hosted API** — detection runs server-side, so the PII reaches the third-party service in full. Don't submit regulated data you aren't cleared to share with a third party. See the plugin README's "Data & privacy" section.
+
 Extract PII entities:
 
 ```!

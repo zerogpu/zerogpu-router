@@ -37,7 +37,9 @@ Pin a release: `clawhub:zerogpu-router@2.0.0`.
 
 ## Try it
 
-Ask your agent in plain language — it picks the right skill, runs the `zerogpu` CLI locally instead of the host model, and replies with the result plus a savings line. The replies below are illustrative: the models are small, so output is concise and a little mechanical.
+Ask your agent in plain language — it picks the right skill, shells out to the local `zerogpu` CLI (which **sends your text to ZeroGPU's hosted API** for inference, instead of using the host model), and replies with the result plus a savings line. The replies below are illustrative: the models are small, so output is concise and a little mechanical.
+
+> **Your input leaves your machine.** These skills transmit the text you give them to ZeroGPU's third-party service — see [Data & privacy](#data--privacy) below before feeding them anything sensitive. Because the agent can pick these skills from plain-language requests, decide up front what you're comfortable routing off-box.
 
 **Summarize** — condense a meeting recap:
 
@@ -130,6 +132,18 @@ Every skill returns `{ <task fields>, model, usage, savings }`.
 ## Watch your savings
 
 Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** — token usage, latency, per-tool savings, broken down by agent and time range.
+
+## Data & privacy
+
+**These skills are not local processing.** Every content skill (`summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `chat`, `chat-thinking`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
+
+Before using these skills:
+
+- **Do not** send secrets, credentials, API keys, or regulated data (PHI, cardholder data, etc.) unless you have cleared third-party processing with ZeroGPU for that data.
+- The PII skills (`redact-pii`, `extract-pii`) **send the raw, un-redacted text** to the service in order to detect PII — redaction happens after transmission, not before. They reduce what you forward *downstream*, not what reaches ZeroGPU.
+- Treat inputs the way you'd treat any third-party API call: assume the request may be logged or retained per ZeroGPU's terms and retention policy. Review those at [zerogpu.ai](https://zerogpu.ai) for your compliance needs.
+
+**Credentials:** `zerogpu login` (the `signin` skill) writes your API key to a local config file and upserts `ZEROGPU_API_KEY` into your shell profile — a persistent change to your environment. Revoke keys from the [dashboard](https://platform.zerogpu.ai).
 
 ## Links
 
