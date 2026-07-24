@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.0.0
+
+Security and compliance release. Resolves every finding from the ClawHub security audit and moves the plugin onto a patched OpenClaw gateway. **Breaking:** the minimum supported gateway is now `2026.7.1` — older gateways can no longer install this version.
+
+### Breaking
+- Minimum OpenClaw gateway raised to **`2026.7.1`**. `peerDependencies.openclaw`, `openclaw.compat.pluginApi`, and `openclaw.compat.minGatewayVersion` moved from `>=2026.4.0` to `>=2026.7.1` (`plugin/package.json`). Upgrade the gateway before upgrading the plugin.
+
+### Security
+- Bumped `openclaw` off the vulnerable `2026.4.0` / `2026.4.27` line (each flagged with 10 published advisories) to the current stable **`2026.7.1`** across `peerDependencies`, `devDependencies`, and the `openclaw.build` block; refreshed `plugin/package-lock.json` so the build toolchain no longer resolves a flagged release.
+
+### Added
+- Data-transfer disclosures on every content-routing skill (`chat`, `chat-thinking`, `summarize`, `classify-iab`, `classify-iab-enriched`, `classify-structured`, `classify-zero-shot`, `extract-entities`, `extract-json`, `extract-pii`, `redact-pii`) — each now states up front that input is sent to ZeroGPU's hosted API, not processed locally, and warns against submitting secrets or regulated data.
+- The PII skills (`redact-pii`, `extract-pii`) additionally note that the **raw, un-redacted text** reaches the service before masking/extraction.
+- A **Data & privacy** section in `plugin/README.md` covering third-party transmission, PII handling, and credential storage.
+- An up-front warning in the `signin` skill that it persists an API key to local config and upserts `ZEROGPU_API_KEY` into the user's shell profile, plus guidance against passing the key as a literal argument on shared machines.
+
+### Changed
+- `plugin/README.md` no longer implies inference runs locally — the "runs the CLI locally" line now clarifies that the local CLI **sends text to ZeroGPU's hosted API** — and the plain-language trigger guidance gains an explicit "your input leaves your machine" opt-in caveat.
+
+### Fixed
+- Build no longer fails under the `2026.7.x` SDK: the default export in `plugin/src/index.ts` is annotated with `ReturnType<typeof definePluginEntry>` so the emitted declaration references the public SDK entry point instead of an internal type module (TS2742).
+
 ## 2.1.2
 
 Cost-savings output is now host-neutral, and the dollar figure is a rounded estimate. The `💰 ZeroGPU savings` note (and the `cost_savings` report) previously said "Claude" — misleading in OpenClaw, where Claude isn't the agent host but the pricing baseline used to value the savings. It now reads **"frontier-model tokens offloaded"** / **"instead of your frontier model."**
