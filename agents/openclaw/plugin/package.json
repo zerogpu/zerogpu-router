@@ -59,9 +59,6 @@
       "pluginSdkVersion": "2026.7.1"
     }
   },
-  "peerDependencies": {
-    "openclaw": ">=2026.7.1"
-  },
   "devDependencies": {
     "openclaw": "^2026.7.1",
     "typescript": "^5.0.0"
