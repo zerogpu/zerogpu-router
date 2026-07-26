@@ -1,5 +1,41 @@
 # Changelog
 
+## 3.0.1
+
+Fixes a gateway boot failure on OpenClaw `2026.7.1`. Installs of this plugin could leave the gateway
+crash-looping after an OpenClaw upgrade, never reporting ready. **No skill behavior or output changes.**
+
+### Fixed
+- Removed `peerDependencies.openclaw` from the published `plugin/package.json`. `2026.7.1` added a
+  startup plugin-convergence gate that fails closed: for any plugin whose shipped manifest declares
+  an `openclaw` peer, it audits that the plugin's `node_modules/openclaw` symlink still resolves to
+  the *live* host package root. That symlink is an absolute path written once at plugin-install time,
+  so an OpenClaw upgrade that relocates the package root (notably a Node version change — `2026.7.1`
+  narrowed `engines.node` to `>=22.22.3 <23 || >=24.15.0 <25 || >=25.9.0`, and per-version global
+  prefixes under nvm/fnm/volta move with it) leaves it stale. The audit then fails with
+  `missing-openclaw-peer-link` and the gateway refuses to report ready.
+
+  The gateway's own repair pass for this (`repairManagedNpmOpenClawPeerLinks`) only walks managed npm
+  roots under `~/.openclaw/npm`. This plugin installs as a ClawHub code-plugin into
+  `~/.openclaw/extensions`, so it was audited but never repaired — the failure persisted across every
+  restart instead of self-healing.
+
+  The peer declaration was never needed at runtime: the host loader aliases `openclaw/plugin-sdk/*`
+  to its own modules, so `dist/index.js` resolves `definePluginEntry` without the symlink. `openclaw`
+  stays in `devDependencies` for the build and type-check, which are unchanged.
+
+**Recovering an already-broken install:** the gate reads the `package.json` of the *installed* copy
+under `~/.openclaw/extensions/`, so that directory has to be replaced — publishing this release does
+not repair machines on its own. Reinstalling in place clears the failure:
+
+```sh
+openclaw plugins install clawhub:zerogpu-router --force
+```
+
+`--force` is required: a plain `plugins install` refuses when the plugin directory already exists.
+To only unbrick the gateway without reinstalling, `openclaw plugins uninstall zerogpu-router --force`
+also restores boot. Note that `openclaw plugins update` skips `path`-source installs entirely.
+
 ## 3.0.0
 
 Security and compliance release. Resolves every finding from the ClawHub security audit and moves the plugin onto a patched OpenClaw gateway. **Breaking:** the minimum supported gateway is now `2026.7.1` — older gateways can no longer install this version.
