@@ -14,14 +14,16 @@ Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude aut
 | --- | --- | --- |
 | **Node.js ≥ 20** | Runs the `zerogpu` CLI | [nodejs.org](https://nodejs.org) |
 | **Claude Code** | Hosts the plugin | `npm install -g @anthropic-ai/claude-code` |
-| **`zerogpu` CLI** | Skills shell out to it | `npm install -g zerogpu-cli` |
+| **`zerogpu` CLI ≥ 3.3.0** | Skills shell out to it | `npm install -g zerogpu-cli@latest` |
 | **ZeroGPU account** | API key | [zerogpu.ai](https://zerogpu.ai) |
 
-Verify the CLI is on your `PATH`:
+Verify the CLI is on your `PATH` and current:
 
 ```sh
 zerogpu --version
 ```
+
+`chat-gpt-oss`, `chat-qwen`, and `classify-domain` need **3.3.0 or newer** — that release added `chat --model` and the `classify_domain` command. On an older CLI those three skills fail; the other 15 work on any 3.x.
 
 ### 1. Authenticate the CLI
 
@@ -257,6 +259,54 @@ Same as `chat`, but the model returns its reasoning trace alongside the answer.
 
 ---
 
+### `/zerogpu-router:chat-gpt-oss`
+
+Heavier chat for work the 1.2B edge models can't carry — long documents, multi-step instructions, harder general-knowledge questions — at a fraction of frontier-model cost.
+
+- **Model:** `gpt-oss-120b` (117B MoE, 131,072-token context)
+- **Wraps:** `zerogpu chat -m gpt-oss-120b`
+- **When Claude auto-invokes:** you've signalled "use a bigger ZeroGPU model", or a routed task came back too weak from `chat`.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-gpt-oss <text> [-i <instructions>]
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-gpt-oss "Summarize the trade-offs between optimistic and pessimistic locking, then recommend one for a high-contention inventory table."
+```
+
+**Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; the skill leaves off the CLI's `-r` flag, so only the final answer is printed.
+
+---
+
+### `/zerogpu-router:chat-qwen`
+
+Heavier chat tuned for multilingual work — 100+ languages, useful when the prompt or the expected answer isn't English.
+
+- **Model:** `qwen3-30b-a3b-fp8` (30.5B MoE, 32,768-token context)
+- **Wraps:** `zerogpu chat -m qwen3-30b-a3b-fp8`
+- **When Claude auto-invokes:** non-English prompts, translation-adjacent tasks, mid-weight questions the edge models handle poorly.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-qwen <text> [-i <instructions>]
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-qwen "Explica la diferencia entre un índice B-tree y uno hash en dos frases."
+```
+
+**Output:** the assistant's answer as plain text. This model is served by the Chat Completions API rather than the Responses API — the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
+
+---
+
 ### `/zerogpu-router:classify-iab`
 
 Classify text against the **IAB content / audience taxonomy** (standard ad-tech category labels).
@@ -293,7 +343,7 @@ Classify text against the **IAB content / audience taxonomy** (standard ad-tech 
 
 Enriched IAB classification — audience categories **plus** topics, keywords, and inferred user intent.
 
-- **Model:** `zlm-v1-iab-classify-edge-enriched`
+- **Model:** `zlm-v2-iab-classify-edge-enriched`
 - **Wraps:** `zerogpu classify_iab_enriched`
 - **When Claude auto-invokes:** "give me topics, keywords, and intent", richer ad/audience signals than plain IAB labels.
 
@@ -319,6 +369,46 @@ Enriched IAB classification — audience categories **plus** topics, keywords, a
   "intent": "comparison-shopping"
 }
 ```
+
+---
+
+### `/zerogpu-router:classify-domain`
+
+Classify a **domain name** against the IAB taxonomy without fetching the page. Built for bidstream enrichment and allow/deny-list scoring, where all you have is a hostname.
+
+- **Model:** `zlm-v1-iab-domain-classifier`
+- **Wraps:** `zerogpu classify_domain`
+- **When Claude auto-invokes:** "what is example.com about?", "categorize these domains", any IAB request where the input is a URL rather than article text.
+
+**Synopsis**
+
+```
+/zerogpu-router:classify-domain <domain>
+```
+
+The model takes a bare hostname — Claude strips the scheme, path, and query before calling, so pasting `https://www.nytimes.com/section/world?x=1` works too.
+
+**Example**
+
+```text
+/zerogpu-router:classify-domain "espn.com"
+```
+
+**Output (illustrative, truncated)**
+
+```json
+{
+  "audience": [
+    { "id": 512, "name": "Sports Radio", "tier1_name": "Interest", "score": 0.66 }
+  ],
+  "content": {
+    "iab_1_0": [{ "code": "IAB17", "name": "Sports", "tier": 1, "score": 0.79 }],
+    "iab_2_2": [{ "id": 483, "name": "Sports", "tier1_name": "Sports", "score": 0.79 }]
+  }
+}
+```
+
+Payloads are up to 10x smaller than sending page text. If you have the actual article, use `classify-iab` or `classify-iab-enriched` instead — they see more signal.
 
 ---
 
@@ -579,9 +669,41 @@ a revised 2025 budget by mid-December.
 
 ---
 
+### `/zerogpu-router:generate-followups`
+
+Generate the questions a reader would naturally ask next about a passage — "people also ask" style prompts, conversation continuations, suggested next steps.
+
+- **Model:** `zlm-v1-followup-questions-edge`
+- **Wraps:** `zerogpu generate_followups`
+- **When Claude auto-invokes:** "what should I ask next?", "suggest follow-up questions", building a related-questions widget.
+
+**Synopsis**
+
+```
+/zerogpu-router:generate-followups <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:generate-followups "The Fed held rates steady at its March meeting, citing sticky core inflation."
+```
+
+**Output (illustrative)**
+
+```json
+[
+  "What are the implications of this decision?",
+  "Can you provide more context on the Fed's recent moves?",
+  "How do other central banks handle similar inflation?"
+]
+```
+
+---
+
 ## Skills reference
 
-Quick lookup table — all 14 skills at a glance.
+Quick lookup table — all 18 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -590,8 +712,11 @@ Quick lookup table — all 14 skills at a glance.
 | `/zerogpu-router:cost-savings` | Show cumulative savings vs. Claude (manual only) | `/zerogpu-router:cost-savings` |
 | `/zerogpu-router:chat <text>` | Short chat reply via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat "Explain WebSockets in two sentences."` |
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (returns reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
+| `/zerogpu-router:chat-gpt-oss <text>` | Heavier chat via `gpt-oss-120b` (131K context) | `/zerogpu-router:chat-gpt-oss "Compare optimistic vs pessimistic locking."` |
+| `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
 | `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification | `/zerogpu-router:classify-iab "The Lakers signed a new point guard."` |
 | `/zerogpu-router:classify-iab-enriched <text>` | IAB + topics/keywords/intent | `/zerogpu-router:classify-iab-enriched "Compare the Tesla Model Y and Hyundai Ioniq 5."` |
+| `/zerogpu-router:classify-domain <domain>` | IAB classification from a hostname, no page fetch | `/zerogpu-router:classify-domain "espn.com"` |
 | `/zerogpu-router:classify-zero-shot <text> -l …` | Zero-shot against custom labels | `/zerogpu-router:classify-zero-shot "fast laptop" -l positive -l negative` |
 | `/zerogpu-router:classify-structured <text> -s '…'` | Schema-based multi-axis classification | `/zerogpu-router:classify-structured "ticket text" -s '{"sentiment":["positive","negative"]}'` |
 | `/zerogpu-router:extract-entities <text> -l …` | Custom-label NER | `/zerogpu-router:extract-entities "Tim Cook met Sundar Pichai in Cupertino." -l person -l location` |
@@ -599,6 +724,7 @@ Quick lookup table — all 14 skills at a glance.
 | `/zerogpu-router:redact-pii <text>` | Mask PII in-line with `[LABEL]` placeholders | `/zerogpu-router:redact-pii "Email John at john@acme.com"` |
 | `/zerogpu-router:extract-json <text> -s '…'` | Schema-driven JSON extraction | `/zerogpu-router:extract-json "..." -s '{"contact":["name::str::Full name"]}'` |
 | `/zerogpu-router:summarize <text>` | Summarize with `llama-3.1-8b-instruct-fast` | `/zerogpu-router:summarize "The board met Thursday to review Q3 results..."` |
+| `/zerogpu-router:generate-followups <text>` | Suggested next questions for a passage | `/zerogpu-router:generate-followups "The Fed held rates steady..."` |
 
 For full flag reference (thresholds, categories, schema syntax), run `zerogpu <command> --help`.
 

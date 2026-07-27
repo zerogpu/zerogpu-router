@@ -1,5 +1,30 @@
 # Changelog
 
+## 3.1.0
+
+Catches the plugin up to the [ZeroGPU model catalog](https://docs.zerogpu.ai/docs/model-catalog), which added three models and renamed a fourth, and to `zerogpu-cli` 3.3.0, which added the commands to reach them. **Four new skills; the existing 14 are unchanged.** Also a rewritten ClawHub listing.
+
+Keep the CLI current — `npm install -g zerogpu-cli@latest` — and every skill works.
+
+### Added
+
+- `generate-followups` — suggested next questions for a passage, "people also ask" style. Model `zlm-v1-followup-questions-edge`, wrapping `zerogpu generate_followups`. The CLI has shipped this command since 3.1.0; the plugin never exposed it.
+- `classify-domain` — IAB classification from a bare hostname, no page fetch. Model `zlm-v1-iab-domain-classifier`, wrapping `zerogpu classify_domain`. Payloads run up to 10x smaller than sending page text, which is the point for bidstream enrichment and allow/deny-list scoring. The agent strips the scheme, path, and query before calling, so pasting a full URL works.
+- `chat-gpt-oss` — heavier chat via `gpt-oss-120b` (117B MoE, 131,072-token context) for long documents and multi-step instructions the 1.2B edge models can't carry. Wraps `zerogpu chat -m gpt-oss-120b`.
+- `chat-qwen` — heavier multilingual chat via `qwen3-30b-a3b-fp8` (30.5B MoE, 100+ languages). Wraps `zerogpu chat -m qwen3-30b-a3b-fp8`; this model is served by the Chat Completions API rather than the Responses API, which the CLI handles.
+
+Both new chat models return a reasoning trace. Neither skill passes the CLI's `-r` flag, so only the final answer is printed — matching how `chat` behaves. `chat-thinking` remains the skill that surfaces reasoning.
+
+Savings tracking covers all four: every call goes through the CLI, and 3.3.0 prices each of these models in its savings table, so they contribute to the `cost-savings` skill like any other.
+
+### Changed
+
+- `classify-iab-enriched` — documented model renamed `zlm-v1-iab-classify-edge-enriched` → `zlm-v2-iab-classify-edge-enriched`, following the catalog and CLI 3.3.0. No behavior change: the skill still shells out to `zerogpu classify_iab_enriched`.
+- **`plugin/README.md` rewritten for the ClawHub listing.** Leads on the positioning that matters — open-weight and small language models, OpenAI-compatible APIs, pay-as-you-go, and a catalog growing by roughly a model a day. Adds a topic-tag row and badges for docs, API compatibility, and pricing alongside the existing website/dashboard/license badges, matching how established ClawHub plugins present themselves. The 18 skills are now grouped into Classification, Extraction & PII, Generation, and Account tables instead of one flat list, and Links became a Support table with docs and issues rows.
+- **Plugin description** (`openclaw.plugin.json`, `plugin/package.json`) — "trivial AI tasks … small/nano models" reworded to "your AI tasks … open-weight and small language models", noting OpenAI compatibility and pay-as-you-go pricing. This is the copy ClawHub shows on the plugin card.
+- **Package keywords** — added `open-weight-models`, `small-language-models`, `openai-compatible`, `classification`, `pii-redaction`, and `summarization`. ClawHub renders these as the listing's topic tags, so the plugin now surfaces for those searches.
+- **No version pinning in the docs.** Dropped the stale `clawhub:zerogpu-router@2.0.0` pin example and the `zerogpu-cli` ≥ 3.3.0 floor callout; install guidance is now simply `zerogpu-cli@latest`. Functionally unchanged — the three new model skills still need the CLI release that carries `chat --model` and `classify_domain`, users just aren't asked to track version numbers.
+
 ## 3.0.1
 
 Fixes a gateway boot failure on OpenClaw `2026.7.1`. Installs of this plugin could leave the gateway

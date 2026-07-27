@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.6.0
+
+Catches the plugin up to the [ZeroGPU model catalog](https://docs.zerogpu.ai/docs/model-catalog), which added three models and renamed a fourth, and to `zerogpu-cli` 3.3.0, which added the commands to reach them. **Four new skills; the existing 14 are unchanged.**
+
+Requires `zerogpu-cli` **≥ 3.3.0** for the three new model skills — `chat --model` and `classify_domain` landed in that release. The other 15 skills still work on any 3.x.
+
+### Added
+
+- `generate-followups` — suggested next questions for a passage, "people also ask" style. Model `zlm-v1-followup-questions-edge`, wrapping `zerogpu generate_followups`. The CLI has shipped this command since 3.1.0; the plugin never exposed it.
+- `classify-domain` — IAB classification from a bare hostname, no page fetch. Model `zlm-v1-iab-domain-classifier`, wrapping `zerogpu classify_domain`. Payloads run up to 10x smaller than sending page text, which is the point for bidstream enrichment and allow/deny-list scoring. Claude strips the scheme, path, and query before calling, so pasting a full URL works.
+- `chat-gpt-oss` — heavier chat via `gpt-oss-120b` (117B MoE, 131,072-token context) for long documents and multi-step instructions the 1.2B edge models can't carry. Wraps `zerogpu chat -m gpt-oss-120b`.
+- `chat-qwen` — heavier multilingual chat via `qwen3-30b-a3b-fp8` (30.5B MoE, 100+ languages). Wraps `zerogpu chat -m qwen3-30b-a3b-fp8`; this model is served by the Chat Completions API rather than the Responses API, which the CLI handles.
+
+Both new chat models return a reasoning trace. Neither skill passes the CLI's `-r` flag, so only the final answer is printed — matching how `chat` behaves. `chat-thinking` remains the skill that surfaces reasoning.
+
+Savings tracking covers all four: every call goes through the CLI, and 3.3.0 prices each of these models in its savings table, so they contribute to `/zerogpu-router:cost-savings` like any other skill.
+
+### Changed
+
+- `classify-iab-enriched` — documented model renamed `zlm-v1-iab-classify-edge-enriched` → `zlm-v2-iab-classify-edge-enriched`, following the catalog and CLI 3.3.0. No behavior change: the skill still shells out to `zerogpu classify_iab_enriched`.
+- `.claude-plugin/marketplace.json` — description now reflects 18 skills and mentions domain classification.
+- `README.md` — prerequisites now call out the `zerogpu-cli` ≥ 3.3.0 floor.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.5.1
 
 Cost-savings copy is now host-neutral, and the dollar figure is a rounded estimate. The `💰 ZeroGPU savings` note and the `cost-savings` report previously said "Claude" for the pricing baseline — the same word as the agent host, so "Claude savings" was ambiguous. They now compare against **"your frontier model"** and count **"frontier-model tokens offloaded."** **The 11 auto-invoked model skills and their outputs are unchanged** — they still relay whatever the CLI emits, verbatim.
