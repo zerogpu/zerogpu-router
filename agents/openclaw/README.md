@@ -44,4 +44,4 @@ See [./plugin/README.md](./plugin/README.md) — the single source of truth for 
 ## Notes
 
 - No additional infrastructure or services required.
-- Skills run locally through the `zerogpu` CLI.
+- Most skills run locally through the `zerogpu` CLI. `classify-domain`, `chat-gpt-oss`, and `chat-qwen` call the ZeroGPU API directly with the same saved credentials, because the CLI has no command for those models yet — so their usage isn't counted in `cost-savings`.

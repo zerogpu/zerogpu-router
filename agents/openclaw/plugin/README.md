@@ -113,7 +113,8 @@ Note the card last-four is left untouched — the PII model covers standard cate
 | Skill | Workload | Backing model |
 |---|---|---|
 | `classify-iab` | IAB topic classification | `zlm-v1-iab-classify-edge` |
-| `classify-iab-enriched` | IAB categories plus topics, keywords, intent | `zlm-v1-iab-classify-edge-enriched` |
+| `classify-iab-enriched` | IAB categories plus topics, keywords, intent | `zlm-v2-iab-classify-edge-enriched` |
+| `classify-domain` | IAB classification from a bare hostname, no page fetch | `zlm-v1-iab-domain-classifier` |
 | `summarize` | TL;DRs, abstracts, meeting summaries | `llama-3.1-8b-instruct-fast` |
 | `classify-zero-shot` | Classify against a flat label list | `deberta-v3-small` |
 | `classify-structured` | Multi-axis schema classification | `gliner2-base-v1` |
@@ -121,13 +122,18 @@ Note the card last-four is left untouched — the PII model covers standard cate
 | `extract-json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
 | `redact-pii` | Mask emails, phones, names, addresses, other PII | `gliner-multi-pii-v1` |
 | `extract-pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
+| `generate-followups` | Suggested next questions for a passage | `zlm-v1-followup-questions-edge` |
 | `chat` | Short small-model chat replies | `LFM2.5-1.2B-Instruct` |
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
+| `chat-gpt-oss` | Heavier chat: long context, multi-step instructions | `gpt-oss-120b` |
+| `chat-qwen` | Heavier chat: multilingual, 100+ languages | `qwen3-30b-a3b-fp8` |
 | `cost-savings` | Cumulative dollars and tokens offloaded to ZeroGPU | — |
 | `signin` | Sign in and persist API key | — |
 | `status` | Show current sign-in status | — |
 
 Every skill returns `{ <task fields>, model, usage, savings }`.
+
+**Three skills call the ZeroGPU API directly.** `classify-domain`, `chat-gpt-oss`, and `chat-qwen` cover models the `zerogpu` CLI has no command for, so they POST to `api.zerogpu.ai` themselves using the credentials `zerogpu login` saved (`~/.zerogpu/config.json`, or `ZEROGPU_API_KEY`). They need `node` on your `PATH` — already a prerequisite for the CLI. Because they bypass the CLI, **their usage is not counted in `cost-savings`**; the other skills are unaffected.
 
 ## Watch your savings
 
@@ -135,7 +141,7 @@ Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** — tok
 
 ## Data & privacy
 
-**These skills are not local processing.** Every content skill (`summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `chat`, `chat-thinking`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
+**These skills are not local processing.** Every content skill (`summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `generate-followups`, `chat`, `chat-thinking`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. `classify-domain`, `chat-gpt-oss`, and `chat-qwen` transmit it to the same hosted API directly, without the CLI in between. Either way the code runs locally; the inference does not.
 
 Before using these skills:
 

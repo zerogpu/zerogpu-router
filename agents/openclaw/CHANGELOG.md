@@ -1,5 +1,28 @@
 # Changelog
 
+## 3.1.0
+
+Catches the plugin up to the [ZeroGPU model catalog](https://docs.zerogpu.ai/docs/model-catalog), which added three models and renamed a fourth. **Four new skills; the existing 14 are unchanged.**
+
+### Added
+
+- `generate-followups` — suggested next questions for a passage, "people also ask" style. Model `zlm-v1-followup-questions-edge`, wrapping `zerogpu generate_followups`. The CLI has shipped this command since 3.1.0; the plugin never exposed it.
+- `classify-domain` — IAB classification from a bare hostname, no page fetch. Model `zlm-v1-iab-domain-classifier`. Full URLs are normalized down to the hostname, so `https://www.nytimes.com/section/world?x=1` and `nytimes.com` behave identically. Payloads run up to 10x smaller than sending page text, which is the point for bidstream enrichment and allow/deny-list scoring.
+- `chat-gpt-oss` — heavier chat via `gpt-oss-120b` (117B MoE, 131,072-token context) for long documents and multi-step instructions the 1.2B edge models can't carry.
+- `chat-qwen` — heavier multilingual chat via `qwen3-30b-a3b-fp8` (30.5B MoE, 100+ languages). This model is served on Chat Completions only, so the skill posts to `/v1/chat/completions` rather than `/v1/responses`.
+
+Both chat models return an internal reasoning trace. The skills deliberately drop it and print only the final answer, matching how `chat` behaves — `chat-thinking` remains the skill that surfaces reasoning.
+
+### Changed
+
+- `classify-iab-enriched` — documented model renamed `zlm-v1-iab-classify-edge-enriched` → `zlm-v2-iab-classify-edge-enriched`, following the catalog. No behavior change: the skill still shells out to `zerogpu classify_iab_enriched`, and the API resolves both ids to the same model.
+- `plugin/README.md` — skills table covers all 18 skills; the "Data & privacy" section now distinguishes skills that transmit via the CLI from the three that post to the API directly.
+- The three direct-API skills declare `bins: [zerogpu, node]` in their OpenClaw `requires` metadata. `node` was already an implicit prerequisite (it runs the CLI); it is now explicit for the skills that depend on it directly.
+
+### Known limitation
+
+`classify-domain`, `chat-gpt-oss`, and `chat-qwen` call `https://api.zerogpu.ai` directly, because `zerogpu-cli` (3.2.0, current) has no command for these three models. They read the same credentials — `~/.zerogpu/config.json`, falling back to `$ZEROGPU_API_KEY` — and fail with the same "run `zerogpu login`" message when unauthenticated, but since the CLI isn't in the call path it can't record the call: **these three do not contribute to the `cost-savings` skill**. The other 15 skills are unaffected. When the CLI adds commands for these models, the skills move onto it and start counting.
+
 ## 3.0.1
 
 Fixes a gateway boot failure on OpenClaw `2026.7.1`. Installs of this plugin could leave the gateway
