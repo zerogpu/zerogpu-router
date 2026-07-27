@@ -1,12 +1,12 @@
 ---
 name: chat-qwen
 description: Chat with qwen3-30b-a3b-fp8, a 30.5B MoE model with strong multilingual coverage (100+ languages, 32K context). Use for non-English prompts, translation-adjacent tasks, or mid-weight questions the 1.2B edge models handle poorly.
-argument-hint: "<text>"
-allowed-tools: Bash(node -e *)
+argument-hint: "<text> [-i <instructions>]"
+allowed-tools: Bash(zerogpu chat *)
 metadata:
   openclaw:
     requires:
-      bins: [zerogpu, node]
+      bins: [zerogpu]
     install:
       - kind: node
         package: zerogpu-cli
@@ -22,10 +22,11 @@ ZGPU_TEXT=$(cat <<'ZGPU_END_OF_INPUT'
 $ARGUMENTS
 ZGPU_END_OF_INPUT
 )
-export ZGPU_TEXT
-node -e 'const fs=require("fs"),os=require("os"),path=require("path");let key=process.env.ZEROGPU_API_KEY;try{key=JSON.parse(fs.readFileSync(path.join(os.homedir(),".zerogpu","config.json"),"utf8")).apiKey||key}catch(e){}if(!key){console.error("Not signed in to ZeroGPU. Run: zerogpu login");process.exit(1)}fetch("https://api.zerogpu.ai/v1/chat/completions",{method:"POST",headers:{"content-type":"application/json","x-api-key":key},body:JSON.stringify({model:"qwen3-30b-a3b-fp8",messages:[{role:"user",content:process.env.ZGPU_TEXT}]})}).then(async r=>{if(!r.ok){console.error("Request failed with status "+r.status+".");console.error(await r.text());process.exit(1)}return r.json()}).then(d=>{const c=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;console.log(c?c.trim():JSON.stringify(d,null,2))}).catch(e=>{console.error("Request failed: "+e.message);process.exit(1)})'
+zerogpu chat "$ZGPU_TEXT" -m qwen3-30b-a3b-fp8
 ```
 
-This model is served on Chat Completions only — the Responses endpoint is not available for it. Output is the assistant's answer as plain text; the model's separate reasoning field is deliberately dropped. Relay the answer as-is — do not rewrite or expand it.
+If the user supplied system instructions, append `-i "<instructions>"` after the model flag.
 
-This skill calls the ZeroGPU API directly rather than through the `zerogpu` CLI, which has no command for this model. It still uses the credentials `zerogpu login` saved, but its usage is **not** recorded in the `cost-savings` skill.
+This model is served by the Chat Completions API rather than the Responses API; the CLI routes it automatically. Output is the assistant's answer as plain text — the model's reasoning trace is omitted, since this skill does not pass the CLI's `-r` flag. Relay the answer as-is — do not rewrite or expand it.
+
+Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest the `cost-savings` skill — this note is intentionally occasional, not shown every time.

@@ -133,7 +133,7 @@ Note the card last-four is left untouched — the PII model covers standard cate
 
 Every skill returns `{ <task fields>, model, usage, savings }`.
 
-**Three skills call the ZeroGPU API directly.** `classify-domain`, `chat-gpt-oss`, and `chat-qwen` cover models the `zerogpu` CLI has no command for, so they POST to `api.zerogpu.ai` themselves using the credentials `zerogpu login` saved (`~/.zerogpu/config.json`, or `ZEROGPU_API_KEY`). They need `node` on your `PATH` — already a prerequisite for the CLI. Because they bypass the CLI, **their usage is not counted in `cost-savings`**; the other skills are unaffected.
+`chat-gpt-oss`, `chat-qwen`, and `classify-domain` require **`zerogpu-cli` ≥ 3.3.0** — that release added `chat --model` and the `classify_domain` command. Run `npm install -g zerogpu-cli@latest` if those three fail; the rest work on any 3.x.
 
 ## Watch your savings
 
@@ -141,7 +141,7 @@ Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** — tok
 
 ## Data & privacy
 
-**These skills are not local processing.** Every content skill (`summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `generate-followups`, `chat`, `chat-thinking`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. `classify-domain`, `chat-gpt-oss`, and `chat-qwen` transmit it to the same hosted API directly, without the CLI in between. Either way the code runs locally; the inference does not.
+**These skills are not local processing.** Every content skill (`summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `generate-followups`, `chat`, `chat-thinking`, `chat-gpt-oss`, `chat-qwen`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
 
 Before using these skills:
 

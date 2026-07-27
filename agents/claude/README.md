@@ -2,7 +2,7 @@
 
 Offload cheap, well-defined NLP tasks (classification, summarization, entity & PII extraction, short chat) from Claude to ZeroGPU's edge-optimized small language models — directly from your Claude Code session.
 
-Every command in the `zerogpu` CLI is exposed as a Claude Code skill, plus three skills for models the CLI does not yet cover. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
+Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
 
 ---
 
@@ -14,14 +14,16 @@ Every command in the `zerogpu` CLI is exposed as a Claude Code skill, plus three
 | --- | --- | --- |
 | **Node.js ≥ 20** | Runs the `zerogpu` CLI | [nodejs.org](https://nodejs.org) |
 | **Claude Code** | Hosts the plugin | `npm install -g @anthropic-ai/claude-code` |
-| **`zerogpu` CLI** | Skills shell out to it | `npm install -g zerogpu-cli` |
+| **`zerogpu` CLI ≥ 3.3.0** | Skills shell out to it | `npm install -g zerogpu-cli@latest` |
 | **ZeroGPU account** | API key | [zerogpu.ai](https://zerogpu.ai) |
 
-Verify the CLI is on your `PATH`:
+Verify the CLI is on your `PATH` and current:
 
 ```sh
 zerogpu --version
 ```
+
+`chat-gpt-oss`, `chat-qwen`, and `classify-domain` need **3.3.0 or newer** — that release added `chat --model` and the `classify_domain` command. On an older CLI those three skills fail; the other 15 work on any 3.x.
 
 ### 1. Authenticate the CLI
 
@@ -262,13 +264,13 @@ Same as `chat`, but the model returns its reasoning trace alongside the answer.
 Heavier chat for work the 1.2B edge models can't carry — long documents, multi-step instructions, harder general-knowledge questions — at a fraction of frontier-model cost.
 
 - **Model:** `gpt-oss-120b` (117B MoE, 131,072-token context)
-- **Calls:** `POST /v1/responses` directly — the `zerogpu` CLI has no command for this model
+- **Wraps:** `zerogpu chat -m gpt-oss-120b`
 - **When Claude auto-invokes:** you've signalled "use a bigger ZeroGPU model", or a routed task came back too weak from `chat`.
 
 **Synopsis**
 
 ```
-/zerogpu-router:chat-gpt-oss <text>
+/zerogpu-router:chat-gpt-oss <text> [-i <instructions>]
 ```
 
 **Example**
@@ -277,9 +279,7 @@ Heavier chat for work the 1.2B edge models can't carry — long documents, multi
 /zerogpu-router:chat-gpt-oss "Summarize the trade-offs between optimistic and pessimistic locking, then recommend one for a high-contention inventory table."
 ```
 
-**Output:** the assistant's answer as plain text. The model emits an internal reasoning trace as well; the skill drops it and prints only the final answer.
-
-Usage is **not** recorded in `/zerogpu-router:cost-savings` (see [Skills that bypass the CLI](#skills-that-bypass-the-cli)).
+**Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; the skill leaves off the CLI's `-r` flag, so only the final answer is printed.
 
 ---
 
@@ -288,13 +288,13 @@ Usage is **not** recorded in `/zerogpu-router:cost-savings` (see [Skills that by
 Heavier chat tuned for multilingual work — 100+ languages, useful when the prompt or the expected answer isn't English.
 
 - **Model:** `qwen3-30b-a3b-fp8` (30.5B MoE, 32,768-token context)
-- **Calls:** `POST /v1/chat/completions` directly — this model isn't served on the Responses endpoint, and the CLI has no command for it
+- **Wraps:** `zerogpu chat -m qwen3-30b-a3b-fp8`
 - **When Claude auto-invokes:** non-English prompts, translation-adjacent tasks, mid-weight questions the edge models handle poorly.
 
 **Synopsis**
 
 ```
-/zerogpu-router:chat-qwen <text>
+/zerogpu-router:chat-qwen <text> [-i <instructions>]
 ```
 
 **Example**
@@ -303,9 +303,7 @@ Heavier chat tuned for multilingual work — 100+ languages, useful when the pro
 /zerogpu-router:chat-qwen "Explica la diferencia entre un índice B-tree y uno hash en dos frases."
 ```
 
-**Output:** the assistant's answer as plain text. The model returns its reasoning in a separate field; the skill drops it.
-
-Usage is **not** recorded in `/zerogpu-router:cost-savings` (see [Skills that bypass the CLI](#skills-that-bypass-the-cli)).
+**Output:** the assistant's answer as plain text. This model is served by the Chat Completions API rather than the Responses API — the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
 
 ---
 
@@ -379,16 +377,16 @@ Enriched IAB classification — audience categories **plus** topics, keywords, a
 Classify a **domain name** against the IAB taxonomy without fetching the page. Built for bidstream enrichment and allow/deny-list scoring, where all you have is a hostname.
 
 - **Model:** `zlm-v1-iab-domain-classifier`
-- **Calls:** `POST /v1/responses` directly — the `zerogpu` CLI has no command for this model
+- **Wraps:** `zerogpu classify_domain`
 - **When Claude auto-invokes:** "what is example.com about?", "categorize these domains", any IAB request where the input is a URL rather than article text.
 
 **Synopsis**
 
 ```
-/zerogpu-router:classify-domain <domain-or-url>
+/zerogpu-router:classify-domain <domain>
 ```
 
-Full URLs are normalized down to the hostname, so `https://www.nytimes.com/section/world?x=1` and `nytimes.com` behave identically.
+The model takes a bare hostname — Claude strips the scheme, path, and query before calling, so pasting `https://www.nytimes.com/section/world?x=1` works too.
 
 **Example**
 
@@ -411,8 +409,6 @@ Full URLs are normalized down to the hostname, so `https://www.nytimes.com/secti
 ```
 
 Payloads are up to 10x smaller than sending page text. If you have the actual article, use `classify-iab` or `classify-iab-enriched` instead — they see more signal.
-
-Usage is **not** recorded in `/zerogpu-router:cost-savings` (see [Skills that bypass the CLI](#skills-that-bypass-the-cli)).
 
 ---
 
@@ -702,16 +698,6 @@ Generate the questions a reader would naturally ask next about a passage — "pe
   "How do other central banks handle similar inflation?"
 ]
 ```
-
----
-
-## Skills that bypass the CLI
-
-Three skills — `classify-domain`, `chat-gpt-oss`, and `chat-qwen` — cover models the `zerogpu` CLI has no command for, so they POST to `https://api.zerogpu.ai` themselves.
-
-They use the same credentials as every other skill: the API key `zerogpu login` wrote to `~/.zerogpu/config.json`, falling back to `$ZEROGPU_API_KEY`. If you're not signed in they fail with the same instruction to run `zerogpu login`. They need `node` on your `PATH`, which the CLI already requires.
-
-The one behavioral difference: because the CLI isn't in the call path, it can't record the call, so **these three do not contribute to `/zerogpu-router:cost-savings`**. Your savings total will under-report by whatever you route through them. The other 15 skills are unaffected. Once `zerogpu-cli` ships commands for these models, the skills will move onto it and start counting.
 
 ---
 
