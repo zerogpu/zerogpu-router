@@ -1,13 +1,13 @@
 # OpenClaw Integration
 
-Use ZeroGPU Router with your OpenClaw agent to route routine AI tasks to small models and cut inference costs. This page is a quick entry point — see the plugin README for the full guide.
+Use ZeroGPU Router with your OpenClaw agent to route your AI tasks to open-weight and small language models and cut inference costs. This page is a quick entry point — see the plugin README for the full guide.
 
 ## Quick start
 
 Get an API key at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 ```sh
-npm install -g zerogpu-cli                        # the CLI the skills shell out to
+npm install -g zerogpu-cli@latest                 # the CLI the skills shell out to
 zerogpu login                                     # prompts for your API key
 openclaw plugins install clawhub:zerogpu-router
 ```
@@ -44,4 +44,4 @@ See [./plugin/README.md](./plugin/README.md) — the single source of truth for 
 ## Notes
 
 - No additional infrastructure or services required.
-- Skills run locally through the `zerogpu` CLI. `chat-gpt-oss`, `chat-qwen`, and `classify-domain` require CLI **≥ 3.3.0**.
+- Skills run locally through the `zerogpu` CLI — keep it current with `npm install -g zerogpu-cli@latest`.

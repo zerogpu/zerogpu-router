@@ -1,7 +1,7 @@
 {
   "name": "zerogpu-router",
   "version": "3.0.1",
-  "description": "ZeroGPU Router plugin for OpenClaw: route trivial AI tasks (summarize, classify, redact PII, extract JSON) to small/nano models via the zerogpu CLI. Cuts agent inference costs without changing your reasoning model.",
+  "description": "ZeroGPU Router plugin for OpenClaw: route your AI tasks (summarize, classify, redact PII, extract JSON, chat) to open-weight and small language models via the zerogpu CLI. OpenAI-compatible and pay-as-you-go — cuts agent inference costs without changing your reasoning model.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -28,10 +28,16 @@
   "keywords": [
     "openclaw",
     "openclaw-plugin",
+    "agent-plugin",
     "zerogpu",
-    "model-routing",
     "cost-optimization",
-    "agent-plugin"
+    "model-routing",
+    "open-weight-models",
+    "small-language-models",
+    "openai-compatible",
+    "classification",
+    "pii-redaction",
+    "summarization"
   ],
   "publishConfig": {
     "access": "public"
