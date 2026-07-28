@@ -1,5 +1,33 @@
 # Changelog
 
+## 2.0.0
+
+`chat` now runs on **`gpt-oss-120b`** instead of `LFM2.5-1.2B-Instruct`. The old edge-model behavior moves to a new `chat-liquid` skill, and `chat-gpt-oss` is removed because `chat` now covers it. Skill count stays at 18.
+
+### Breaking
+
+- **`chat-gpt-oss` removed.** `chat` targets the same model, so the two were duplicates. Replace `/zerogpu-router:chat-gpt-oss <text>` with `/zerogpu-router:chat <text>`; the command, output, and cost are identical.
+- **`chat` switched models,** `LFM2.5-1.2B-Instruct` to `gpt-oss-120b`. That is 1.2B parameters to a 117B MoE, and a 32,768-token context to 131,072. Answers improve materially on long documents and multi-step instructions, and cost per call goes up: `gpt-oss-120b` is \$0.03 / \$0.10 per 1M input/output tokens against \$0.02 / \$0.05 for the edge model, so roughly 1.5x input and 2x output. Both stay far below frontier pricing. `gpt-oss-120b` also emits a reasoning trace; the skill omits the CLI's `-r` flag, so only the final answer prints.
+- **`chat` now requires `zerogpu-cli` ≥ 3.3.0,** the release that added `chat --model`. It previously ran on any 3.x.
+
+**To keep the old behavior,** replace `/zerogpu-router:chat` with `/zerogpu-router:chat-liquid`.
+
+### Added
+
+- **`chat-liquid`** wraps `zerogpu chat -m LFM2.5-1.2B-Instruct`, the fastest and cheapest chat on the platform. Same model and flags `chat` used in 1.6.1. Its internal quoting was switched to the heredoc-into-variable form the other model skills use, which changes nothing about what reaches the model.
+
+### Changed
+
+- Every chat skill now passes `--model` explicitly instead of relying on the CLI default, so a future change to that default cannot silently move a skill onto another model.
+- `README.md`: `chat` and `chat-liquid` documented in full, the `chat-gpt-oss` section removed, quick-reference table and CLI version note updated.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.6.1
 
 Documentation punctuation only. **No skill, model, or output changes.** All 18 skills behave exactly as they do in 1.6.0.
