@@ -1,6 +1,6 @@
 # ZeroGPU Router
 
-**Cut your OpenClaw agent's inference costs.** Route your AI tasks — summarize, classify, redact PII, extract JSON, short chat — to open-weight and small language models instead of burning frontier-model tokens. Our APIs are OpenAI-compatible and pay-as-you-go.
+**Cut your OpenClaw agent's inference costs.** Route your AI tasks (summarize, classify, redact PII, extract JSON, short chat) to open-weight and small language models instead of burning frontier-model tokens. Our APIs are OpenAI-compatible and pay-as-you-go.
 
 [![Website](https://img.shields.io/badge/website-zerogpu.ai-22c55e)](https://zerogpu.ai)
 [![Dashboard](https://img.shields.io/badge/dashboard-platform.zerogpu.ai-3b82f6)](https://platform.zerogpu.ai)
@@ -15,14 +15,14 @@
 
 ## What it does
 
-Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded to ZeroGPU's open-weight and small models — typically **100–1000× cheaper per call**.
+Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded to ZeroGPU's open-weight and small models, typically **100–1000× cheaper per call**.
 
 Our open-weight models are the most cost-effective on the market right now. You'll find models here you won't see anywhere else, and we add roughly one a day.
 
-- **18 task-specific skills** — `summarize`, `classify-iab`, `redact-pii`, `extract-json`, and more
-- **Nothing to host or register** — each skill shells out to the local `zerogpu` CLI through the agent's Bash tools
-- **Savings you can see** — every call logs its model, usage, and a real dollar figure
-- **OpenAI-compatible, pay-as-you-go** — no commitments, no idle GPU cost
+- **18 task-specific skills:** `summarize`, `classify-iab`, `redact-pii`, `extract-json`, and more
+- **Nothing to host or register:** each skill shells out to the local `zerogpu` CLI through the agent's Bash tools
+- **Savings you can see:** every call logs its model, usage, and a real dollar figure
+- **OpenAI-compatible, pay-as-you-go:** no commitments, no idle GPU cost
 
 ## Quickstart
 
@@ -45,11 +45,11 @@ openclaw plugins install clawhub:zerogpu-router
 
 ## Try it
 
-Ask your agent in plain language — it picks the right skill, shells out to the local `zerogpu` CLI (which **sends your text to ZeroGPU's hosted API** for inference, instead of using the host model), and replies with the result plus a savings line. The replies below are illustrative: the models are small, so output is concise and a little mechanical.
+Ask your agent in plain language. It picks the right skill, shells out to the local `zerogpu` CLI (which **sends your text to ZeroGPU's hosted API** for inference, instead of using the host model), and replies with the result plus a savings line. The replies below are illustrative: the models are small, so output is concise and a little mechanical.
 
-> **Your input leaves your machine.** These skills transmit the text you give them to ZeroGPU's third-party service — see [Data & privacy](#data--privacy) below before feeding them anything sensitive. Because the agent can pick these skills from plain-language requests, decide up front what you're comfortable routing off-box.
+> **Your input leaves your machine.** These skills transmit the text you give them to ZeroGPU's third-party service. See [Data & privacy](#data--privacy) below before feeding them anything sensitive. Because the agent can pick these skills from plain-language requests, decide up front what you're comfortable routing off-box.
 
-**Summarize** — condense a meeting recap:
+**Summarize** a meeting recap:
 
 ```text
 summarize this: Team, quick recap of today's sync. We agreed to push the mobile
@@ -72,10 +72,10 @@ model: llama-3.1-8b-instruct-fast · 78 tokens in / 41 out
 💰 ZeroGPU savings so far: ≈ $2 (18,730 frontier-model tokens offloaded)
 ```
 
-**Classify** — triage a support ticket against your own labels:
+**Classify** a support ticket against your own labels:
 
 ```text
-classify this support ticket as billing, bug, feature-request, or account —
+classify this support ticket as billing, bug, feature-request, or account:
 "I was charged twice for my October subscription, and the second charge is a
 different amount than my plan. Please refund the duplicate and explain the
 difference."
@@ -95,26 +95,26 @@ model: deberta-v3-small · 61 tokens in
 💰 ZeroGPU savings so far: ≈ $2 (19,180 frontier-model tokens offloaded)
 ```
 
-**Redact PII** — scrub a CRM note before sharing it:
+**Redact PII** from a CRM note before sharing it:
 
 ```text
-redact the PII in this CRM note before I share it with the vendor —
+redact the PII in this CRM note before I share it with the vendor:
 "Call with Daniel Okafor (daniel.okafor@brightwave.io, +1 206-555-0147) on Tue.
 Send the enterprise quote to their AP team at 400 Pine St, Seattle, WA 98101.
-Card on file ends 4412 — do not reference it in email."
+Card on file ends 4412; do not reference it in email."
 ```
 
 Reply:
 
 ```text
 Call with [PERSON] ([EMAIL], [PHONE_NUMBER]) on Tue. Send the enterprise quote to
-their AP team at [ADDRESS]. Card on file ends 4412 — do not reference it in email.
+their AP team at [ADDRESS]. Card on file ends 4412; do not reference it in email.
 
 model: gliner-multi-pii-v1 · 5 spans masked
 💰 ZeroGPU savings so far: ≈ $2 (19,650 frontier-model tokens offloaded)
 ```
 
-Note the card last-four is left untouched — the PII model covers standard categories (names, emails, phones, addresses), not project-specific identifiers. Strip those yourself.
+Note the card last-four is left untouched. The PII model covers standard categories (names, emails, phones, addresses), not project-specific identifiers. Strip those yourself.
 
 ## The skills you get
 
@@ -160,7 +160,7 @@ Every skill returns `{ <task fields>, model, usage, savings }`. Browse the full 
 
 ## Watch your savings
 
-Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** — token usage, latency, per-tool savings, broken down by agent and time range.
+Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)**: token usage, latency, per-tool savings, broken down by agent and time range.
 
 ## Data & privacy
 
@@ -169,10 +169,10 @@ Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)** — tok
 Before using these skills:
 
 - **Do not** send secrets, credentials, API keys, or regulated data (PHI, cardholder data, etc.) unless you have cleared third-party processing with ZeroGPU for that data.
-- The PII skills (`redact-pii`, `extract-pii`) **send the raw, un-redacted text** to the service in order to detect PII — redaction happens after transmission, not before. They reduce what you forward *downstream*, not what reaches ZeroGPU.
+- The PII skills (`redact-pii`, `extract-pii`) **send the raw, un-redacted text** to the service in order to detect PII; redaction happens after transmission, not before. They reduce what you forward *downstream*, not what reaches ZeroGPU.
 - Treat inputs the way you'd treat any third-party API call: assume the request may be logged or retained per ZeroGPU's terms and retention policy. Review those at [zerogpu.ai](https://zerogpu.ai) for your compliance needs.
 
-**Credentials:** `zerogpu login` (the `signin` skill) writes your API key to a local config file and upserts `ZEROGPU_API_KEY` into your shell profile — a persistent change to your environment. Revoke keys from the [dashboard](https://platform.zerogpu.ai).
+**Credentials:** `zerogpu login` (the `signin` skill) writes your API key to a local config file and upserts `ZEROGPU_API_KEY` into your shell profile, a persistent change to your environment. Revoke keys from the [dashboard](https://platform.zerogpu.ai).
 
 ## Support
 
@@ -188,4 +188,4 @@ Before using these skills:
 
 ## License
 
-MIT — see [LICENSE](https://github.com/zerogpu/zerogpu-router/blob/main/LICENSE).
+MIT. See [LICENSE](https://github.com/zerogpu/zerogpu-router/blob/main/LICENSE).

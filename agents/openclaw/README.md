@@ -1,6 +1,6 @@
 # OpenClaw Integration
 
-Use ZeroGPU Router with your OpenClaw agent to route your AI tasks to open-weight and small language models and cut inference costs. This page is a quick entry point — see the plugin README for the full guide.
+Use ZeroGPU Router with your OpenClaw agent to route your AI tasks to open-weight and small language models and cut inference costs. This page is a quick entry point; see the plugin README for the full guide.
 
 ## Quick start
 
@@ -14,7 +14,7 @@ openclaw plugins install clawhub:zerogpu-router
 
 ## Try it
 
-Ask your agent in plain language — it picks the right skill and runs the `zerogpu` CLI locally:
+Ask your agent in plain language. It picks the right skill and runs the `zerogpu` CLI locally:
 
 ```text
 summarize this: Team, quick recap of today's sync. We agreed to push the mobile
@@ -39,9 +39,9 @@ model: llama-3.1-8b-instruct-fast · 78 tokens in / 41 out
 
 ## Full documentation
 
-See [./plugin/README.md](./plugin/README.md) — the single source of truth for skills, examples, and configuration.
+See [./plugin/README.md](./plugin/README.md), the single source of truth for skills, examples, and configuration.
 
 ## Notes
 
 - No additional infrastructure or services required.
-- Skills run locally through the `zerogpu` CLI — keep it current with `npm install -g zerogpu-cli@latest`.
+- Skills run locally through the `zerogpu` CLI. Keep it current with `npm install -g zerogpu-cli@latest`.

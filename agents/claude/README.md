@@ -1,6 +1,6 @@
-# ZeroGPU Router — Claude Code plugin
+# ZeroGPU Router for Claude Code
 
-Offload cheap, well-defined NLP tasks (classification, summarization, entity & PII extraction, short chat) from Claude to ZeroGPU's edge-optimized small language models — directly from your Claude Code session.
+Offload cheap, well-defined NLP tasks (classification, summarization, entity & PII extraction, short chat) from Claude to ZeroGPU's edge-optimized small language models, directly from your Claude Code session.
 
 Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
 
@@ -23,7 +23,7 @@ Verify the CLI is on your `PATH` and current:
 zerogpu --version
 ```
 
-`chat-gpt-oss`, `chat-qwen`, and `classify-domain` need **3.3.0 or newer** — that release added `chat --model` and the `classify_domain` command. On an older CLI those three skills fail; the other 15 work on any 3.x.
+`chat-gpt-oss`, `chat-qwen`, and `classify-domain` need **3.3.0 or newer**. That release added `chat --model` and the `classify_domain` command. On an older CLI those three skills fail; the other 15 work on any 3.x.
 
 ### 1. Authenticate the CLI
 
@@ -65,7 +65,7 @@ Confirm it's loaded:
 Expected output includes:
 
 ```text
-zerogpu-router — enabled
+zerogpu-router: enabled
 ```
 
 You're ready to go.
@@ -83,7 +83,7 @@ Claude picks the right skill based on what you say:
 ```text
 Redact PII from this support ticket before I paste it into our public bug tracker:
 
-Hi team — this is Sarah Chen (sarah.chen@northwind-labs.com, +1 415-555-0182).
+Hi team, this is Sarah Chen (sarah.chen@northwind-labs.com, +1 415-555-0182).
 Our prod database started throwing connection timeouts around 2:14 AM PT last
 night. The on-call engineer Marcus Rivera (slack: @mrivera) restarted the
 pgbouncer pod but the issue came back within 20 minutes. Billing should go to
@@ -91,7 +91,7 @@ our CFO Priya Patel at priya.patel@northwind-labs.com, billing address 1455
 Market St, Suite 600, San Francisco, CA 94103. Please call me back at the
 number above.
 ```
-→ Claude routes to `redact-pii`. Names, emails, phone numbers, social handles, and street addresses come back replaced by uppercase label placeholders like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]` — safe to paste into a public tracker, and the raw PII never enters Claude's context window. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) aren't in the model's label set — strip those yourself or use `/zerogpu-router:extract-entities` with custom labels.
+→ Claude routes to `redact-pii`. Names, emails, phone numbers, social handles, and street addresses come back replaced by uppercase label placeholders like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]`, safe to paste into a public tracker, and the raw PII never enters Claude's context window. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) aren't in the model's label set. Strip those yourself or use `/zerogpu-router:extract-entities` with custom labels.
 
 ```text
 Pull all the email addresses and phone numbers out of this:
@@ -261,7 +261,7 @@ Same as `chat`, but the model returns its reasoning trace alongside the answer.
 
 ### `/zerogpu-router:chat-gpt-oss`
 
-Heavier chat for work the 1.2B edge models can't carry — long documents, multi-step instructions, harder general-knowledge questions — at a fraction of frontier-model cost.
+Heavier chat for work the 1.2B edge models can't carry (long documents, multi-step instructions, harder general-knowledge questions) at a fraction of frontier-model cost.
 
 - **Model:** `gpt-oss-120b` (117B MoE, 131,072-token context)
 - **Wraps:** `zerogpu chat -m gpt-oss-120b`
@@ -285,7 +285,7 @@ Heavier chat for work the 1.2B edge models can't carry — long documents, multi
 
 ### `/zerogpu-router:chat-qwen`
 
-Heavier chat tuned for multilingual work — 100+ languages, useful when the prompt or the expected answer isn't English.
+Heavier chat tuned for multilingual work: 100+ languages, useful when the prompt or the expected answer isn't English.
 
 - **Model:** `qwen3-30b-a3b-fp8` (30.5B MoE, 32,768-token context)
 - **Wraps:** `zerogpu chat -m qwen3-30b-a3b-fp8`
@@ -303,7 +303,7 @@ Heavier chat tuned for multilingual work — 100+ languages, useful when the pro
 /zerogpu-router:chat-qwen "Explica la diferencia entre un índice B-tree y uno hash en dos frases."
 ```
 
-**Output:** the assistant's answer as plain text. This model is served by the Chat Completions API rather than the Responses API — the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
+**Output:** the assistant's answer as plain text. This model is served by the Chat Completions API rather than the Responses API; the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
 
 ---
 
@@ -341,7 +341,7 @@ Classify text against the **IAB content / audience taxonomy** (standard ad-tech 
 
 ### `/zerogpu-router:classify-iab-enriched`
 
-Enriched IAB classification — audience categories **plus** topics, keywords, and inferred user intent.
+Enriched IAB classification: audience categories **plus** topics, keywords, and inferred user intent.
 
 - **Model:** `zlm-v2-iab-classify-edge-enriched`
 - **Wraps:** `zerogpu classify_iab_enriched`
@@ -386,7 +386,7 @@ Classify a **domain name** against the IAB taxonomy without fetching the page. B
 /zerogpu-router:classify-domain <domain>
 ```
 
-The model takes a bare hostname — Claude strips the scheme, path, and query before calling, so pasting `https://www.nytimes.com/section/world?x=1` works too.
+The model takes a bare hostname. Claude strips the scheme, path, and query before calling, so pasting `https://www.nytimes.com/section/world?x=1` works too.
 
 **Example**
 
@@ -408,7 +408,7 @@ The model takes a bare hostname — Claude strips the scheme, path, and query be
 }
 ```
 
-Payloads are up to 10x smaller than sending page text. If you have the actual article, use `classify-iab` or `classify-iab-enriched` instead — they see more signal.
+Payloads are up to 10x smaller than sending page text. If you have the actual article, use `classify-iab` or `classify-iab-enriched` instead; they see more signal.
 
 ---
 
@@ -450,7 +450,7 @@ Zero-shot classification against an arbitrary list of candidate labels you suppl
 
 ### `/zerogpu-router:classify-structured`
 
-Schema-driven, multi-axis classification — one chosen label per category.
+Schema-driven, multi-axis classification: one chosen label per category.
 
 - **Model:** `gliner2-base-v1`
 - **Wraps:** `zerogpu classify_structured`
@@ -502,8 +502,8 @@ Custom-label named-entity recognition. You define the entity labels; the model f
 
 | Name | Required | Default | Description |
 | --- | --- | --- | --- |
-| `text` | yes | — | Source text. |
-| `-l <label>` / `--labels <a,b,c>` | yes (one) | — | Entity labels to extract. |
+| `text` | yes | n/a | Source text. |
+| `-l <label>` / `--labels <a,b,c>` | yes (one) | n/a | Entity labels to extract. |
 | `-t`, `--threshold <number>` | optional | `0.3` | Minimum confidence in `[0, 1]`. |
 
 **Example**
@@ -544,7 +544,7 @@ Extract personally identifiable information entities, grouped by category, **wit
 
 | Name | Required | Default | Description |
 | --- | --- | --- | --- |
-| `text` | yes | — | Source text. |
+| `text` | yes | n/a | Source text. |
 | `-t`, `--threshold <number>` | optional | `0.5` | Minimum confidence. |
 | `-c`, `--categories <list>` | optional | `identity,contact` | Comma-separated. Other values: `financial`, `medical`, `credentials`. |
 
@@ -671,7 +671,7 @@ a revised 2025 budget by mid-December.
 
 ### `/zerogpu-router:generate-followups`
 
-Generate the questions a reader would naturally ask next about a passage — "people also ask" style prompts, conversation continuations, suggested next steps.
+Generate the questions a reader would naturally ask next about a passage: "people also ask" style prompts, conversation continuations, suggested next steps.
 
 - **Model:** `zlm-v1-followup-questions-edge`
 - **Wraps:** `zerogpu generate_followups`
@@ -703,7 +703,7 @@ Generate the questions a reader would naturally ask next about a passage — "pe
 
 ## Skills reference
 
-Quick lookup table — all 18 skills at a glance.
+Quick lookup table: all 18 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -744,10 +744,10 @@ For full flag reference (thresholds, categories, schema syntax), run `zerogpu <c
 
 ## Additional documentation
 
-- [`CHANGELOG.md`](./CHANGELOG.md) — version history
-- [ZeroGPU platform](https://zerogpu.ai) — account, billing, model catalog
-- [Claude Code plugins](https://docs.claude.com/en/plugins) — how plugins work in Claude Code
+- [`CHANGELOG.md`](./CHANGELOG.md): version history
+- [ZeroGPU platform](https://zerogpu.ai): account, billing, model catalog
+- [Claude Code plugins](https://docs.claude.com/en/plugins): how plugins work in Claude Code
 
 ## License
 
-MIT — see [`LICENSE`](../../LICENSE) at the repo root.
+MIT. See [`LICENSE`](../../LICENSE) at the repo root.
