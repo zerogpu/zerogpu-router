@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Cut inference costs without dumbing down your agent.</strong><br/>
-  Route summarize, classify, PII redaction, JSON extraction, and short chat to small/nano models via the <code>zerogpu</code> CLI — executed locally by your agent's Bash tools.
+  Route summarize, classify, PII redaction, JSON extraction, and short chat to small/nano models via the <code>zerogpu</code> CLI, executed locally by your agent's Bash tools.
 </p>
 
 <p align="center">
@@ -30,15 +30,15 @@
 
 ## What is ZeroGPU Router?
 
-ZeroGPU Router is a smart task router for AI agents. It exposes task-specific skills — summarize, classify, redact PII, extract JSON, and more — that shell out to the local `zerogpu` CLI, backed by small language models that run for a fraction of the cost of a frontier model.
+ZeroGPU Router is a smart task router for AI agents. It exposes task-specific skills (summarize, classify, redact PII, extract JSON, and more) that shell out to the local `zerogpu` CLI, backed by small language models that run for a fraction of the cost of a frontier model.
 
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
-- **OpenClaw** — install the `zerogpu` CLI plus **`zerogpu-router`** (see [agents/openclaw/](agents/openclaw/)). Skills run locally through your agent's Bash tools.
-- **Claude Code** — install the `zerogpu` CLI plus the marketplace plugin and you get 11 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
-- **Cheap by default** — small models for trivial work, frontier model untouched for everything else.
-- **Per-call savings** — every routed task returns model, latency, and a real `savings_usd` figure.
-- **CLI, no infra** — everything runs through the local `zerogpu` CLI your agent already calls. No servers, MCP endpoints, or infra to stand up.
+- **OpenClaw:** install the `zerogpu` CLI plus **`zerogpu-router`** (see [agents/openclaw/](agents/openclaw/)). Skills run locally through your agent's Bash tools.
+- **Claude Code:** install the `zerogpu` CLI plus the marketplace plugin and you get 11 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
+- **Cheap by default:** small models for trivial work, frontier model untouched for everything else.
+- **Per-call savings:** every routed task returns model, latency, and a real `savings_usd` figure.
+- **CLI, no infra:** everything runs through the local `zerogpu` CLI your agent already calls. No servers, MCP endpoints, or infra to stand up.
 
 ## OpenClaw quick start
 
@@ -50,7 +50,7 @@ You need a ZeroGPU API key. Grab it at [platform.zerogpu.ai](https://platform.ze
 openclaw plugins install clawhub:zerogpu-router
 ```
 
-The plugin's skills provision the `zerogpu` CLI automatically on first use (via a `node` install spec), so there's no separate global install — you just need a package manager (npm by default) available.
+The plugin's skills provision the `zerogpu` CLI automatically on first use (via a `node` install spec), so there's no separate global install. You just need a package manager (npm by default) available.
 
 **2. Authenticate:**
 
@@ -59,8 +59,6 @@ zerogpu login
 ```
 
 You'll be prompted for your API key (`zgpu-api-…`).
-
-Pin a release: `clawhub:zerogpu-router@2.0.0`.
 
 **4. Try it:**
 
@@ -73,10 +71,10 @@ team of about 40 seats. Action items: loop in support leadership and send an
 updated enterprise quote by Friday.
 ```
 
-The agent runs the `summarize` skill — which executes `zerogpu summarize` locally via its Bash tool — and returns a concise, slightly mechanical summary plus a savings line, for example:
+The agent runs the `summarize` skill, which executes `zerogpu summarize` locally via its Bash tool, and returns a concise, slightly mechanical summary plus a savings line, for example:
 
 ```text
-Positive Acme Corp renewal call — happy with uptime, frustrated by slow support
+Positive Acme Corp renewal call: happy with uptime, frustrated by slow support
 the last two months. VP may evaluate a competitor if the SLA does not improve
 before the December renewal; also asked about volume pricing for ~40 more seats.
 Next: loop in support leadership, send an updated enterprise quote by Friday.
@@ -86,7 +84,7 @@ Next: loop in support leadership, send an updated enterprise quote by Friday.
 
 ## Claude Code quick start
 
-The Claude Code plugin ships 14 skills — 11 inference skills that Claude auto-invokes when your request matches ("summarize this", "redact the PII", "classify by sentiment and topic"), plus the manual `signin`, `status`, and `cost-savings` skills. You can also call any skill manually with `/zerogpu-router:<name>`. Run `/zerogpu-router:cost-savings` anytime to see how much you've saved by routing trivial work to ZeroGPU.
+The Claude Code plugin ships 14 skills: 11 inference skills that Claude auto-invokes when your request matches ("summarize this", "redact the PII", "classify by sentiment and topic"), plus the manual `signin`, `status`, and `cost-savings` skills. You can also call any skill manually with `/zerogpu-router:<name>`. Run `/zerogpu-router:cost-savings` anytime to see how much you've saved by routing trivial work to ZeroGPU.
 
 Grab a ZeroGPU API key at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
@@ -104,7 +102,7 @@ zerogpu login
 
 You'll be prompted for your API key (`zgpu-api-…`).
 
-**3. Install the Claude Code plugin** — start a Claude Code session by running `claude` in your terminal, then:
+**3. Install the Claude Code plugin.** Start a Claude Code session by running `claude` in your terminal, then:
 
 ```text
 /plugin marketplace add zerogpu/zerogpu-router
@@ -117,7 +115,7 @@ You'll be prompted for your API key (`zgpu-api-…`).
 ```text
 Redact PII from this support ticket before I paste it into our public bug tracker:
 
-Hi team — this is Sarah Chen (sarah.chen@northwind-labs.com, +1 415-555-0182).
+Hi team, this is Sarah Chen (sarah.chen@northwind-labs.com, +1 415-555-0182).
 Our prod database started throwing connection timeouts around 2:14 AM PT last
 night. The on-call engineer Marcus Rivera (slack: @mrivera) restarted the
 pgbouncer pod but the issue came back within 20 minutes. Billing should go to
@@ -126,11 +124,11 @@ Market St, Suite 600, San Francisco, CA 94103. Please call me back at the
 number above.
 ```
 
-Claude routes to `/zerogpu-router:redact-pii` automatically and returns the same passage with names, emails, phone numbers, social handles, and street addresses replaced by uppercase label placeholders like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]` — safe to paste into a public tracker. The `gliner-multi-pii-v1` edge model does the masking, not Claude, so the raw PII never enters Claude's context window.
+Claude routes to `/zerogpu-router:redact-pii` automatically and returns the same passage with names, emails, phone numbers, social handles, and street addresses replaced by uppercase label placeholders like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]`, safe to paste into a public tracker. The `gliner-multi-pii-v1` edge model does the masking, not Claude, so the raw PII never enters Claude's context window.
 
-The model is tuned for the standard PII categories above. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) won't be caught — strip those yourself, or pipe the result through `/zerogpu-router:extract-entities` with your own custom labels.
+The model is tuned for the standard PII categories above. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) won't be caught. Strip those yourself, or pipe the result through `/zerogpu-router:extract-entities` with your own custom labels.
 
-Full walkthrough — prerequisites, every skill documented in detail, troubleshooting: **[agents/claude/README.md](agents/claude/README.md)**.
+Full walkthrough (prerequisites, every skill documented in detail, troubleshooting): **[agents/claude/README.md](agents/claude/README.md)**.
 
 ## Routes
 

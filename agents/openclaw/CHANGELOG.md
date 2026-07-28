@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.1.1
+
+Documentation punctuation only. **No skill, model, or output changes.** All 18 skills behave exactly as they do in 3.1.0.
+
+### Changed
+
+- `plugin/README.md`, the ClawHub listing: removed all 21 em dashes. Each sentence was repunctuated to fit rather than having the dash swapped for a hyphen. The tagline and feature bullets take colons, joined independent clauses take a semicolon or a full stop, and asides move into parentheses. The three worked examples now read "**Summarize** a meeting recap", "**Classify** a support ticket", and "**Redact PII** from a CRM note".
+- `../README.md`, the OpenClaw integration page: same treatment, 4 em dashes removed.
+
+No content was added or removed. Badges, topic tags, the grouped skill tables, the Data & privacy section, and every command and model id are untouched.
+
 ## 3.1.0
 
 Catches the plugin up to the [ZeroGPU model catalog](https://docs.zerogpu.ai/docs/model-catalog), which added three models and renamed a fourth, and to `zerogpu-cli` 3.3.0, which added the commands to reach them. **Four new skills; the existing 14 are unchanged.** Also a rewritten ClawHub listing.

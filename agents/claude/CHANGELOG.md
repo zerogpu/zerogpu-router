@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.6.1
+
+Documentation punctuation only. **No skill, model, or output changes.** All 18 skills behave exactly as they do in 1.6.0.
+
+### Changed
+
+- `README.md`: removed all 24 em dashes. Each sentence was repunctuated to fit rather than having the dash swapped for a hyphen. Label-then-explanation lines take a colon, joined independent clauses take a semicolon or a full stop, and asides move into parentheses. Two parameter tables used a bare em dash for "no default"; those cells now read `n/a`.
+- Plugin heading is now "ZeroGPU Router for Claude Code", previously "ZeroGPU Router — Claude Code plugin".
+
+No content was added or removed, and every command, flag, model id, and example output is untouched.
+
+### Install
+
+```
+/plugin marketplace add zerogpu/zerogpu-router
+/plugin install zerogpu-router@zerogpu
+```
+
 ## 1.6.0
 
 Catches the plugin up to the [ZeroGPU model catalog](https://docs.zerogpu.ai/docs/model-catalog), which added three models and renamed a fourth, and to `zerogpu-cli` 3.3.0, which added the commands to reach them. **Four new skills; the existing 14 are unchanged.**
