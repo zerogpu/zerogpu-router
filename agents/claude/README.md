@@ -23,7 +23,7 @@ Verify the CLI is on your `PATH` and current:
 zerogpu --version
 ```
 
-`chat-gpt-oss`, `chat-qwen`, and `classify-domain` need **3.3.0 or newer**. That release added `chat --model` and the `classify_domain` command. On an older CLI those three skills fail; the other 15 work on any 3.x.
+The chat skills and `classify-domain` need **3.3.0 or newer**. That release added `chat --model` and the `classify_domain` command. On an older CLI those skills fail.
 
 ### 1. Authenticate the CLI
 
@@ -208,11 +208,11 @@ Pass `--json` for the raw data, or `--reset` to clear the history.
 
 ### `/zerogpu-router:chat`
 
-Short, single-turn chat reply for things that don't need Claude-level reasoning or conversation context.
+The default ZeroGPU chat skill. Handles work the 1.2B edge models can't carry (long documents, multi-step instructions, harder general-knowledge questions) at a fraction of frontier-model cost.
 
-- **Model:** `LFM2.5-1.2B-Instruct`
-- **Wraps:** `zerogpu chat`
-- **When Claude auto-invokes:** quick factual answers, one-liners, basic rephrasings where you've signalled "use a small model."
+- **Model:** `gpt-oss-120b` (117B MoE, 131,072-token context)
+- **Wraps:** `zerogpu chat -m gpt-oss-120b`
+- **When Claude auto-invokes:** you've signalled "use a ZeroGPU model" or "don't use Claude for this" and the task isn't one of the specialized skills below.
 
 **Synopsis**
 
@@ -230,10 +230,43 @@ Short, single-turn chat reply for things that don't need Claude-level reasoning 
 **Example**
 
 ```text
-/zerogpu-router:chat "Explain WebSockets in two sentences." -i "You are a concise technical writer."
+/zerogpu-router:chat "Summarize the trade-offs between optimistic and pessimistic locking, then recommend one for a high-contention inventory table."
 ```
 
-**Output:** raw assistant text (or pretty-printed JSON if the model returned one).
+**Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; the skill leaves off the CLI's `-r` flag, so only the final answer is printed.
+
+Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts.
+
+---
+
+### `/zerogpu-router:chat-liquid`
+
+The fastest, cheapest chat reply on the platform. Single-turn answers that don't need Claude-level reasoning or conversation context.
+
+- **Model:** `LFM2.5-1.2B-Instruct`
+- **Wraps:** `zerogpu chat -m LFM2.5-1.2B-Instruct`
+- **When Claude auto-invokes:** quick factual answers, one-liners, basic rephrasings where you've signalled "use a small model" or asked for the cheapest option.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-liquid <text> [-i <instructions>]
+```
+
+**Arguments**
+
+| Name | Required | Description |
+| --- | --- | --- |
+| `text` | yes | The user message / prompt (quoted). |
+| `-i`, `--instructions <instructions>` | optional | System instructions to steer behavior. |
+
+**Example**
+
+```text
+/zerogpu-router:chat-liquid "Explain WebSockets in two sentences." -i "You are a concise technical writer."
+```
+
+**Output:** raw assistant text (or pretty-printed JSON if the model returned one). At 1.2B parameters the replies are terse and occasionally mechanical. If that's too weak, `/zerogpu-router:chat` runs the same prompt on `gpt-oss-120b`.
 
 ---
 
@@ -256,30 +289,6 @@ Same as `chat`, but the model returns its reasoning trace alongside the answer.
 ```text
 /zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"
 ```
-
----
-
-### `/zerogpu-router:chat-gpt-oss`
-
-Heavier chat for work the 1.2B edge models can't carry (long documents, multi-step instructions, harder general-knowledge questions) at a fraction of frontier-model cost.
-
-- **Model:** `gpt-oss-120b` (117B MoE, 131,072-token context)
-- **Wraps:** `zerogpu chat -m gpt-oss-120b`
-- **When Claude auto-invokes:** you've signalled "use a bigger ZeroGPU model", or a routed task came back too weak from `chat`.
-
-**Synopsis**
-
-```
-/zerogpu-router:chat-gpt-oss <text> [-i <instructions>]
-```
-
-**Example**
-
-```text
-/zerogpu-router:chat-gpt-oss "Summarize the trade-offs between optimistic and pessimistic locking, then recommend one for a high-contention inventory table."
-```
-
-**Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; the skill leaves off the CLI's `-r` flag, so only the final answer is printed.
 
 ---
 
@@ -710,9 +719,9 @@ Quick lookup table: all 18 skills at a glance.
 | `/zerogpu-router:signin` | Sign in and persist API key (manual only) | `/zerogpu-router:signin` |
 | `/zerogpu-router:status` | Show current sign-in status (manual only) | `/zerogpu-router:status` |
 | `/zerogpu-router:cost-savings` | Show cumulative savings vs. Claude (manual only) | `/zerogpu-router:cost-savings` |
-| `/zerogpu-router:chat <text>` | Short chat reply via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat "Explain WebSockets in two sentences."` |
+| `/zerogpu-router:chat <text>` | Default chat via `gpt-oss-120b` (131K context) | `/zerogpu-router:chat "Compare optimistic vs pessimistic locking."` |
+| `/zerogpu-router:chat-liquid <text>` | Fastest, cheapest chat via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat-liquid "Explain WebSockets in two sentences."` |
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (returns reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
-| `/zerogpu-router:chat-gpt-oss <text>` | Heavier chat via `gpt-oss-120b` (131K context) | `/zerogpu-router:chat-gpt-oss "Compare optimistic vs pessimistic locking."` |
 | `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
 | `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification | `/zerogpu-router:classify-iab "The Lakers signed a new point guard."` |
 | `/zerogpu-router:classify-iab-enriched <text>` | IAB + topics/keywords/intent | `/zerogpu-router:classify-iab-enriched "Compare the Tesla Model Y and Hyundai Ioniq 5."` |

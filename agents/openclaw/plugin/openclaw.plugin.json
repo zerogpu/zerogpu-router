@@ -6,7 +6,7 @@
   "version": "3.1.1",
   "skills": [
     "./skills/chat",
-    "./skills/chat-gpt-oss",
+    "./skills/chat-liquid",
     "./skills/chat-qwen",
     "./skills/chat-thinking",
     "./skills/classify-domain",

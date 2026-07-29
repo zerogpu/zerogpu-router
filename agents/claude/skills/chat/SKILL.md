@@ -1,25 +1,24 @@
 ---
 name: chat
-description: Short chat reply via the ZeroGPU edge model (LFM2.5-1.2B-Instruct). Use when the user wants a quick, single-turn answer that does not need Claude-level reasoning, prior conversation context, or code generation. Optional system instructions via -i.
+description: Chat reply via ZeroGPU's default model, gpt-oss-120b (117B MoE, 131K context). Use when the user wants an answer from a ZeroGPU model rather than Claude, including longer documents, multi-step instructions, and harder general-knowledge questions. Optional system instructions via -i.
 argument-hint: "<text> [-i <instructions>]"
 allowed-tools: Bash(zerogpu chat *)
 ---
 
-Call the ZeroGPU chat model:
+Call the ZeroGPU chat model. `$ARGUMENTS` is the raw prompt. Pass it verbatim, with no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
 
 ```!
-zerogpu chat $ARGUMENTS
+ZGPU_TEXT=$(cat <<'ZGPU_END_OF_INPUT'
+$ARGUMENTS
+ZGPU_END_OF_INPUT
+)
+zerogpu chat "$ZGPU_TEXT" -m gpt-oss-120b
 ```
 
-**Quoting (required, to survive shell parsing of arbitrary user text):** format `$ARGUMENTS` with the prompt wrapped via heredoc command substitution, then any flags after. Pass the user's prompt verbatim inside the heredoc — do not paraphrase, do not escape:
+If the user supplied system instructions, append `-i "<instructions>"` after the model flag.
 
-```
-"$(cat <<'ZGPU_T'
-<the user's prompt here, verbatim, can span multiple lines and contain quotes/parens/$/etc.>
-ZGPU_T
-)" [-i "<system instructions>"]
-```
+Output is the assistant's answer as plain text. The model also produces a reasoning trace; this skill omits the CLI's `-r` flag so only the final answer is printed. Relay that answer as-is, without rewriting or expanding it.
 
-Never inline the prompt as a plain `"..."` string — newlines, parens, single quotes, and `$` in the user's text will break shell parsing. The heredoc form is safe for any input.
+For a faster, cheaper reply where quality matters less, use `/zerogpu-router:chat-liquid` (LFM2.5-1.2B-Instruct). For a visible reasoning trace, use `/zerogpu-router:chat-thinking`. For multilingual prompts, use `/zerogpu-router:chat-qwen`.
 
-Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest `/zerogpu-router:cost-savings` — this note is intentionally occasional, not shown every time.
+Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest `/zerogpu-router:cost-savings`. This note is intentionally occasional, not shown every time.
