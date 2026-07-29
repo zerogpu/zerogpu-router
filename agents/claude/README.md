@@ -14,7 +14,7 @@ Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude aut
 | --- | --- | --- |
 | **Node.js ≥ 20** | Runs the `zerogpu` CLI | [nodejs.org](https://nodejs.org) |
 | **Claude Code** | Hosts the plugin | `npm install -g @anthropic-ai/claude-code` |
-| **`zerogpu` CLI ≥ 3.3.0** | Skills shell out to it | `npm install -g zerogpu-cli@latest` |
+| **`zerogpu` CLI ≥ 3.4.0** | Skills shell out to it | `npm install -g zerogpu-cli@latest` |
 | **ZeroGPU account** | API key | [zerogpu.ai](https://zerogpu.ai) |
 
 Verify the CLI is on your `PATH` and current:
@@ -23,7 +23,7 @@ Verify the CLI is on your `PATH` and current:
 zerogpu --version
 ```
 
-The chat skills and `classify-domain` need **3.3.0 or newer**. That release added `chat --model` and the `classify_domain` command. On an older CLI those skills fail.
+Most chat skills and `classify-domain` need **3.3.0 or newer**, the release that added `chat --model` and the `classify_domain` command. `chat-glm` and `chat-deepseek` need **3.4.0 or newer**, which added those two models to the CLI's `--model` allowlist — on an older CLI they fail with `Unknown model` before any request is made.
 
 ### 1. Authenticate the CLI
 
@@ -235,7 +235,7 @@ The default ZeroGPU chat skill. Handles work the 1.2B edge models can't carry (l
 
 **Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; the skill leaves off the CLI's `-r` flag, so only the final answer is printed.
 
-Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts.
+Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts. When the input exceeds this model's 131K context, use `chat-deepseek` for code and agentic work or `chat-glm` for the most capable option — both carry a 1M-token context.
 
 ---
 
@@ -313,6 +313,58 @@ Heavier chat tuned for multilingual work: 100+ languages, useful when the prompt
 ```
 
 **Output:** the assistant's answer as plain text. This model is served by the Chat Completions API rather than the Responses API; the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
+
+---
+
+### `/zerogpu-router:chat-deepseek`
+
+Coding and agentic chat with a 1M-token context: reading or writing code across a large codebase, porting and refactoring, planning multi-step automation.
+
+- **Model:** `deepseek-v4-flash` (284B MoE, 13B active per token, 1,048,576-token context)
+- **Wraps:** `zerogpu chat -m deepseek-v4-flash`
+- **When Claude auto-invokes:** code-heavy prompts, repo-scale questions, multi-step tool-use planning — especially when the input is too large for `chat`'s 131K context.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-deepseek <text> [-i <instructions>]
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-deepseek "Port this callback-based module to async/await and flag any behaviour changes."
+```
+
+**Output:** the assistant's answer as plain text. Chat Completions only; the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
+
+At \$0.07 / \$0.14 per 1M input/output tokens this is the cheaper of the two 1M-context models — about a sixteenth of `chat-glm`. Prefer it when the task is code or tool-use rather than sheer input size.
+
+---
+
+### `/zerogpu-router:chat-glm`
+
+The largest and most capable model on the platform, with a 1M-token context for whole repositories, book-length documents, and long agent transcripts.
+
+- **Model:** `glm-5.2` (753B MoE, 8 of 256 experts per token, 1,048,576-token context)
+- **Wraps:** `zerogpu chat -m glm-5.2`
+- **When Claude auto-invokes:** long-horizon reasoning, or input that genuinely does not fit anywhere else.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-glm <text> [-i <instructions>]
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-glm "Here is our entire service directory. Which services would a payments outage take down, and in what order?"
+```
+
+**Output:** the assistant's answer as plain text. Chat Completions only; the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
+
+**Cost:** \$1.10 / \$3.50 per 1M input/output tokens — roughly 20x `chat` (`gpt-oss-120b`) and over 50x the 1.2B edge models. It is the one skill here where the usual savings framing does not apply, so reach for it only when the size or horizon of the task actually requires it.
 
 ---
 
@@ -712,7 +764,7 @@ Generate the questions a reader would naturally ask next about a passage: "peopl
 
 ## Skills reference
 
-Quick lookup table: all 18 skills at a glance.
+Quick lookup table: all 20 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -723,6 +775,8 @@ Quick lookup table: all 18 skills at a glance.
 | `/zerogpu-router:chat-liquid <text>` | Fastest, cheapest chat via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat-liquid "Explain WebSockets in two sentences."` |
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (returns reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
 | `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
+| `/zerogpu-router:chat-deepseek <text>` | Coding and agentic chat via `deepseek-v4-flash` (1M context) | `/zerogpu-router:chat-deepseek "Port this module to async/await."` |
+| `/zerogpu-router:chat-glm <text>` | Most capable, 1M context via `glm-5.2` (~20x the cost) | `/zerogpu-router:chat-glm "Which services would a payments outage take down?"` |
 | `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification | `/zerogpu-router:classify-iab "The Lakers signed a new point guard."` |
 | `/zerogpu-router:classify-iab-enriched <text>` | IAB + topics/keywords/intent | `/zerogpu-router:classify-iab-enriched "Compare the Tesla Model Y and Hyundai Ioniq 5."` |
 | `/zerogpu-router:classify-domain <domain>` | IAB classification from a hostname, no page fetch | `/zerogpu-router:classify-domain "espn.com"` |

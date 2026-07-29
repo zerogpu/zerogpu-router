@@ -1,5 +1,31 @@
 # Changelog
 
+## 2.1.0
+
+Two skills for the open-weight models the docs catalog gained, both with a 1,048,576-token context window. Skill count goes from 18 to 20.
+
+The reason to care about either is size: `chat` tops out at a 131,072-token context, and until now nothing here went past it.
+
+### Added
+
+- **`chat-glm`** wraps `zerogpu chat -m glm-5.2`. A 753B MoE flagship (8 of 256 experts per token) with a 1M-token context, for whole repositories, book-length documents, and long agent transcripts. It is the most capable model on the platform and the most expensive by a wide margin: \$1.10 / \$3.50 per 1M input/output tokens, against \$0.03 / \$0.10 for `chat` and \$0.02 / \$0.05 for the edge models. That is roughly 20x `chat` and over 50x `chat-liquid`, so this is the one skill where the usual savings framing does not hold. Its description says so explicitly, to keep Claude from picking it for prompts that `chat` would handle.
+- **`chat-deepseek`** wraps `zerogpu chat -m deepseek-v4-flash`. A 284B MoE model (13B active per token) with the same 1M context, tuned for coding and agentic workflows, at \$0.07 / \$0.14 per 1M. Roughly a sixteenth of `chat-glm`, so it is the better default whenever the task is code or tool-use rather than sheer input size.
+
+Both models are served by the Chat Completions API rather than the Responses API; the CLI routes them automatically.
+
+### Changed
+
+- **`chat` now points at the new skills.** Its "for X use Y" line previously stopped at `chat-qwen`; it now also names `chat-deepseek` and `chat-glm` for input that exceeds its 131K context.
+- **The root README's routes table was rewritten.** It had drifted badly: it claimed eleven routes, used the retired MCP-era `zerogpu_*` tool names rather than skill names, listed `zerogpu_chat` as `LFM2.5-1.2B-Instruct` (the default moved to `gpt-oss-120b` in 2.0.0), still showed the old `zlm-v1` enriched IAB id, and omitted `classify-domain`, `generate-followups`, `chat-liquid`, and `chat-qwen` entirely.
+
+### Known issues
+
+- **`chat-deepseek` does not work yet.** `deepseek-v4-flash` is published in the ZeroGPU API reference but not yet served: the API returns `404 model_not_found` for it. The skill is correct per the published spec and will start working the moment the platform enables the model, with no further change here. `chat-glm` was verified working end to end.
+
+### Requires
+
+- `zerogpu-cli` >= 3.4.0, the release that added `glm-5.2` and `deepseek-v4-flash` to the `chat --model` allowlist. Earlier versions reject both with `Unknown model` before any request is made.
+
 ## 2.0.0
 
 `chat` now runs on **`gpt-oss-120b`** instead of `LFM2.5-1.2B-Instruct`. The old edge-model behavior moves to a new `chat-liquid` skill, and `chat-gpt-oss` is removed because `chat` now covers it. Skill count stays at 18.

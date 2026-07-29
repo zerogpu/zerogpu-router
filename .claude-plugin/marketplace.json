@@ -7,7 +7,7 @@
     {
       "name": "zerogpu-router",
       "source": "./agents/claude",
-      "description": "Route classification, domain classification, summarization, entity/PII/JSON extraction, follow-ups, and small- to mid-model chat to ZeroGPU — 18 auto-invoked skills.",
+      "description": "Route classification, domain classification, summarization, entity/PII/JSON extraction, follow-ups, and small- to mid-model chat to ZeroGPU — 20 auto-invoked skills.",
       "category": "productivity",
       "tags": ["nlp", "classification", "summarization", "extraction", "pii", "ner", "cost-optimization", "small-models"]
     }
