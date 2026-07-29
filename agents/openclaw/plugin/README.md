@@ -147,6 +147,8 @@ Note the card last-four is left untouched. The PII model covers standard categor
 | `chat-liquid` | Fastest, cheapest chat replies | `LFM2.5-1.2B-Instruct` |
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 | `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
+| `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash` |
+| `chat-glm` | Largest context and most capable, ~20x the cost | `glm-5.2` |
 
 **Account**
 

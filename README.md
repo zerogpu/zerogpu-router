@@ -132,23 +132,43 @@ Full walkthrough (prerequisites, every skill documented in detail, troubleshooti
 
 ## Routes
 
-ZeroGPU Router exposes eleven task-specific routes:
+ZeroGPU Router exposes twenty auto-invoked skills: seventeen task routes and three account utilities.
 
-| Route | Workload | Model |
+**Chat and generation**
+
+| Skill | Workload | Model |
 |---|---|---|
-| `zerogpu_classify_iab` | IAB topic classification | `zlm-v1-iab-classify-edge` |
-| `zerogpu_classify_iab_enriched` | IAB categories plus topics, keywords, intent | `zlm-v1-iab-classify-edge-enriched` |
-| `zerogpu_summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
-| `zerogpu_classify_zero_shot` | Classify against a flat label list | `deberta-v3-small` |
-| `zerogpu_classify_structured` | Multi-axis schema classification | `gliner2-base-v1` |
-| `zerogpu_extract_entities` | Extract people, places, companies, dates, custom entities | `gliner2-base-v1` |
-| `zerogpu_extract_json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
-| `zerogpu_redact_pii` | Mask emails, phones, names, addresses, other PII | `gliner-multi-pii-v1` |
-| `zerogpu_extract_pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
-| `zerogpu_chat` | Short small-model chat replies | `LFM2.5-1.2B-Instruct` |
-| `zerogpu_chat_thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
+| `chat` | Default chat: long context, multi-step instructions | `gpt-oss-120b` |
+| `chat-liquid` | Fastest, cheapest chat replies | `LFM2.5-1.2B-Instruct` |
+| `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
+| `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
+| `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash` |
+| `chat-glm` | Largest and most capable, 1M-token context, ~20x the cost | `glm-5.2` |
+| `summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
+| `generate-followups` | Suggested next questions for a passage | `zlm-v1-followup-questions-edge` |
 
-Every route returns `{ <task fields>, model, usage, savings }`.
+**Classification**
+
+| Skill | Workload | Model |
+|---|---|---|
+| `classify-iab` | IAB topic classification | `zlm-v1-iab-classify-edge` |
+| `classify-iab-enriched` | IAB categories plus topics, keywords, intent | `zlm-v2-iab-classify-edge-enriched` |
+| `classify-domain` | IAB classification from a bare hostname, no page fetch | `zlm-v1-iab-domain-classifier` |
+| `classify-zero-shot` | Classify against a flat label list | `deberta-v3-small` |
+| `classify-structured` | Multi-axis schema classification | `gliner2-base-v1` |
+
+**Extraction and PII**
+
+| Skill | Workload | Model |
+|---|---|---|
+| `extract-entities` | Extract people, places, companies, dates, custom entities | `gliner2-base-v1` |
+| `extract-json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
+| `extract-pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
+| `redact-pii` | Mask emails, phones, names, addresses, other PII | `gliner-multi-pii-v1` |
+
+**Account** (manual only): `signin`, `status`, `cost-savings`.
+
+Every task skill prints the model's answer as plain text, and occasionally appends a `💰 ZeroGPU savings` line.
 
 ## Packages
 

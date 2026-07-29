@@ -6,6 +6,8 @@
   "version": "4.0.0",
   "skills": [
     "./skills/chat",
+    "./skills/chat-deepseek",
+    "./skills/chat-glm",
     "./skills/chat-liquid",
     "./skills/chat-qwen",
     "./skills/chat-thinking",
