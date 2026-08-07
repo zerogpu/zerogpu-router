@@ -147,6 +147,8 @@ ZeroGPU Router exposes twenty auto-invoked skills: seventeen task routes and thr
 | `summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
 | `generate-followups` | Suggested next questions for a passage | `zlm-v1-followup-questions-edge` |
 
+On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its own `summarize` skill (for URLs, videos, and PDFs), and two skills cannot share a name. Skill names are otherwise identical across both agents.
+
 **Classification**
 
 | Skill | Workload | Model |

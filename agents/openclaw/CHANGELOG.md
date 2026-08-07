@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.2.0
+
+**The `summarize` skill has never worked.** Not in this release, not in 4.1.0, not in any prior version — for any user. It is renamed to **`zerogpu-summarize`** and works now. If you installed this plugin to offload summarization, that offload was not happening.
+
+### Fixed
+
+- **`summarize` never loaded, silently.** OpenClaw ships its own bundled skill named `summarize` (the summarize.sh CLI, for URLs, YouTube, podcasts, and PDFs). Two skills cannot share a name, and the bundled one won. Nothing errored and nothing warned — the skill simply was not there, so the agent summarized with its own frontier model instead: no edge offload, no backing-model line, no savings recorded. Renaming to `zerogpu-summarize` sidesteps the collision entirely. It is now the only skill here whose name is not the bare task name; every other skill is unchanged.
+- **The skill's description now stakes out the boundary against the bundled skill.** Both load side by side, and the agent chooses between them on description alone, so `zerogpu-summarize` claims plain-text passages already in the conversation and explicitly cedes URLs, videos, PDFs, and local files to the bundled `summarize`. Ask for a link to be summarized and you still get the bundled skill — that is correct; the `zerogpu` CLI takes text only and cannot fetch a URL.
+
+### Requires
+
+- **`zerogpu-cli` >= 3.5.0.** The `zerogpu summarize` command underneath this skill was independently broken: it posted to the Responses API, which does not serve `llama-3.1-8b-instruct-fast`, so every call returned `400 invalid_prompt`. 3.5.0 routes it to Chat Completions and adds the system prompt that makes the model summarize rather than answer the passage. Both fixes are needed for this skill to work — run `npm install -g zerogpu-cli@latest` when you upgrade.
+
+### Internal
+
+- **CI now fails on skill-name collisions.** `openclaw-plugin-validate` diffs the plugin's skill names against `openclaw/skills/*` in the installed dependency, and separately checks that `openclaw.plugin.json`, the skill directories, and each `SKILL.md` `name:` field all agree. OpenClaw adds bundled skills continuously; the next collision breaks the build instead of shipping dead.
+
 ## 4.1.0
 
 Two skills for the open-weight models the docs catalog gained, both with a 1,048,576-token context window. Skill count goes from 18 to 20.

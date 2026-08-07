@@ -24,7 +24,7 @@
     "./skills/redact-pii",
     "./skills/signin",
     "./skills/status",
-    "./skills/summarize"
+    "./skills/zerogpu-summarize"
   ],
   "configSchema": {
     "type": "object",

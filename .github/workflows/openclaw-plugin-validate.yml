@@ -62,6 +62,58 @@ jobs:
             exit 1
           fi
 
+      - name: Check for bundled skill name collisions
+        run: |
+          set -euo pipefail
+          cd agents/openclaw/plugin
+
+          # OpenClaw ships its own bundled skills. A plugin skill sharing a name
+          # with one of them never loads, silently — this is how `summarize` was
+          # dead for every user until 4.2.0. Fail the build instead.
+          COLLISIONS=$(comm -12 \
+            <(ls skills | sort) \
+            <(ls node_modules/openclaw/skills | sort))
+
+          if [ -n "$COLLISIONS" ]; then
+            echo "::error::Plugin skills collide with OpenClaw bundled skills: $(echo "$COLLISIONS" | tr '\n' ' ')"
+            echo "Rename the skill (directory, SKILL.md name:, and openclaw.plugin.json entry)."
+            exit 1
+          fi
+
+          echo "No collisions with $(ls node_modules/openclaw/skills | wc -l) bundled skills."
+
+      - name: Check skill manifest matches disk
+        run: |
+          set -euo pipefail
+          cd agents/openclaw/plugin
+
+          # A rename has to land in three places. If the manifest, the directory,
+          # and the SKILL.md `name:` disagree, the skill loads wrong or not at all.
+          STATUS=0
+          for ENTRY in $(jq -r '.skills[]' openclaw.plugin.json); do
+            DIR="${ENTRY#./}"
+            if [ ! -f "$DIR/SKILL.md" ]; then
+              echo "::error::openclaw.plugin.json lists $ENTRY but $DIR/SKILL.md does not exist"
+              STATUS=1
+              continue
+            fi
+            DECLARED=$(sed -n 's/^name: *//p' "$DIR/SKILL.md" | head -1)
+            if [ "$DECLARED" != "$(basename "$DIR")" ]; then
+              echo "::error file=$DIR/SKILL.md::name: is '$DECLARED' but the directory is '$(basename "$DIR")'"
+              STATUS=1
+            fi
+          done
+
+          for DIR in skills/*/; do
+            NAME=$(basename "$DIR")
+            if ! jq -e --arg s "./skills/$NAME" '.skills | index($s)' openclaw.plugin.json > /dev/null; then
+              echo "::error::skills/$NAME exists on disk but is not listed in openclaw.plugin.json"
+              STATUS=1
+            fi
+          done
+
+          exit $STATUS
+
       - name: Verify build output
         run: |
           test -f agents/openclaw/plugin/dist/index.js || (echo "Missing build output" && exit 1)

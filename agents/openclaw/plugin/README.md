@@ -19,7 +19,7 @@ Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded
 
 Our open-weight models are the most cost-effective on the market right now. You'll find models here you won't see anywhere else, and we add roughly one a day.
 
-- **18 task-specific skills:** `summarize`, `classify-iab`, `redact-pii`, `extract-json`, and more
+- **20 task-specific skills:** `zerogpu-summarize`, `classify-iab`, `redact-pii`, `extract-json`, and more
 - **Nothing to host or register:** each skill shells out to the local `zerogpu` CLI through the agent's Bash tools
 - **Savings you can see:** every call logs its model, usage, and a real dollar figure
 - **OpenAI-compatible, pay-as-you-go:** no commitments, no idle GPU cost
@@ -141,7 +141,7 @@ Note the card last-four is left untouched. The PII model covers standard categor
 
 | Skill | Workload | Backing model |
 |---|---|---|
-| `summarize` | TL;DRs, abstracts, meeting summaries | `llama-3.1-8b-instruct-fast` |
+| `zerogpu-summarize` | TL;DRs, abstracts, meeting summaries | `llama-3.1-8b-instruct-fast` |
 | `generate-followups` | Suggested next questions for a passage | `zlm-v1-followup-questions-edge` |
 | `chat` | Default chat: long context, multi-step instructions | `gpt-oss-120b` |
 | `chat-liquid` | Fastest, cheapest chat replies | `LFM2.5-1.2B-Instruct` |
@@ -166,7 +166,7 @@ Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)**: token 
 
 ## Data & privacy
 
-**These skills are not local processing.** Every content skill (`summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `generate-followups`, `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
+**These skills are not local processing.** Every content skill (`zerogpu-summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `generate-followups`, `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
 
 Before using these skills:
 
