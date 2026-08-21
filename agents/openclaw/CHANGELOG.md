@@ -1,5 +1,28 @@
 # Changelog
 
+## 4.3.0
+
+Two skills for capabilities the platform has been serving that neither plugin exposed: content moderation and text embeddings. Skill count goes from 20 to 22.
+
+Both models are routable only on their own endpoints, which is why they needed skills of their own rather than a flag on an existing one: a `/responses` call with either returns `400 model_not_found`.
+
+### Added
+
+- **`moderate`** wraps `zerogpu moderate`. Screens text against OpenAI's 13 safety categories via `zlm-v1-moderation-edge` (86M params, \$0.02 / \$0.05 per 1M input/output tokens) and returns the native moderations envelope — a `flagged` verdict, per-category booleans, and calibrated `category_scores` — so it drops into any pipeline written against `omni-moderation-latest`. In ZeroGPU's [published benchmarks](https://zerogpu.ai/benchmarks/moderation-edge) it beats omni-moderation on the binary safe/unsafe call and on 9 of 13 categories. The skill tells the agent to report the verdict and only the categories that came back true, without restating the flagged text, and to run the check even when the passage is unpleasant — reporting a flag is the point of the skill, not a reason to decline it.
+- **`embed`** wraps `zerogpu embed`. Turns text into a 384-dimensional vector for semantic search, RAG retrieval, clustering, and deduplication. Defaults to `all-minilm-l6-v2` (22.7M params, 256-token window), the general-purpose choice for short chunks; `-m bge-small-en-v1.5` (33.4M params, 512-token window) is tuned for English retrieval and is the one to reach for when chunks run long or ranking quality is the bottleneck. Both cost \$0.50 per 1M input tokens and bill nothing on output, and both return the same vector width, so they are interchangeable in an existing index. The skill explicitly tells the agent not to print 384 floats into the conversation unless you ask for them.
+
+### Changed
+
+- **The glm-5.2 cost comparison was wrong in four places, and it was steering routing.** `gpt-oss-120b` was repriced to \$0.15 / \$0.60 per 1M, but these skills still quoted \$0.03 / \$0.10 and told the agent that `chat-glm` costs "roughly 20x" `chat`. At the real prices it is about 7x on input and 6x on output. That multiplier is not decoration: it sits in the bodies of `chat` and `chat-glm` — and in `chat-glm`'s `description`, which is what the agent matches on — precisely to push work down to the cheaper model, so a 3x-inflated figure was distorting the choice in both directions. Corrected in both skills and the plugin README's routes table. The neighbouring claims were re-derived and both still hold: glm-5.2 is still over 50x the 1.2B edge models (\$1.10 against \$0.02), and `chat-deepseek` is still roughly a sixteenth of `chat-glm` (\$0.07 against \$1.10).
+
+### Known issues
+
+- **Neither new skill works until the CLI ships the commands.** `zerogpu moderate` and `zerogpu embed` do not exist in any published `zerogpu-cli` release, including 3.7.0; both skills fail with an unknown-command error until they do. This is the same shape as `chat-deepseek`, which shipped against a model the API had not enabled yet and started working untouched. The assumed surface is the text as the first positional argument, plus `-m` on `embed` for the model, matching `zerogpu chat`. If the CLI lands different names or flags, only the two `SKILL.md` files change.
+
+### Requires
+
+- `zerogpu-cli` >= the release that adds `moderate` and `embed`. Every other skill in this plugin is unaffected and keeps working on 3.7.0.
+
 ## 4.2.0
 
 **The `summarize` skill has never worked.** Not in this release, not in 4.1.0, not in any prior version — for any user. It is renamed to **`zerogpu-summarize`** and works now. If you installed this plugin to offload summarization, that offload was not happening.
