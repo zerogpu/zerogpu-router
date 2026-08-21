@@ -364,7 +364,7 @@ The largest and most capable model on the platform, with a 1M-token context for 
 
 **Output:** the assistant's answer as plain text. Chat Completions only; the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
 
-**Cost:** \$1.10 / \$3.50 per 1M input/output tokens — roughly 20x `chat` (`gpt-oss-120b`) and over 50x the 1.2B edge models. It is the one skill here where the usual savings framing does not apply, so reach for it only when the size or horizon of the task actually requires it.
+**Cost:** \$1.10 / \$3.50 per 1M input/output tokens — roughly 7x `chat` (`gpt-oss-120b`, \$0.15 / \$0.60) on input and 6x on output, and over 50x the 1.2B edge models. It is the one skill here where the usual savings framing does not apply, so reach for it only when the size or horizon of the task actually requires it.
 
 ---
 
@@ -762,9 +762,83 @@ Generate the questions a reader would naturally ask next about a passage: "peopl
 
 ---
 
+### `/zerogpu-router:moderate`
+
+Screen a passage for unsafe, harmful, or policy-sensitive content and get back a safety verdict.
+
+- **Model:** `zlm-v1-moderation-edge`
+- **Wraps:** `zerogpu moderate`
+- **When Claude auto-invokes:** "moderate this", "is this safe to publish?", "content-check this comment", screening user-generated text before it is forwarded.
+
+**Synopsis**
+
+```
+/zerogpu-router:moderate <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:moderate "You are worthless and everyone would be better off if you disappeared."
+```
+
+**Output (illustrative)**
+
+```json
+{
+  "flagged": true,
+  "categories": { "harassment": true, "harassment/threatening": true, "self-harm": false },
+  "category_scores": { "harassment": 0.825, "harassment/threatening": 0.958, "self-harm": 0.015 }
+}
+```
+
+Returns OpenAI's moderations envelope across all 13 safety categories, so it drops into any pipeline written against `omni-moderation-latest`. Served by the Moderations API rather than the Responses API; the CLI routes it automatically. At \$0.02 / \$0.05 per 1M tokens it is cheap enough to sit inline in front of every response your app serves.
+
+---
+
+### `/zerogpu-router:embed`
+
+Turn text into a 384-dimensional vector for semantic search, RAG retrieval, clustering, or deduplication.
+
+- **Models:** `all-minilm-l6-v2` (default), `bge-small-en-v1.5` (`-m`)
+- **Wraps:** `zerogpu embed`
+- **When Claude auto-invokes:** "embed this", "build a vector index", "find the semantically closest passage", "dedupe these by meaning."
+
+**Synopsis**
+
+```
+/zerogpu-router:embed <text> [-m <model>]
+```
+
+**Example**
+
+```text
+/zerogpu-router:embed "ZeroGPU runs high-volume inference tasks on small models at the edge."
+/zerogpu-router:embed "Long passage to index for retrieval..." -m bge-small-en-v1.5
+```
+
+**Output (illustrative, vector truncated)**
+
+```json
+{
+  "data": [{ "index": 0, "embedding": [0.012601, -0.072932, 0.043332, "... 380 more"] }],
+  "model": "all-MiniLM-L6-v2",
+  "usage": { "prompt_tokens": 18, "total_tokens": 18 }
+}
+```
+
+| Model | Params | Window | Best for |
+| --- | --- | --- | --- |
+| `all-minilm-l6-v2` | 22.7M | 256 tokens | General semantic similarity over short chunks |
+| `bge-small-en-v1.5` | 33.4M | 512 tokens | English retrieval, longer chunks, ranking quality |
+
+Both cost \$0.50 per 1M input tokens, bill nothing on output, and return 384-dimensional vectors, so they are interchangeable in an existing index. Served by the Embeddings API rather than the Responses API; the CLI routes them automatically. Inputs past the window are truncated, so chunk long documents and embed the chunks.
+
+---
+
 ## Skills reference
 
-Quick lookup table: all 20 skills at a glance.
+Quick lookup table: all 22 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -776,7 +850,7 @@ Quick lookup table: all 20 skills at a glance.
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (returns reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
 | `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
 | `/zerogpu-router:chat-deepseek <text>` | Coding and agentic chat via `deepseek-v4-flash` (1M context) | `/zerogpu-router:chat-deepseek "Port this module to async/await."` |
-| `/zerogpu-router:chat-glm <text>` | Most capable, 1M context via `glm-5.2` (~20x the cost) | `/zerogpu-router:chat-glm "Which services would a payments outage take down?"` |
+| `/zerogpu-router:chat-glm <text>` | Most capable, 1M context via `glm-5.2` (~7x the cost) | `/zerogpu-router:chat-glm "Which services would a payments outage take down?"` |
 | `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification | `/zerogpu-router:classify-iab "The Lakers signed a new point guard."` |
 | `/zerogpu-router:classify-iab-enriched <text>` | IAB + topics/keywords/intent | `/zerogpu-router:classify-iab-enriched "Compare the Tesla Model Y and Hyundai Ioniq 5."` |
 | `/zerogpu-router:classify-domain <domain>` | IAB classification from a hostname, no page fetch | `/zerogpu-router:classify-domain "espn.com"` |
@@ -788,6 +862,8 @@ Quick lookup table: all 20 skills at a glance.
 | `/zerogpu-router:extract-json <text> -s '…'` | Schema-driven JSON extraction | `/zerogpu-router:extract-json "..." -s '{"contact":["name::str::Full name"]}'` |
 | `/zerogpu-router:summarize <text>` | Summarize with `llama-3.1-8b-instruct-fast` | `/zerogpu-router:summarize "The board met Thursday to review Q3 results..."` |
 | `/zerogpu-router:generate-followups <text>` | Suggested next questions for a passage | `/zerogpu-router:generate-followups "The Fed held rates steady..."` |
+| `/zerogpu-router:moderate <text>` | Safety verdict across OpenAI's 13 categories | `/zerogpu-router:moderate "Screen this user comment before we publish it."` |
+| `/zerogpu-router:embed <text> [-m …]` | 384-dim embedding for search, RAG, dedupe | `/zerogpu-router:embed "ZeroGPU runs inference at the edge." -m bge-small-en-v1.5` |
 
 For full flag reference (thresholds, categories, schema syntax), run `zerogpu <command> --help`.
 

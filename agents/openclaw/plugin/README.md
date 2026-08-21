@@ -148,7 +148,14 @@ Note the card last-four is left untouched. The PII model covers standard categor
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 | `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
 | `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash` |
-| `chat-glm` | Largest context and most capable, ~20x the cost | `glm-5.2` |
+| `chat-glm` | Largest context and most capable, ~7x the cost | `glm-5.2` |
+
+**Moderation and embeddings**
+
+| Skill | Workload | Backing model |
+|---|---|---|
+| `moderate` | Safety verdict across OpenAI's 13 moderation categories | `zlm-v1-moderation-edge` |
+| `embed` | Text to 384-dimensional vectors for search, RAG, dedupe | `all-minilm-l6-v2`, `bge-small-en-v1.5` |
 
 **Account**
 
@@ -166,7 +173,7 @@ Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)**: token 
 
 ## Data & privacy
 
-**These skills are not local processing.** Every content skill (`zerogpu-summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `generate-followups`, `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
+**These skills are not local processing.** Every content skill (`zerogpu-summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `generate-followups`, `moderate`, `embed`, `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
 
 Before using these skills:
 
