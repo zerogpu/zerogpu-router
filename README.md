@@ -132,7 +132,7 @@ Full walkthrough (prerequisites, every skill documented in detail, troubleshooti
 
 ## Routes
 
-ZeroGPU Router exposes twenty auto-invoked skills: seventeen task routes and three account utilities.
+ZeroGPU Router exposes twenty-two auto-invoked skills: nineteen task routes and three account utilities.
 
 **Chat and generation**
 
@@ -143,7 +143,7 @@ ZeroGPU Router exposes twenty auto-invoked skills: seventeen task routes and thr
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 | `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
 | `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash` |
-| `chat-glm` | Largest and most capable, 1M-token context, ~20x the cost | `glm-5.2` |
+| `chat-glm` | Largest and most capable, 1M-token context, ~7x the cost | `glm-5.2` |
 | `summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
 | `generate-followups` | Suggested next questions for a passage | `zlm-v1-followup-questions-edge` |
 
@@ -167,6 +167,13 @@ On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its
 | `extract-json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
 | `extract-pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
 | `redact-pii` | Mask emails, phones, names, addresses, other PII | `gliner-multi-pii-v1` |
+
+**Moderation and embeddings**
+
+| Skill | Workload | Model |
+|---|---|---|
+| `moderate` | Safety verdict across OpenAI's 13 moderation categories | `zlm-v1-moderation-edge` |
+| `embed` | Text to 384-dimensional vectors for search, RAG, dedupe | `all-minilm-l6-v2`, `bge-small-en-v1.5` |
 
 **Account** (manual only): `signin`, `status`, `cost-savings`.
 
