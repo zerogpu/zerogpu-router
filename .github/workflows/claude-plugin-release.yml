@@ -1,54 +1,78 @@
 name: claude-plugin-release
 
+# Runs after claude-plugin-validate succeeds on a push to main. If plugin.json
+# carries a version that hasn't been released yet, and the top CHANGELOG section
+# is for that version, tag the validated commit and create the GitHub release.
+#
+# Tag and release are created here rather than by a tag-triggered workflow:
+# a tag pushed with GITHUB_TOKEN does not trigger other workflows.
+
 on:
-  push:
-    tags:
-      - 'zerogpu-router--v*'
+  workflow_run:
+    workflows: [claude-plugin-validate]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: write
 
+concurrency:
+  group: claude-plugin-release
+  cancel-in-progress: false
+
 jobs:
   release:
-    name: Create GitHub release
+    name: Tag and create GitHub release
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: Checkout
+      - name: Checkout validated commit
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Resolve version from tag
+      - name: Check for an unreleased version
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG#zerogpu-router--v}"
-          if [ -z "$VERSION" ] || [ "$VERSION" = "$TAG" ]; then
-            echo "::error::Tag '$TAG' does not match expected pattern 'zerogpu-router--v<version>'"
+          VERSION=$(jq -r .version agents/claude/.claude-plugin/plugin.json)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error file=agents/claude/.claude-plugin/plugin.json::version '$VERSION' is not MAJOR.MINOR.PATCH"
             exit 1
           fi
+          TAG="zerogpu-router--v$VERSION"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Version $VERSION is already released ($TAG). Nothing to do."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "release=true"     >> "$GITHUB_OUTPUT"
           echo "tag=$TAG"         >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Verify plugin.json version matches tag
-        run: |
-          set -euo pipefail
-          PLUGIN_VERSION=$(jq -r .version agents/claude/.claude-plugin/plugin.json)
-          if [ "$PLUGIN_VERSION" != "${{ steps.version.outputs.version }}" ]; then
-            echo "::error file=agents/claude/.claude-plugin/plugin.json::plugin.json version ($PLUGIN_VERSION) does not match tag version (${{ steps.version.outputs.version }})"
-            exit 1
-          fi
-
-      - name: Extract CHANGELOG section to file
+      - name: Extract CHANGELOG section
+        if: steps.version.outputs.release == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           CHANGELOG="agents/claude/CHANGELOG.md"
           NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+
+          # The newest (top) section must be the version being released.
+          LATEST=$(awk '/^## /{print $2; exit}' "$CHANGELOG")
+          if [ "$LATEST" != "$VERSION" ]; then
+            echo "::error file=$CHANGELOG::Latest CHANGELOG section is '## $LATEST' but plugin.json is $VERSION. Not releasing."
+            exit 1
+          fi
 
           # Grab lines from `## <version>` (exclusive) up to the next `## ` heading (exclusive),
           # then strip leading/trailing blank lines. Write directly to a file so the notes
@@ -63,13 +87,32 @@ jobs:
             > "$NOTES_FILE"
 
           if [ ! -s "$NOTES_FILE" ]; then
-            echo "::error file=$CHANGELOG::No '## $VERSION' section found in $CHANGELOG"
+            echo "::error file=$CHANGELOG::'## $VERSION' section in $CHANGELOG is empty"
             exit 1
           fi
 
           echo "NOTES_FILE=$NOTES_FILE" >> "$GITHUB_ENV"
 
+      - name: Create and push tag
+        if: steps.version.outputs.release == 'true'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            # Left over from a run that pushed the tag but failed to create the release.
+            echo "Tag $TAG already exists on origin; reusing it."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898800+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" "$SHA" -m "zerogpu-router $VERSION"
+          git push origin "refs/tags/$TAG"
+
       - name: Create GitHub release
+        if: steps.version.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.tag }}

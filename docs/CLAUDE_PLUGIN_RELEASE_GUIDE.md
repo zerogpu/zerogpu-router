@@ -1,37 +1,19 @@
 # Releasing the `zerogpu-router` plugin
 
-How to cut a release. The whole flow is two things: **write the changelog** (by hand, per release), then **run one script**.
+A release is **a version bump in `plugin.json` plus a matching changelog section, landed on `main`**. CI does the rest: validates, tags, and creates the GitHub release. You never create tags or releases by hand.
 
 ## 1. While you work — just update the changelog
 
 For any change under `agents/claude/`:
 
-- Add or extend a `## <next-version>` section in `agents/claude/CHANGELOG.md` describing what users see. Several PRs can share one section — you don't need a new heading per PR.
-- **Do not** touch `agents/claude/.claude-plugin/plugin.json`. The release script bumps the version for you.
+- Add or extend a `## <next-version>` section at the **top** of `agents/claude/CHANGELOG.md` describing what users see. Several PRs can share one section — you don't need a new heading per PR.
+- Leave `agents/claude/.claude-plugin/plugin.json` alone until you're ready to release. Merging a version bump is what triggers a release.
 
-PR CI (`claude-plugin-validate`) only runs `claude plugin validate` on the marketplace and the plugin. It no longer checks the changelog, so intermediate PRs stay unblocked — the changelog is enforced once, at release time (step 2).
+PR CI (`claude-plugin-validate`) only runs `claude plugin validate` on the marketplace and the plugin. It doesn't check the changelog or the version, so intermediate PRs stay unblocked.
 
-## 2. Cut the release — run the script
+## 2. Cut the release — bump the version
 
-From a clean `main` that's in sync with `origin/main`:
-
-```bash
-git checkout main && git pull
-scripts/claude-release          # prompts: 1) patch  2) minor  3) major
-scripts/claude-release minor    # or pass the bump directly
-scripts/claude-release major
-```
-
-Run it from anywhere in the repo — it resolves paths against the git root.
-
-The script, in order:
-
-1. Picks the bump (interactive menu, or the `patch|minor|major` argument).
-2. **Preconditions** — needs `jq` + the Claude CLI, a clean tree, you on `main`, and `main` level with `origin/main`.
-3. Computes the next version from `plugin.json` and forms the tag `zerogpu-router--v<new>`; aborts if that tag already exists.
-4. **Requires** a matching `## <new-version>` heading in `agents/claude/CHANGELOG.md`. Missing → it stops before changing anything, so add the section and re-run.
-5. Bumps `plugin.json`, commits as `claude: release v<new>`, and pushes to `origin/main`.
-6. Runs `claude plugin tag --push` from `agents/claude/` — validates the plugin, cross-checks `plugin.json` against the marketplace entry, and pushes the tag.
+In a PR, bump `version` in `agents/claude/.claude-plugin/plugin.json` and make sure the top section of `agents/claude/CHANGELOG.md` is `## <new-version>`. Merge it. That's the whole release step.
 
 Which bump to choose:
 
@@ -41,15 +23,24 @@ Which bump to choose:
 | New skill, new optional flag, model swap with same I/O       | `minor` |
 | Skill removed/renamed, output shape changed, required flag   | `major` |
 
-## 3. The GitHub release happens on its own
+## 3. CI tags and releases
 
-`claude-plugin-release` (`.github/workflows/claude-plugin-release.yml`) fires on the `zerogpu-router--v*` tag:
+On every push to `main` touching `agents/claude/` or `.claude-plugin/`:
 
-- verifies `plugin.json` on the tagged commit matches the tag version,
-- slices the matching `## <version>` section out of `agents/claude/CHANGELOG.md`,
-- creates the GitHub release with that section as the body.
+1. **`claude-plugin-validate`** validates the marketplace and plugin. That's its only job.
+2. **`claude-plugin-release`** (`.github/workflows/claude-plugin-release.yml`) runs only if validate **succeeded**, against the exact commit validate checked:
+   - Reads `version` from `plugin.json`. If a `zerogpu-router--v<version>` release already exists, the version hasn't changed: **skip**.
+   - Requires the **top** section of `agents/claude/CHANGELOG.md` to be `## <version>`. If it isn't, the run **fails** without tagging or releasing.
+   - Creates the annotated tag `zerogpu-router--v<version>` on that commit as `github-actions[bot]` and pushes it.
+   - Creates the GitHub release `zerogpu-router <version>` with that changelog section as the body.
 
-No manual `gh release create`. If it fails, fix the cause and re-tag rather than releasing by hand.
+Tag and release happen in the same workflow on purpose: a tag pushed with the default `GITHUB_TOKEN` doesn't trigger other workflows, so a separate tag-triggered release job would never run.
+
+### When something goes wrong
+
+- **Validate failed:** no release. Fix it and push; the next green run releases.
+- **Release run failed on the changelog check:** push a commit fixing the top `## <version>` section. Changelog-only pushes to `main` still run validate, so the release follows.
+- **Tag pushed but release creation failed:** re-run the failed `claude-plugin-release` run. It reuses the existing tag.
 
 ## Install (for users)
 

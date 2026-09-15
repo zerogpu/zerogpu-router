@@ -8,12 +8,13 @@ on:
       - 'agents/claude/**'
       - '!agents/claude/CHANGELOG.md'
       - '.github/workflows/claude-plugin-validate.yml'
+  # CHANGELOG is not excluded on push: claude-plugin-release runs off this
+  # workflow, so a changelog-only fix on main must still reach it.
   push:
     branches: [main]
     paths:
       - '.claude-plugin/**'
       - 'agents/claude/**'
-      - '!agents/claude/CHANGELOG.md'
 
 concurrency:
   group: claude-plugin-validate-${{ github.ref }}
