@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.2.1
+
+Maintenance release: the plugin now releases itself from CI. **No skill, model, or output changes.** All 22 skills behave exactly as they do in 2.2.0.
+
+This is also the first release cut by the new workflow, so it doubles as its end-to-end test.
+
+### Changed
+
+- **Releases are automatic.** `claude-plugin-release` no longer waits for a hand-pushed tag. It runs after `claude-plugin-validate` passes on `main`, and when `plugin.json` carries a version with no GitHub release yet and the top `CHANGELOG.md` section matches it, it creates the `zerogpu-router--v<version>` tag on the validated commit and publishes the release with that section as the body. A version that is already released is skipped; a changelog that does not match fails the run without tagging.
+- **Every plugin PR is a release.** `claude-plugin-validate` now fails a PR that changes anything under `agents/claude/` unless it bumps `version` in `plugin.json` above `main`'s and puts the matching `## <version>` section at the top of the changelog. Changelog-only PRs are exempt.
+- **`scripts/claude-release` removed.** Bumping, tagging, and pushing no longer happen on a laptop.
+- **`claude-plugin-validate`** now also runs on changelog-only pushes to `main`, so fixing a mismatched changelog heading still reaches the release workflow.
+- `docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md` rewritten for the new flow, including what to do when a run fails.
+
 ## 2.2.0
 
 Two skills for capabilities the platform has been serving that neither plugin exposed: content moderation and text embeddings. Skill count goes from 20 to 22.
