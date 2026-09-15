@@ -1,19 +1,13 @@
 # Releasing the `zerogpu-router` plugin
 
-A release is **a version bump in `plugin.json` plus a matching changelog section, landed on `main`**. CI does the rest: validates, tags, and creates the GitHub release. You never create tags or releases by hand.
+**Every PR that changes the plugin is a release.** It bumps the version and adds a changelog section, PR CI checks both, and merging it tags and publishes the GitHub release. You never create tags or releases by hand.
 
-## 1. While you work — just update the changelog
+## 1. In your PR — bump the version and write the changelog
 
-For any change under `agents/claude/`:
+For any change under `agents/claude/` (other than the changelog itself):
 
-- Add or extend a `## <next-version>` section at the **top** of `agents/claude/CHANGELOG.md` describing what users see. Several PRs can share one section — you don't need a new heading per PR.
-- Leave `agents/claude/.claude-plugin/plugin.json` alone until you're ready to release. Merging a version bump is what triggers a release.
-
-PR CI (`claude-plugin-validate`) only runs `claude plugin validate` on the marketplace and the plugin. It doesn't check the changelog or the version, so intermediate PRs stay unblocked.
-
-## 2. Cut the release — bump the version
-
-In a PR, bump `version` in `agents/claude/.claude-plugin/plugin.json` and make sure the top section of `agents/claude/CHANGELOG.md` is `## <new-version>`. Merge it. That's the whole release step.
+- Bump `version` in `agents/claude/.claude-plugin/plugin.json`.
+- Add a `## <new-version>` section at the **top** of `agents/claude/CHANGELOG.md` describing what users see. It becomes the GitHub release body verbatim.
 
 Which bump to choose:
 
@@ -23,11 +17,22 @@ Which bump to choose:
 | New skill, new optional flag, model swap with same I/O       | `minor` |
 | Skill removed/renamed, output shape changed, required flag   | `major` |
 
-## 3. CI tags and releases
+If another plugin PR merges first with the same version, you'll get a conflict in `plugin.json` / `CHANGELOG.md`: rebase and bump again.
+
+## 2. PR CI checks it
+
+`claude-plugin-validate` on the PR:
+
+- runs `claude plugin validate` on the marketplace and the plugin,
+- if the PR changes anything under `agents/claude/` besides `CHANGELOG.md`, **fails** unless the `plugin.json` version is higher than `main`'s and the top changelog section is `## <that version>`.
+
+Changelog-only PRs don't run validate and don't need a bump.
+
+## 3. Merge — CI tags and releases
 
 On every push to `main` touching `agents/claude/` or `.claude-plugin/`:
 
-1. **`claude-plugin-validate`** validates the marketplace and plugin. That's its only job.
+1. **`claude-plugin-validate`** validates the marketplace and plugin.
 2. **`claude-plugin-release`** (`.github/workflows/claude-plugin-release.yml`) runs only if validate **succeeded**, against the exact commit validate checked:
    - Reads `version` from `plugin.json`. If a `zerogpu-router--v<version>` release already exists, the version hasn't changed: **skip**.
    - Requires the **top** section of `agents/claude/CHANGELOG.md` to be `## <version>`. If it isn't, the run **fails** without tagging or releasing.

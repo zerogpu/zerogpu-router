@@ -48,3 +48,39 @@ jobs:
 
       - name: Validate plugin (agents/claude)
         run: claude plugin validate ./agents/claude
+
+      # Merging a plugin change releases it, so the PR must carry the bump and
+      # the matching changelog section that claude-plugin-release requires.
+      - name: Check version bump and CHANGELOG
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          PLUGIN_JSON="agents/claude/.claude-plugin/plugin.json"
+          CHANGELOG="agents/claude/CHANGELOG.md"
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+
+          if git diff --quiet "origin/$BASE_REF" -- agents/claude/ ":(exclude)$CHANGELOG"; then
+            echo "No plugin changes — version bump not required."
+            exit 0
+          fi
+
+          OLD=$(git show "origin/$BASE_REF:$PLUGIN_JSON" | jq -r .version)
+          NEW=$(jq -r .version "$PLUGIN_JSON")
+          if ! [[ "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error file=$PLUGIN_JSON::version '$NEW' is not MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          if [ "$NEW" = "$OLD" ] || [ "$(printf '%s\n%s\n' "$OLD" "$NEW" | sort -V | tail -1)" != "$NEW" ]; then
+            echo "::error file=$PLUGIN_JSON::Plugin changed but version was not bumped ($BASE_REF has $OLD, this PR has $NEW). Bump version in plugin.json."
+            exit 1
+          fi
+
+          LATEST=$(awk '/^## /{print $2; exit}' "$CHANGELOG")
+          if [ "$LATEST" != "$NEW" ]; then
+            echo "::error file=$CHANGELOG::Top CHANGELOG section is '## $LATEST'. Add a '## $NEW' section at the top describing this release."
+            exit 1
+          fi
+
+          echo "Version $OLD -> $NEW with a matching CHANGELOG section."

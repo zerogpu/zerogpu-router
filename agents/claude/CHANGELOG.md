@@ -9,9 +9,9 @@ This is also the first release cut by the new workflow, so it doubles as its end
 ### Changed
 
 - **Releases are automatic.** `claude-plugin-release` no longer waits for a hand-pushed tag. It runs after `claude-plugin-validate` passes on `main`, and when `plugin.json` carries a version with no GitHub release yet and the top `CHANGELOG.md` section matches it, it creates the `zerogpu-router--v<version>` tag on the validated commit and publishes the release with that section as the body. A version that is already released is skipped; a changelog that does not match fails the run without tagging.
-- **Cutting a release is a PR.** Bump `version` in `plugin.json`, put the matching `## <version>` section at the top of the changelog, merge.
+- **Every plugin PR is a release.** `claude-plugin-validate` now fails a PR that changes anything under `agents/claude/` unless it bumps `version` in `plugin.json` above `main`'s and puts the matching `## <version>` section at the top of the changelog. Changelog-only PRs are exempt.
 - **`scripts/claude-release` removed.** Bumping, tagging, and pushing no longer happen on a laptop.
-- **`claude-plugin-validate`** now also runs on changelog-only pushes to `main`, so fixing a mismatched changelog heading still reaches the release workflow. PRs still skip changelog-only changes.
+- **`claude-plugin-validate`** now also runs on changelog-only pushes to `main`, so fixing a mismatched changelog heading still reaches the release workflow.
 - `docs/CLAUDE_PLUGIN_RELEASE_GUIDE.md` rewritten for the new flow, including what to do when a run fails.
 
 ## 2.2.0
