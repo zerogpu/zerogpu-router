@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://zerogpu.ai/assets/zerogpu-icon-dark-DB2Jfxq2.png" alt="ZeroGPU" width="160"/>
+  <img src="https://zerogpu.ai/assets/zerogpu-logo-dark-sWHVe27f.webp" alt="ZeroGPU" width="160"/>
 </p>
 
 <h1 align="center">ZeroGPU Router</h1>
