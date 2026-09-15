@@ -2,7 +2,7 @@
 
 Offload cheap, well-defined NLP tasks (classification, summarization, entity & PII extraction, short chat) from Claude to ZeroGPU's edge-optimized small language models, directly from your Claude Code session.
 
-Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
+Every ZeroGPU task is exposed as a Claude Code skill. Each skill names its own model and calls the `zerogpu` CLI's model-agnostic endpoint commands (`chat_completions`, `moderations`, `embeddings`), so the plugin keeps working when the CLI's model list changes. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
 
 ---
 
@@ -14,7 +14,7 @@ Every command in the `zerogpu` CLI is exposed as a Claude Code skill. Claude aut
 | --- | --- | --- |
 | **Node.js ≥ 20** | Runs the `zerogpu` CLI | [nodejs.org](https://nodejs.org) |
 | **Claude Code** | Hosts the plugin | `npm install -g @anthropic-ai/claude-code` |
-| **`zerogpu` CLI ≥ 3.4.0** | Skills shell out to it | `npm install -g zerogpu-cli@latest` |
+| **`zerogpu` CLI ≥ 3.8.0** | Skills shell out to it | `npm install -g zerogpu-cli@latest` |
 | **ZeroGPU account** | API key | [zerogpu.ai](https://zerogpu.ai) |
 
 Verify the CLI is on your `PATH` and current:
@@ -23,7 +23,7 @@ Verify the CLI is on your `PATH` and current:
 zerogpu --version
 ```
 
-Most chat skills and `classify-domain` need **3.3.0 or newer**, the release that added `chat --model` and the `classify_domain` command. `chat-glm` and `chat-deepseek` need **3.4.0 or newer**, which added those two models to the CLI's `--model` allowlist — on an older CLI they fail with `Unknown model` before any request is made.
+The inference skills need **3.8.0 or newer**, the release that added the `chat_completions`, `moderations`, and `embeddings` commands. Those commands take the model from the skill and keep no model list of their own, so later CLI releases that add, rename, or remove models do not affect the plugin. On an older CLI the skills fail with `error: unknown command 'chat_completions'`.
 
 ### 1. Authenticate the CLI
 
@@ -114,7 +114,7 @@ Call any skill explicitly with `/zerogpu-router:<name> <args>`:
 ```
 
 ```text
-/zerogpu-router:redact-pii "Email John Smith at john@acme.com about invoice 12345."
+/zerogpu-router:redact-pii Email John Smith at john@acme.com about invoice 12345.
 ```
 
 ```text
@@ -211,29 +211,22 @@ Pass `--json` for the raw data, or `--reset` to clear the history.
 The default ZeroGPU chat skill. Handles work the 1.2B edge models can't carry (long documents, multi-step instructions, harder general-knowledge questions) at a fraction of frontier-model cost.
 
 - **Model:** `gpt-oss-120b` (117B MoE, 131,072-token context)
-- **Wraps:** `zerogpu chat -m gpt-oss-120b`
+- **Wraps:** `zerogpu chat_completions -m gpt-oss-120b`
 - **When Claude auto-invokes:** you've signalled "use a ZeroGPU model" or "don't use Claude for this" and the task isn't one of the specialized skills below.
 
 **Synopsis**
 
 ```
-/zerogpu-router:chat <text> [-i <instructions>]
+/zerogpu-router:chat <text>
 ```
-
-**Arguments**
-
-| Name | Required | Description |
-| --- | --- | --- |
-| `text` | yes | The user message / prompt (quoted). |
-| `-i`, `--instructions <instructions>` | optional | System instructions to steer behavior. |
 
 **Example**
 
 ```text
-/zerogpu-router:chat "Summarize the trade-offs between optimistic and pessimistic locking, then recommend one for a high-contention inventory table."
+/zerogpu-router:chat Summarize the trade-offs between optimistic and pessimistic locking, then recommend one for a high-contention inventory table.
 ```
 
-**Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; the skill leaves off the CLI's `-r` flag, so only the final answer is printed.
+**Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; Chat Completions returns it in a separate field, so only the final answer is printed.
 
 Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts. When the input exceeds this model's 131K context, use `chat-deepseek` for code and agentic work or `chat-glm` for the most capable option — both carry a 1M-token context.
 
@@ -244,26 +237,19 @@ Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thin
 The fastest, cheapest chat reply on the platform. Single-turn answers that don't need Claude-level reasoning or conversation context.
 
 - **Model:** `LFM2.5-1.2B-Instruct`
-- **Wraps:** `zerogpu chat -m LFM2.5-1.2B-Instruct`
+- **Wraps:** `zerogpu chat_completions -m LFM2.5-1.2B-Instruct`
 - **When Claude auto-invokes:** quick factual answers, one-liners, basic rephrasings where you've signalled "use a small model" or asked for the cheapest option.
 
 **Synopsis**
 
 ```
-/zerogpu-router:chat-liquid <text> [-i <instructions>]
+/zerogpu-router:chat-liquid <text>
 ```
-
-**Arguments**
-
-| Name | Required | Description |
-| --- | --- | --- |
-| `text` | yes | The user message / prompt (quoted). |
-| `-i`, `--instructions <instructions>` | optional | System instructions to steer behavior. |
 
 **Example**
 
 ```text
-/zerogpu-router:chat-liquid "Explain WebSockets in two sentences." -i "You are a concise technical writer."
+/zerogpu-router:chat-liquid Explain WebSockets in two sentences.
 ```
 
 **Output:** raw assistant text (or pretty-printed JSON if the model returned one). At 1.2B parameters the replies are terse and occasionally mechanical. If that's too weak, `/zerogpu-router:chat` runs the same prompt on `gpt-oss-120b`.
@@ -275,7 +261,7 @@ The fastest, cheapest chat reply on the platform. Single-turn answers that don't
 Same as `chat`, but the model returns its reasoning trace alongside the answer.
 
 - **Model:** `LFM2.5-1.2B-Thinking`
-- **Wraps:** `zerogpu chat_thinking`
+- **Wraps:** `zerogpu chat_completions -m LFM2.5-1.2B-Thinking --raw`
 - **When Claude auto-invokes:** short logic / math / word-problem questions where step-by-step reasoning is useful.
 
 **Synopsis**
@@ -287,8 +273,10 @@ Same as `chat`, but the model returns its reasoning trace alongside the answer.
 **Example**
 
 ```text
-/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"
+/zerogpu-router:chat-thinking If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?
 ```
+
+**Output:** the model's reasoning, then its answer. The skill prints the full Chat Completions response, where the reasoning is a separate field, and Claude shows the two in order.
 
 ---
 
@@ -297,22 +285,22 @@ Same as `chat`, but the model returns its reasoning trace alongside the answer.
 Heavier chat tuned for multilingual work: 100+ languages, useful when the prompt or the expected answer isn't English.
 
 - **Model:** `qwen3-30b-a3b-fp8` (30.5B MoE, 32,768-token context)
-- **Wraps:** `zerogpu chat -m qwen3-30b-a3b-fp8`
+- **Wraps:** `zerogpu chat_completions -m qwen3-30b-a3b-fp8`
 - **When Claude auto-invokes:** non-English prompts, translation-adjacent tasks, mid-weight questions the edge models handle poorly.
 
 **Synopsis**
 
 ```
-/zerogpu-router:chat-qwen <text> [-i <instructions>]
+/zerogpu-router:chat-qwen <text>
 ```
 
 **Example**
 
 ```text
-/zerogpu-router:chat-qwen "Explica la diferencia entre un índice B-tree y uno hash en dos frases."
+/zerogpu-router:chat-qwen Explica la diferencia entre un índice B-tree y uno hash en dos frases.
 ```
 
-**Output:** the assistant's answer as plain text. This model is served by the Chat Completions API rather than the Responses API; the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
+**Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
 ---
 
@@ -321,22 +309,22 @@ Heavier chat tuned for multilingual work: 100+ languages, useful when the prompt
 Coding and agentic chat with a 1M-token context: reading or writing code across a large codebase, porting and refactoring, planning multi-step automation.
 
 - **Model:** `deepseek-v4-flash` (284B MoE, 13B active per token, 1,048,576-token context)
-- **Wraps:** `zerogpu chat -m deepseek-v4-flash`
+- **Wraps:** `zerogpu chat_completions -m deepseek-v4-flash`
 - **When Claude auto-invokes:** code-heavy prompts, repo-scale questions, multi-step tool-use planning — especially when the input is too large for `chat`'s 131K context.
 
 **Synopsis**
 
 ```
-/zerogpu-router:chat-deepseek <text> [-i <instructions>]
+/zerogpu-router:chat-deepseek <text>
 ```
 
 **Example**
 
 ```text
-/zerogpu-router:chat-deepseek "Port this callback-based module to async/await and flag any behaviour changes."
+/zerogpu-router:chat-deepseek Port this callback-based module to async/await and flag any behaviour changes.
 ```
 
-**Output:** the assistant's answer as plain text. Chat Completions only; the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
+**Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
 At \$0.07 / \$0.14 per 1M input/output tokens this is the cheaper of the two 1M-context models — about a sixteenth of `chat-glm`. Prefer it when the task is code or tool-use rather than sheer input size.
 
@@ -347,22 +335,22 @@ At \$0.07 / \$0.14 per 1M input/output tokens this is the cheaper of the two 1M-
 The largest and most capable model on the platform, with a 1M-token context for whole repositories, book-length documents, and long agent transcripts.
 
 - **Model:** `glm-5.2` (753B MoE, 8 of 256 experts per token, 1,048,576-token context)
-- **Wraps:** `zerogpu chat -m glm-5.2`
+- **Wraps:** `zerogpu chat_completions -m glm-5.2`
 - **When Claude auto-invokes:** long-horizon reasoning, or input that genuinely does not fit anywhere else.
 
 **Synopsis**
 
 ```
-/zerogpu-router:chat-glm <text> [-i <instructions>]
+/zerogpu-router:chat-glm <text>
 ```
 
 **Example**
 
 ```text
-/zerogpu-router:chat-glm "Here is our entire service directory. Which services would a payments outage take down, and in what order?"
+/zerogpu-router:chat-glm Here is our entire service directory. Which services would a payments outage take down, and in what order?
 ```
 
-**Output:** the assistant's answer as plain text. Chat Completions only; the CLI routes it automatically. Its reasoning trace is omitted, since the skill doesn't pass `-r`.
+**Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
 **Cost:** \$1.10 / \$3.50 per 1M input/output tokens — roughly 7x `chat` (`gpt-oss-120b`, \$0.15 / \$0.60) on input and 6x on output, and over 50x the 1.2B edge models. It is the one skill here where the usual savings framing does not apply, so reach for it only when the size or horizon of the task actually requires it.
 
@@ -373,7 +361,7 @@ The largest and most capable model on the platform, with a 1M-token context for 
 Classify text against the **IAB content / audience taxonomy** (standard ad-tech category labels).
 
 - **Model:** `zlm-v1-iab-classify-edge`
-- **Wraps:** `zerogpu classify_iab`
+- **Wraps:** `zerogpu chat_completions -m zlm-v1-iab-classify-edge`
 - **When Claude auto-invokes:** "what IAB category is this?", "tag this article for ad targeting", "give me the topic taxonomy."
 
 **Synopsis**
@@ -385,16 +373,18 @@ Classify text against the **IAB content / audience taxonomy** (standard ad-tech 
 **Example**
 
 ```text
-/zerogpu-router:classify-iab "The Lakers signed a new point guard ahead of the playoffs."
+/zerogpu-router:classify-iab The Lakers signed a new point guard.
 ```
 
-**Output (illustrative)**
+**Output (truncated)**
 
 ```json
 {
-  "categories": [
-    { "id": "IAB17-44", "name": "Basketball", "confidence": 0.97 }
-  ]
+  "audience": [{ "name": "Basketball", "score": 0.879 }, { "name": "Sports", "score": 0.830 }],
+  "content": {
+    "iab_1_0": [{ "name": "Pro Basketball", "score": 0.952 }],
+    "iab_2_2": [{ "name": "Basketball", "score": 0.952 }]
+  }
 }
 ```
 
@@ -405,7 +395,7 @@ Classify text against the **IAB content / audience taxonomy** (standard ad-tech 
 Enriched IAB classification: audience categories **plus** topics, keywords, and inferred user intent.
 
 - **Model:** `zlm-v2-iab-classify-edge-enriched`
-- **Wraps:** `zerogpu classify_iab_enriched`
+- **Wraps:** `zerogpu chat_completions -m zlm-v2-iab-classify-edge-enriched`
 - **When Claude auto-invokes:** "give me topics, keywords, and intent", richer ad/audience signals than plain IAB labels.
 
 **Synopsis**
@@ -438,7 +428,7 @@ Enriched IAB classification: audience categories **plus** topics, keywords, and 
 Classify a **domain name** against the IAB taxonomy without fetching the page. Built for bidstream enrichment and allow/deny-list scoring, where all you have is a hostname.
 
 - **Model:** `zlm-v1-iab-domain-classifier`
-- **Wraps:** `zerogpu classify_domain`
+- **Wraps:** `zerogpu chat_completions -m zlm-v1-iab-domain-classifier`
 - **When Claude auto-invokes:** "what is example.com about?", "categorize these domains", any IAB request where the input is a URL rather than article text.
 
 **Synopsis**
@@ -478,7 +468,7 @@ Payloads are up to 10x smaller than sending page text. If you have the actual ar
 Zero-shot classification against an arbitrary list of candidate labels you supply.
 
 - **Model:** `deberta-v3-small`
-- **Wraps:** `zerogpu classify_zero_shot`
+- **Wraps:** `zerogpu chat_completions -m deberta-v3-small`, with the labels as a `[a, b, c]` system message
 - **When Claude auto-invokes:** "is this positive, negative, or neutral?", "tag this as bug, feature, or question."
 
 **Synopsis**
@@ -495,6 +485,8 @@ Zero-shot classification against an arbitrary list of candidate labels you suppl
 | `-l <label>` | one of `-l` / `--labels` | A single label. Repeatable. |
 | `--labels <a,b,c>` | one of `-l` / `--labels` | Comma-separated label list. |
 
+Claude reads the arguments and runs the command itself, putting the labels in the system message, where the model reads them. Plain words work too: `… labels: bug, feature, question`.
+
 **Example**
 
 ```text
@@ -504,7 +496,7 @@ Zero-shot classification against an arbitrary list of candidate labels you suppl
 **Output (illustrative)**
 
 ```json
-{ "label": "positive", "scores": { "positive": 0.94, "neutral": 0.04, "negative": 0.02 } }
+{ "positive": 0.9795, "neutral": 0.0120, "negative": 0.0085 }
 ```
 
 ---
@@ -514,7 +506,7 @@ Zero-shot classification against an arbitrary list of candidate labels you suppl
 Schema-driven, multi-axis classification: one chosen label per category.
 
 - **Model:** `gliner2-base-v1`
-- **Wraps:** `zerogpu classify_structured`
+- **Wraps:** `zerogpu chat_completions -m gliner2-base-v1` with `usecase: "classification"`
 - **When Claude auto-invokes:** "classify by sentiment and topic", any request that names multiple classification dimensions with explicit label sets.
 
 **Synopsis**
@@ -530,6 +522,8 @@ Schema-driven, multi-axis classification: one chosen label per category.
 | `text` | yes | Text to classify. |
 | `-s`, `--schema <json>` | **yes** | JSON object mapping each category to its allowed labels. |
 
+Claude reads the arguments and runs the command itself, sending the schema as `metadata` with `usecase: "classification"`.
+
 **Example**
 
 ```text
@@ -537,10 +531,10 @@ Schema-driven, multi-axis classification: one chosen label per category.
   -s '{"sentiment":["positive","negative","neutral"],"topic":["support","billing","product"]}'
 ```
 
-**Output (illustrative)**
+**Output**
 
 ```json
-{ "sentiment": "negative", "topic": "support" }
+{ "classification": { "sentiment": "negative", "topic": "support" } }
 ```
 
 ---
@@ -550,7 +544,7 @@ Schema-driven, multi-axis classification: one chosen label per category.
 Custom-label named-entity recognition. You define the entity labels; the model finds spans.
 
 - **Model:** `gliner2-base-v1`
-- **Wraps:** `zerogpu extract_entities`
+- **Wraps:** `zerogpu chat_completions -m gliner2-base-v1` with `usecase: "ner"`
 - **When Claude auto-invokes:** "extract all people, organizations, and locations from this", "find every product mention."
 
 **Synopsis**
@@ -567,6 +561,8 @@ Custom-label named-entity recognition. You define the entity labels; the model f
 | `-l <label>` / `--labels <a,b,c>` | yes (one) | n/a | Entity labels to extract. |
 | `-t`, `--threshold <number>` | optional | `0.3` | Minimum confidence in `[0, 1]`. |
 
+Claude reads the arguments and runs the command itself, sending the labels and threshold as `metadata` with `usecase: "ner"`.
+
 **Example**
 
 ```text
@@ -577,52 +573,47 @@ Custom-label named-entity recognition. You define the entity labels; the model f
 **Output (illustrative)**
 
 ```json
-[
-  { "label": "organization", "text": "Apple", "score": 0.98 },
-  { "label": "person", "text": "Tim Cook", "score": 0.97 },
-  { "label": "person", "text": "Sundar Pichai", "score": 0.96 },
-  { "label": "location", "text": "Cupertino", "score": 0.91 }
-]
+{
+  "entities": {
+    "person": ["Tim Cook", "Sundar Pichai"],
+    "organization": ["Apple"],
+    "location": ["Cupertino"]
+  }
+}
 ```
 
 ---
 
 ### `/zerogpu-router:extract-pii`
 
-Extract personally identifiable information entities, grouped by category, **without modifying the source text**.
+Extract personally identifiable information entities **without modifying the source text**.
 
 - **Model:** `gliner-multi-pii-v1`
-- **Wraps:** `zerogpu extract_pii`
+- **Wraps:** `zerogpu chat_completions -m gliner-multi-pii-v1` with `usecase: "extract-pii"`, threshold `0.5`
 - **When Claude auto-invokes:** "find all PII", "what personal info is in this?", "list emails/phones/names."
 
 **Synopsis**
 
 ```
-/zerogpu-router:extract-pii <text> [-t <threshold>] [(-c | --categories) <list>]
+/zerogpu-router:extract-pii <text>
 ```
-
-**Arguments**
-
-| Name | Required | Default | Description |
-| --- | --- | --- | --- |
-| `text` | yes | n/a | Source text. |
-| `-t`, `--threshold <number>` | optional | `0.5` | Minimum confidence. |
-| `-c`, `--categories <list>` | optional | `identity,contact` | Comma-separated. Other values: `financial`, `medical`, `credentials`. |
 
 **Example**
 
 ```text
-/zerogpu-router:extract-pii "Contact Jane Doe at jane@example.com or +1 (415) 555-1212." -t 0.6 -c identity,contact,financial
+/zerogpu-router:extract-pii Contact Jane Doe at jane@example.com, SSN 123-45-6789.
 ```
 
 **Output (illustrative)**
 
 ```json
-[
-  { "category": "identity", "label": "person", "text": "Jane Doe", "score": 0.96 },
-  { "category": "contact",  "label": "email",  "text": "jane@example.com", "score": 0.99 },
-  { "category": "contact",  "label": "phone",  "text": "+1 (415) 555-1212", "score": 0.95 }
-]
+{
+  "entities": [
+    { "text": "Jane Doe", "label": "person", "start": 8, "end": 16, "score": 0.9995 },
+    { "text": "jane@example.com", "label": "email", "start": 20, "end": 36, "score": 0.9814 },
+    { "text": "123-45-6789", "label": "social security number", "start": 42, "end": 53, "score": 0.9928 }
+  ]
+}
 ```
 
 If you want to **mask** PII inline rather than extract it, use `/zerogpu-router:redact-pii` instead.
@@ -634,7 +625,7 @@ If you want to **mask** PII inline rather than extract it, use `/zerogpu-router:
 Detect PII and replace each span in-line with a `[LABEL]` placeholder. Use this before sharing or logging sensitive text.
 
 - **Model:** `gliner-multi-pii-v1` (with `mask: "label"`)
-- **Wraps:** `zerogpu redact_pii`
+- **Wraps:** `zerogpu chat_completions -m gliner-multi-pii-v1` with `usecase: "redact"`
 - **When Claude auto-invokes:** "redact", "scrub", "mask", "anonymize", or "sanitize this for sharing."
 
 **Synopsis**
@@ -646,13 +637,19 @@ Detect PII and replace each span in-line with a `[LABEL]` placeholder. Use this 
 **Example**
 
 ```text
-/zerogpu-router:redact-pii "Email John Smith at john@acme.com about invoice 12345."
+/zerogpu-router:redact-pii Email John Smith at john@acme.com about invoice 12345.
 ```
 
-**Output**
+**Output (truncated)**
 
-```
-Email [PERSON] at [EMAIL] about invoice 12345.
+```json
+{
+  "redacted_text": "Email [PERSON] at [EMAIL] about invoice 12345.",
+  "entities": [
+    { "text": "John Smith", "label": "person", "start": 6, "end": 16, "score": 0.9981 },
+    { "text": "john@acme.com", "label": "email", "start": 20, "end": 33, "score": 0.9311 }
+  ]
+}
 ```
 
 ---
@@ -662,7 +659,7 @@ Email [PERSON] at [EMAIL] about invoice 12345.
 Pull specific named fields out of free text into a structured JSON object, defined by a per-field schema.
 
 - **Model:** `gliner2-base-v1`
-- **Wraps:** `zerogpu extract_json`
+- **Wraps:** `zerogpu chat_completions -m gliner2-base-v1` with `usecase: "json"`
 - **When Claude auto-invokes:** "extract the contact info as JSON", "parse this invoice", "pull these fields out."
 
 **Synopsis**
@@ -671,7 +668,7 @@ Pull specific named fields out of free text into a structured JSON object, defin
 /zerogpu-router:extract-json <text> -s '<json schema>'
 ```
 
-**Schema syntax:** each field is `name::type::description`.
+**Schema syntax:** each field is `name::type::description`. Claude reads the arguments and runs the command itself, sending the schema as `metadata` with `usecase: "json"`.
 
 **Example**
 
@@ -680,14 +677,14 @@ Pull specific named fields out of free text into a structured JSON object, defin
   -s '{"contact":["name::str::Full name","email::str::Email address","phone::str::Phone number"]}'
 ```
 
-**Output (illustrative)**
+**Output**
 
 ```json
 {
-  "contact": {
-    "name": "Maria Lopez",
-    "email": "maria.lopez@acme.io",
-    "phone": "415-555-0188"
+  "data": {
+    "contact": [
+      { "name": "Maria Lopez", "email": "maria.lopez@acme.io", "phone": "415-555-0188" }
+    ]
   }
 }
 ```
@@ -699,7 +696,7 @@ Pull specific named fields out of free text into a structured JSON object, defin
 Condense a passage into a short summary.
 
 - **Model:** `llama-3.1-8b-instruct-fast`
-- **Wraps:** `zerogpu summarize`
+- **Wraps:** `zerogpu chat_completions -m llama-3.1-8b-instruct-fast`, with a system message instructing the model to summarize
 - **When Claude auto-invokes:** "summarize", "TL;DR", "give me the gist", "condense this."
 
 **Synopsis**
@@ -735,7 +732,7 @@ a revised 2025 budget by mid-December.
 Generate the questions a reader would naturally ask next about a passage: "people also ask" style prompts, conversation continuations, suggested next steps.
 
 - **Model:** `zlm-v1-followup-questions-edge`
-- **Wraps:** `zerogpu generate_followups`
+- **Wraps:** `zerogpu chat_completions -m zlm-v1-followup-questions-edge`
 - **When Claude auto-invokes:** "what should I ask next?", "suggest follow-up questions", building a related-questions widget.
 
 **Synopsis**
@@ -767,7 +764,7 @@ Generate the questions a reader would naturally ask next about a passage: "peopl
 Screen a passage for unsafe, harmful, or policy-sensitive content and get back a safety verdict.
 
 - **Model:** `zlm-v1-moderation-edge`
-- **Wraps:** `zerogpu moderate`
+- **Wraps:** `zerogpu moderations -m zlm-v1-moderation-edge`
 - **When Claude auto-invokes:** "moderate this", "is this safe to publish?", "content-check this comment", screening user-generated text before it is forwarded.
 
 **Synopsis**
@@ -786,13 +783,15 @@ Screen a passage for unsafe, harmful, or policy-sensitive content and get back a
 
 ```json
 {
-  "flagged": true,
-  "categories": { "harassment": true, "harassment/threatening": true, "self-harm": false },
-  "category_scores": { "harassment": 0.825, "harassment/threatening": 0.958, "self-harm": 0.015 }
+  "results": [{
+    "flagged": true,
+    "categories": { "harassment": true, "harassment/threatening": true, "self-harm": false },
+    "category_scores": { "harassment": 0.825, "harassment/threatening": 0.958, "self-harm": 0.015 }
+  }]
 }
 ```
 
-Returns OpenAI's moderations envelope across all 13 safety categories, so it drops into any pipeline written against `omni-moderation-latest`. Served by the Moderations API rather than the Responses API; the CLI routes it automatically. At \$0.02 / \$0.05 per 1M tokens it is cheap enough to sit inline in front of every response your app serves.
+Returns OpenAI's moderations envelope across all 13 safety categories, so it drops into any pipeline written against `omni-moderation-latest`. The model is served only by the Moderations API, so this skill calls `zerogpu moderations` rather than Chat Completions. At \$0.02 / \$0.05 per 1M tokens it is cheap enough to sit inline in front of every response your app serves.
 
 ---
 
@@ -801,7 +800,7 @@ Returns OpenAI's moderations envelope across all 13 safety categories, so it dro
 Turn text into a 384-dimensional vector for semantic search, RAG retrieval, clustering, or deduplication.
 
 - **Models:** `all-minilm-l6-v2` (default), `bge-small-en-v1.5` (`-m`)
-- **Wraps:** `zerogpu embed`
+- **Wraps:** `zerogpu embeddings -m all-minilm-l6-v2`
 - **When Claude auto-invokes:** "embed this", "build a vector index", "find the semantically closest passage", "dedupe these by meaning."
 
 **Synopsis**
@@ -832,7 +831,7 @@ Turn text into a 384-dimensional vector for semantic search, RAG retrieval, clus
 | `all-minilm-l6-v2` | 22.7M | 256 tokens | General semantic similarity over short chunks |
 | `bge-small-en-v1.5` | 33.4M | 512 tokens | English retrieval, longer chunks, ranking quality |
 
-Both cost \$0.50 per 1M input tokens, bill nothing on output, and return 384-dimensional vectors, so they are interchangeable in an existing index. Served by the Embeddings API rather than the Responses API; the CLI routes them automatically. Inputs past the window are truncated, so chunk long documents and embed the chunks.
+Both cost \$0.50 per 1M input tokens, bill nothing on output, and return 384-dimensional vectors, so they are interchangeable in an existing index. The models are served only by the Embeddings API, so this skill calls `zerogpu embeddings` rather than Chat Completions. Inputs past the window are truncated, so chunk long documents and embed the chunks.
 
 ---
 
@@ -847,7 +846,7 @@ Quick lookup table: all 22 skills at a glance.
 | `/zerogpu-router:cost-savings` | Show cumulative savings vs. Claude (manual only) | `/zerogpu-router:cost-savings` |
 | `/zerogpu-router:chat <text>` | Default chat via `gpt-oss-120b` (131K context) | `/zerogpu-router:chat "Compare optimistic vs pessimistic locking."` |
 | `/zerogpu-router:chat-liquid <text>` | Fastest, cheapest chat via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat-liquid "Explain WebSockets in two sentences."` |
-| `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (returns reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
+| `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (shows reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
 | `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
 | `/zerogpu-router:chat-deepseek <text>` | Coding and agentic chat via `deepseek-v4-flash` (1M context) | `/zerogpu-router:chat-deepseek "Port this module to async/await."` |
 | `/zerogpu-router:chat-glm <text>` | Most capable, 1M context via `glm-5.2` (~7x the cost) | `/zerogpu-router:chat-glm "Which services would a payments outage take down?"` |
@@ -865,7 +864,7 @@ Quick lookup table: all 22 skills at a glance.
 | `/zerogpu-router:moderate <text>` | Safety verdict across OpenAI's 13 categories | `/zerogpu-router:moderate "Screen this user comment before we publish it."` |
 | `/zerogpu-router:embed <text> [-m …]` | 384-dim embedding for search, RAG, dedupe | `/zerogpu-router:embed "ZeroGPU runs inference at the edge." -m bge-small-en-v1.5` |
 
-For full flag reference (thresholds, categories, schema syntax), run `zerogpu <command> --help`.
+For the options the skills pass to the CLI (`-m`, `-i`, `--metadata`, `--raw`), run `zerogpu chat_completions --help`.
 
 ---
 
@@ -874,6 +873,8 @@ For full flag reference (thresholds, categories, schema syntax), run `zerogpu <c
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | `zerogpu: command not found` | CLI not installed or not on `PATH` | `npm install -g zerogpu-cli`, then restart your shell |
+| `error: unknown command 'chat_completions'` | CLI older than 3.8.0 | `npm install -g zerogpu-cli@latest` |
+| `metadata.usecase is required for gliner models` | A hand-written `zerogpu chat_completions` call is missing `usecase` | Include `"usecase"` in `--metadata` exactly as the skill's `SKILL.md` shows |
 | Skill returns "You're not signed in yet." | No credentials | Run `/zerogpu-router:signin` |
 | `/zerogpu-router:*` skills don't appear in `/help` | Plugin not enabled | Run `/plugin` and enable `zerogpu-router` |
 | `Request failed with status 401` | Bad / revoked API key | Re-run `/zerogpu-router:signin` |

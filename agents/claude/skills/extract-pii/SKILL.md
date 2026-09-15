@@ -1,26 +1,19 @@
 ---
 name: extract-pii
-description: Extract PII entities from text (gliner-multi-pii-v1). Use when the user wants to find personally identifiable information — names, emails, phones, addresses, financial identifiers — grouped by category, without modifying the source text.
-argument-hint: "<text> [-t <threshold>] [(-c | --categories) <list>]"
-allowed-tools: Bash(zerogpu extract_pii*)
+description: Extract PII entities from text (gliner-multi-pii-v1). Use when the user wants to find personally identifiable information — names, emails, phones, addresses, financial identifiers — without modifying the source text.
+argument-hint: "<text>"
+allowed-tools: Bash(zerogpu chat_completions *)
 ---
 
-Extract PII entities:
+Extract PII entities. `$ARGUMENTS` is the raw source text — pass it verbatim, no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
 
 ```!
-zerogpu extract_pii $ARGUMENTS
+zerogpu chat_completions -m gliner-multi-pii-v1 --metadata '{"usecase":"extract-pii","threshold":0.5,"categories":["identity","contact"]}' <<'ZGPU_END_OF_INPUT'
+$ARGUMENTS
+ZGPU_END_OF_INPUT
 ```
 
-**Quoting (required, to survive shell parsing of arbitrary user text):** format `$ARGUMENTS` with the source text wrapped via heredoc command substitution, then flags after. Inside the heredoc, paste the user's text verbatim — do not escape:
-
-```
-"$(cat <<'ZGPU_T'
-<the source text, verbatim, multi-line and special chars all OK>
-ZGPU_T
-)" [-t 0.5] [-c identity,contact]
-```
-
-Optional flags: `-t <threshold>` (float, default `0.5`), `-c <list>` (comma-separated categories, default `identity,contact`; other values include `financial`, `medical`, `credentials`).
+Output is a JSON object whose `entities` lists each span with its `text`, `label`, character offsets, and `score`.
 
 If the user wants the PII *masked in-line* rather than extracted, use `/zerogpu-router:redact-pii` instead.
 

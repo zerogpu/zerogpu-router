@@ -2,13 +2,13 @@
 name: classify-domain
 description: Classify a domain name against the IAB taxonomy without fetching the page (zlm-v1-iab-domain-classifier). Use when the user has a hostname or URL rather than article text — bidstream enrichment, allow/deny-list scoring, "what is example.com about?".
 argument-hint: "<domain>"
-allowed-tools: Bash(zerogpu classify_domain*)
+allowed-tools: Bash(zerogpu chat_completions *)
 ---
 
 Classify a domain:
 
 ```!
-zerogpu classify_domain "$ARGUMENTS"
+zerogpu chat_completions -m zlm-v1-iab-domain-classifier "$ARGUMENTS"
 ```
 
 **Format `$ARGUMENTS` as a bare hostname.** The model takes only the domain — strip the scheme, path, query, and fragment first. `https://www.nytimes.com/section/world?x=1` becomes `www.nytimes.com`. If the user gave you several domains, run the command once per domain.

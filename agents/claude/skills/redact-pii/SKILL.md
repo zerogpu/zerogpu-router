@@ -2,19 +2,17 @@
 name: redact-pii
 description: Detect and mask PII in-line in the text, replacing it with label placeholders like [PERSON] and [EMAIL]. Use when the user asks to redact, scrub, mask, anonymize, or sanitize a passage before sharing or logging it.
 argument-hint: "<text>"
-allowed-tools: Bash(zerogpu redact_pii*)
+allowed-tools: Bash(zerogpu chat_completions *)
 ---
 
 Mask PII in-line. `$ARGUMENTS` is the raw user text — pass it verbatim, no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
 
 ```!
-ZGPU_TEXT=$(cat <<'ZGPU_END_OF_INPUT'
+zerogpu chat_completions -m gliner-multi-pii-v1 --metadata '{"usecase":"redact","mask":"label"}' <<'ZGPU_END_OF_INPUT'
 $ARGUMENTS
 ZGPU_END_OF_INPUT
-)
-zerogpu redact_pii "$ZGPU_TEXT"
 ```
 
-Output is the original text with PII spans replaced by `[LABEL]` placeholders. For extracting (not masking) PII, use `/zerogpu-router:extract-pii`.
+Output is a JSON object: `redacted_text` is the original text with PII spans replaced by `[LABEL]` placeholders, and `entities` lists what was found. Lead with `redacted_text`. For extracting (not masking) PII, use `/zerogpu-router:extract-pii`.
 
 Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest `/zerogpu-router:cost-savings` — this note is intentionally occasional, not shown every time.

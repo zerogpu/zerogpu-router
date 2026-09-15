@@ -1,5 +1,35 @@
 # Changelog
 
+## 2.3.0
+
+The plugin no longer breaks when the `zerogpu` CLI changes its models. Every inference skill now calls one of the CLI's model-agnostic endpoint commands, added in `zerogpu-cli` 3.8.0, and names its model itself, so a model the CLI adds, renames, or drops from a per-task command no longer changes what these skills send. Skill names are unchanged, and so is every skill's output apart from the notes below. `signin`, `status`, and `cost-savings` still wrap `zerogpu login`, `zerogpu status`, and `zerogpu cost_savings`.
+
+### Changed
+
+- **17 skills call `zerogpu chat_completions -m <model>`:** `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`, `chat-deepseek`, `chat-glm`, `summarize`, `classify-iab`, `classify-iab-enriched`, `classify-domain`, `classify-zero-shot`, `classify-structured`, `extract-entities`, `extract-json`, `extract-pii`, `redact-pii`, and `generate-followups`. Chat Completions serves every one of these models, including the ones some CLI commands send to `/v1/responses`, so one endpoint covers them all. Checked against the live API before the switch: `classify-iab`, `classify-iab-enriched`, `classify-domain`, `generate-followups`, `redact-pii`, `extract-pii`, `extract-entities`, `extract-json`, and `classify-structured` print output identical to the CLI commands they used to wrap.
+- **`moderate` calls `zerogpu moderations` and `embed` calls `zerogpu embeddings`.** Their models are not served on Chat Completions (`400 Model not supported`). This fixes the 2.2.0 known issue: both skills failed with an unknown-command error because the CLI never shipped `moderate` or `embed`. They work now.
+- **`summarize`** sends the same system prompt as `zerogpu summarize`, through `-i`.
+- **`chat-thinking`** prints the full response (`--raw`), and Claude shows the reasoning, then the answer. On Chat Completions the reasoning is a separate field rather than part of the text.
+- **`redact-pii`** now tells Claude the output is JSON and to lead with `redacted_text`. The output itself is unchanged; the old wording described it as plain text.
+- **The input reaches the CLI on stdin** for every skill that takes plain text, rather than as a command-line argument, so very large prompts to the 1M-context models no longer risk the OS argument-length limit.
+- **`classify-zero-shot`, `classify-structured`, `extract-entities`, `extract-json`, and `embed` have Claude run the command.** Their options now travel in the request's `metadata` or system message, and the gliner models reject a request whose `metadata` lacks an exact `usecase`. A pre-run command built from the raw arguments could not guarantee that: in testing, an auto-invoked `extract-entities` sent no `usecase` and failed. These five skills now show Claude the exact command — `usecase` included — and Claude fills in the labels, schema, or model from the request and runs it. Their arguments are unchanged: `-l`, `--labels`, `-t`, `-s`, and `-m` still work, and so do plain words (`labels: person, location`).
+- **`classify-zero-shot` sends its labels as a `[a, b, c]` system message**, which is the only place the model reads them on Chat Completions. The old argument hint advertised a `-t` threshold that the CLI never accepted for zero-shot; it is gone.
+- **The README's illustrative outputs for `classify-iab`, `classify-zero-shot`, `classify-structured`, `extract-entities`, `extract-json`, `extract-pii`, `redact-pii`, and `moderate`** now show the real response shapes. Several predated the models' current output.
+
+### Removed
+
+- **`extract-pii` no longer takes `-t` or `-c`.** It takes only the text and always sends the old defaults, threshold `0.5` and categories `identity,contact`. On this endpoint the model returned the same entities whatever `categories` held.
+- **The chat skills no longer advertise `-i`.** The prompt reaches the CLI through a quoted heredoc, so an `-i` in the arguments was never a flag: it became part of the prompt. The descriptions, argument hints, and README now drop it rather than promise it.
+
+### Requires
+
+- `zerogpu-cli` >= 3.8.0 (`npm install -g zerogpu-cli@latest`). On an older CLI every inference skill fails with `error: unknown command 'chat_completions'` (or `'moderations'` / `'embeddings'`).
+
+### Known issues
+
+- **`chat-thinking` was not verified live.** `LFM2.5-1.2B-Thinking` returned `500` on both `/v1/responses` and `/v1/chat/completions` throughout testing, so the new reasoning-then-answer handling has not been checked against a real response.
+- **`chat-qwen` can come back empty.** `qwen3-30b-a3b-fp8` sometimes spends its whole completion budget on reasoning and returns no content, which prints `Response did not contain any message content.` The old `zerogpu chat -m qwen3-30b-a3b-fp8` fails the same way on the same prompts.
+
 ## 2.2.1
 
 Maintenance release: the plugin now releases itself from CI. **No skill, model, or output changes.** All 22 skills behave exactly as they do in 2.2.0.
