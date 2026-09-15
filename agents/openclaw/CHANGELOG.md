@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.3.1
+
+Maintenance release: the plugin now releases and publishes itself from CI. **No skill, model, or output changes.** All 22 skills behave exactly as they do in 4.3.0.
+
+This is also the first release cut by the new workflow, so it doubles as its end-to-end test.
+
+### Changed
+
+- **Releases are automatic.** `openclaw-plugin-release` no longer waits for a hand-pushed tag. It runs after `openclaw-plugin-validate` passes on `main`, and when `package.json` carries a version with no GitHub release yet and the top `CHANGELOG.md` section matches it, it creates the `zerogpu-openclaw-plugin--v<version>` tag on the validated commit, publishes the GitHub release with that section as the body, and publishes the plugin to ClawHub. A version that is already released is skipped; a changelog that does not match fails the run without tagging or publishing.
+- **Every plugin PR is a release.** `openclaw-plugin-validate` now fails a PR that changes anything under `agents/openclaw/` unless it bumps the version above `main`'s and puts the matching `## <version>` section at the top of the changelog. This replaces the looser "CHANGELOG was touched" check. Changelog-only PRs are exempt.
+- **Lockfile version is checked.** `openclaw-plugin-validate` now also fails when `package-lock.json` disagrees with `package.json`.
+- **`scripts/openclaw-release` removed.** Bumping, tagging, and pushing no longer happen on a laptop.
+- `docs/OPENCLAW_PLUGIN_RELEASE_GUIDE.md` rewritten for the new flow, including what to do when a run fails.
+
 ## 4.3.0
 
 Two skills for capabilities the platform has been serving that neither plugin exposed: content moderation and text embeddings. Skill count goes from 20 to 22.

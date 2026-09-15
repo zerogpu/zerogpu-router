@@ -56,9 +56,15 @@ jobs:
           set -euo pipefail
           PKG_VERSION=$(jq -r .version agents/openclaw/plugin/package.json)
           PLUGIN_VERSION=$(jq -r .version agents/openclaw/plugin/openclaw.plugin.json)
+          LOCK_VERSION=$(jq -r '.version' agents/openclaw/plugin/package-lock.json)
+          LOCK_ROOT_VERSION=$(jq -r '.packages[""].version' agents/openclaw/plugin/package-lock.json)
 
           if [ "$PKG_VERSION" != "$PLUGIN_VERSION" ]; then
             echo "::error::Version mismatch: package.json ($PKG_VERSION) vs openclaw.plugin.json ($PLUGIN_VERSION)"
+            exit 1
+          fi
+          if [ "$PKG_VERSION" != "$LOCK_VERSION" ] || [ "$PKG_VERSION" != "$LOCK_ROOT_VERSION" ]; then
+            echo "::error file=agents/openclaw/plugin/package-lock.json::Version mismatch: package.json ($PKG_VERSION) vs package-lock.json ($LOCK_VERSION / $LOCK_ROOT_VERSION). Run: npm --prefix agents/openclaw/plugin install --package-lock-only"
             exit 1
           fi
 
@@ -118,23 +124,39 @@ jobs:
         run: |
           test -f agents/openclaw/plugin/dist/index.js || (echo "Missing build output" && exit 1)
     
-      - name: Check CHANGELOG updated
+      # Merging a plugin change releases it, so the PR must carry the bump and
+      # the matching changelog section that openclaw-plugin-release requires.
+      - name: Check version bump and CHANGELOG
         if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           set -euo pipefail
-          BASE_REF="${{ github.base_ref }}"
-          git fetch --no-tags --depth=1 origin "$BASE_REF"
-    
+          PKG="agents/openclaw/plugin/package.json"
           CHANGELOG="agents/openclaw/CHANGELOG.md"
-    
-          if git diff --quiet "origin/$BASE_REF" -- "agents/openclaw/" ":(exclude)$CHANGELOG"; then
-            echo "No plugin changes — CHANGELOG update not required."
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+
+          # Compare commits, not the working tree, so build output doesn't count.
+          if git diff --quiet "origin/$BASE_REF" HEAD -- agents/openclaw/ ":(exclude)$CHANGELOG"; then
+            echo "No plugin changes — version bump not required."
             exit 0
           fi
-    
-          if git diff --quiet "origin/$BASE_REF" -- "$CHANGELOG"; then
-            echo "::error file=$CHANGELOG::OpenClaw plugin changed but CHANGELOG not updated."
+
+          OLD=$(git show "origin/$BASE_REF:$PKG" | jq -r .version)
+          NEW=$(jq -r .version "$PKG")
+          if ! [[ "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error file=$PKG::version '$NEW' is not MAJOR.MINOR.PATCH"
             exit 1
           fi
-    
-          echo "CHANGELOG updated."
+          if [ "$NEW" = "$OLD" ] || [ "$(printf '%s\n%s\n' "$OLD" "$NEW" | sort -V | tail -1)" != "$NEW" ]; then
+            echo "::error file=$PKG::Plugin changed but version was not bumped ($BASE_REF has $OLD, this PR has $NEW). Bump version in package.json, openclaw.plugin.json, and package-lock.json."
+            exit 1
+          fi
+
+          LATEST=$(awk '/^## /{print $2; exit}' "$CHANGELOG")
+          if [ "$LATEST" != "$NEW" ]; then
+            echo "::error file=$CHANGELOG::Top CHANGELOG section is '## $LATEST'. Add a '## $NEW' section at the top describing this release."
+            exit 1
+          fi
+
+          echo "Version $OLD -> $NEW with a matching CHANGELOG section."

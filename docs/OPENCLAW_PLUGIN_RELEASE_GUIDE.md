@@ -1,39 +1,18 @@
 # Releasing the `zerogpu-router` OpenClaw plugin
 
-How to cut a release. The whole flow is two things: **write the changelog** (by hand, per release), then **run one script**. The plugin publishes to **ClawHub** as the `zerogpu-router` code-plugin.
+**Every PR that changes the plugin is a release.** It bumps the version and adds a changelog section, PR CI checks both, and merging it tags, creates the GitHub release, and publishes to **ClawHub** as the `zerogpu-router` code-plugin. You never create tags, releases, or ClawHub publishes by hand.
 
-## 1. While you work — just update the changelog
+## 1. In your PR — bump the version and write the changelog
 
-For any change under `agents/openclaw/`:
+For any change under `agents/openclaw/` (other than the changelog itself):
 
-- Add or extend a `## <next-version>` section in `agents/openclaw/CHANGELOG.md` describing what users see. Several PRs can share one section — you don't need a new heading per PR.
-- **Do not** hand-bump `agents/openclaw/plugin/package.json` or `openclaw.plugin.json`. The release script bumps both (and the lockfile) for you.
+- Bump `version` to the same value in both `agents/openclaw/plugin/package.json` and `agents/openclaw/plugin/openclaw.plugin.json`, then sync the lockfile:
 
-PR CI (`openclaw-plugin-validate`) runs `npm ci`, `npm run build`, checks `package.json` and `openclaw.plugin.json` versions match, and — on PRs — that the changelog was updated when plugin files changed.
+  ```bash
+  npm --prefix agents/openclaw/plugin install --package-lock-only
+  ```
 
-## 2. Cut the release — run the script
-
-From a clean `main` that's in sync with `origin/main`:
-
-```bash
-git checkout main && git pull
-scripts/openclaw-release          # patch (default)
-scripts/openclaw-release minor
-scripts/openclaw-release major
-```
-
-Run it from anywhere in the repo — it resolves paths against the git root.
-
-The script, in order:
-
-1. Picks the bump (the `patch|minor|major` argument; defaults to `patch`).
-2. **Preconditions** — needs `jq` + `npm`, a clean tree, you on `main`, and `main` level with `origin/main`.
-3. Computes the next version from `package.json` and forms the tag `zerogpu-openclaw-plugin--v<new>`; aborts if that tag already exists locally or on `origin`.
-4. **Requires** a matching `## <new-version>` heading in `agents/openclaw/CHANGELOG.md`. Missing → it stops before changing anything, so add the section and re-run.
-5. Bumps `package.json` + `openclaw.plugin.json`, syncs `package-lock.json`, commits as `openclaw: release v<new>`, and pushes to `origin/main`.
-6. Tags `zerogpu-openclaw-plugin--v<new>` and pushes the tag.
-
-> The tag prefix stays `zerogpu-openclaw-plugin--v*` on purpose — it is distinct from the Claude plugin's `zerogpu-router--v*` tag, so the two release workflows never collide. The published ClawHub package name is `zerogpu-router`; the git tag prefix and the package name are independent.
+- Add a `## <new-version>` section at the **top** of `agents/openclaw/CHANGELOG.md` describing what users see. It becomes the GitHub release body verbatim.
 
 Which bump to choose:
 
@@ -43,15 +22,40 @@ Which bump to choose:
 | New skill, new optional flag, model swap with same I/O       | `minor` |
 | Skill removed/renamed, output shape changed, required flag   | `major` |
 
-## 3. The GitHub release + ClawHub publish happen on their own
+If another plugin PR merges first with the same version, you'll get a conflict in the manifests / `CHANGELOG.md`: rebase and bump again.
 
-`openclaw-plugin-release` (`.github/workflows/openclaw-plugin-release.yml`) fires on the `zerogpu-openclaw-plugin--v*` tag:
+## 2. PR CI checks it
 
-- verifies `package.json` on the tagged commit matches the tag version,
-- slices the matching `## <version>` section out of `agents/openclaw/CHANGELOG.md` and creates the GitHub release with that section as the body,
-- builds the plugin and runs `clawhub package publish agents/openclaw/plugin --family code-plugin --owner zerogpu` (a `--dry-run` first, then the real publish) using the `CLAWHUB_TOKEN` secret.
+`openclaw-plugin-validate` on the PR:
 
-No manual `gh release create` or `clawhub` publish. If it fails, fix the cause and re-tag rather than releasing by hand.
+- runs `npm ci`, `npm run build`, `npm pack --dry-run`, and the skill collision and manifest checks,
+- checks `package.json`, `openclaw.plugin.json`, and `package-lock.json` carry the same version,
+- if the PR changes anything under `agents/openclaw/` besides `CHANGELOG.md`, **fails** unless the `package.json` version is higher than `main`'s and the top changelog section is `## <that version>`.
+
+Changelog-only PRs don't need a bump.
+
+## 3. Merge — CI tags, releases, and publishes
+
+On every push to `main` touching `agents/openclaw/`:
+
+1. **`openclaw-plugin-validate`** builds and validates the plugin.
+2. **`openclaw-plugin-release`** (`.github/workflows/openclaw-plugin-release.yml`) runs only if validate **succeeded**, against the exact commit validate checked:
+   - Reads `version` from `package.json`. If a `zerogpu-openclaw-plugin--v<version>` release already exists, the version hasn't changed: **skip** (nothing is published).
+   - Requires the **top** section of `agents/openclaw/CHANGELOG.md` to be `## <version>`. If it isn't, the run **fails** without tagging, releasing, or publishing.
+   - Creates the annotated tag `zerogpu-openclaw-plugin--v<version>` on that commit as `github-actions[bot]` and pushes it.
+   - Creates the GitHub release `zerogpu-openclaw-plugin <version>` with that changelog section as the body.
+   - Builds the plugin and runs `clawhub package publish agents/openclaw/plugin --family code-plugin --owner zerogpu` (a `--dry-run` first, then the real publish) using the `CLAWHUB_TOKEN` secret.
+
+Tag and release happen in the same workflow on purpose: a tag pushed with the default `GITHUB_TOKEN` doesn't trigger other workflows, so a separate tag-triggered release job would never run.
+
+> The tag prefix stays `zerogpu-openclaw-plugin--v*` on purpose — it is distinct from the Claude plugin's `zerogpu-router--v*` tag, so the two release flows never collide. The published ClawHub package name is `zerogpu-router`; the git tag prefix and the package name are independent.
+
+### When something goes wrong
+
+- **Validate failed:** no release. Fix it and push; the next green run releases.
+- **Release run failed on the changelog check:** push a commit fixing the top `## <version>` section. Changelog pushes to `main` still run validate, so the release follows.
+- **Tag pushed but release creation failed:** re-run the failed `openclaw-plugin-release` run. It reuses the existing tag.
+- **GitHub release created but ClawHub publish failed:** use **Re-run failed jobs** on that run, not "Re-run all jobs". A full re-run sees the release already exists and skips the publish.
 
 ## Install (for users)
 
