@@ -13,10 +13,10 @@ metadata:
         bins: [zerogpu]
 ---
 
-Show the ZeroGPU cost-savings summary:
+Show the ZeroGPU cost-savings summary with the `exec` tool:
 
-```!
+```bash
 zerogpu cost_savings
 ```
 
-Relay the report to the user as-is. Token counts are actual (from the API); dollar figures are an estimate of what the same work would have cost on the host model (default baseline `claude-opus-4-8`, overridable via the `ZEROGPU_SAVINGS_MODEL` env var). Pass `--json` for raw data or `--reset` to clear the history.
+Relay the report to the user as-is. Token counts are actual (from the API); dollar figures are an estimate of what the same work would have cost on the host model (default baseline `claude-opus-4-8`, overridable via the `ZEROGPU_SAVINGS_MODEL` env var). Add `--json` when the user wants the raw data, or `--reset` only when they explicitly ask to clear the history.

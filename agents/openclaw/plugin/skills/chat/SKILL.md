@@ -2,7 +2,7 @@
 name: chat
 description: Chat reply via ZeroGPU's default model, gpt-oss-120b (117B MoE, 131K context). Use when the user wants an answer from a ZeroGPU model rather than the host model, including longer documents, multi-step instructions, and harder general-knowledge questions. Optional system instructions via -i.
 argument-hint: "<text> [-i <instructions>]"
-allowed-tools: Bash(zerogpu chat *)
+allowed-tools: Bash(zerogpu chat_completions *)
 metadata:
   openclaw:
     requires:
@@ -15,19 +15,17 @@ metadata:
 
 > **Sends your input to ZeroGPU's hosted API** for inference. This is not local processing. Don't pass secrets, credentials, or regulated data you aren't cleared to share with a third party. See the plugin README's "Data & privacy" section.
 
-Call the ZeroGPU chat model. `$ARGUMENTS` is the raw prompt. Pass it verbatim, with no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
+Call the ZeroGPU chat model. Run this with the `exec` tool, pasting the user's prompt into the heredoc verbatim — no escaping or quoting required (the quoted heredoc handles every shell metacharacter, newline, quote, and paren safely):
 
-```!
-ZGPU_TEXT=$(cat <<'ZGPU_END_OF_INPUT'
-$ARGUMENTS
+```bash
+zerogpu chat_completions -m gpt-oss-120b <<'ZGPU_END_OF_INPUT'
+<the user's prompt, verbatim>
 ZGPU_END_OF_INPUT
-)
-zerogpu chat "$ZGPU_TEXT" -m gpt-oss-120b
 ```
 
-If the user supplied system instructions, append `-i "<instructions>"` after the model flag.
+If the user supplied system instructions, add `-i '<instructions>'` after the model flag, writing any `'` inside them as `'\''`.
 
-Output is the assistant's answer as plain text. The model also produces a reasoning trace; this skill omits the CLI's `-r` flag so only the final answer is printed. Relay that answer as-is, without rewriting or expanding it.
+Output is the assistant's answer as plain text. The model also produces a reasoning trace, which the Chat Completions response carries separately, so only the final answer is printed. Relay that answer as-is, without rewriting or expanding it.
 
 For a faster, cheaper reply where quality matters less, use the `chat-liquid` skill (LFM2.5-1.2B-Instruct). For a visible reasoning trace, use `chat-thinking`. For multilingual prompts, use `chat-qwen`. When the input does not fit in this model's 131K context, use `chat-deepseek` for code and agentic work, or `chat-glm` for the largest and most capable option — both carry a 1M-token context, and glm-5.2 costs roughly 7x this skill.
 

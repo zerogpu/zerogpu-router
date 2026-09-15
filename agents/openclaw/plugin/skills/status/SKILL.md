@@ -13,9 +13,9 @@ metadata:
         bins: [zerogpu]
 ---
 
-Check the sign-in status:
+Check the sign-in status with the `exec` tool:
 
-```!
+```bash
 zerogpu status
 ```
 

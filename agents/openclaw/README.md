@@ -7,7 +7,7 @@ Use ZeroGPU Router with your OpenClaw agent to route your AI tasks to open-weigh
 Get an API key at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
 ```sh
-npm install -g zerogpu-cli@latest                 # the CLI the skills shell out to
+npm install -g zerogpu-cli@latest                 # the CLI the skills shell out to (3.8.0+)
 zerogpu login                                     # prompts for your API key
 openclaw plugins install clawhub:zerogpu-router
 ```
@@ -44,4 +44,4 @@ See [./plugin/README.md](./plugin/README.md), the single source of truth for ski
 ## Notes
 
 - No additional infrastructure or services required.
-- Skills run locally through the `zerogpu` CLI. Keep it current with `npm install -g zerogpu-cli@latest`.
+- Skills run locally through the `zerogpu` CLI and need 3.8.0 or newer. Each skill names its own model, so later CLI model updates don't affect the plugin. Upgrade with `npm install -g zerogpu-cli@latest`.
