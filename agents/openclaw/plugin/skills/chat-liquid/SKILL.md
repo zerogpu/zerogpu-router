@@ -2,7 +2,7 @@
 name: chat-liquid
 description: Fastest, cheapest chat reply via Liquid AI's edge model (LFM2.5-1.2B-Instruct). Use when the user wants a quick, single-turn answer that does not need host-level reasoning, prior conversation context, or code generation, and explicitly favors speed or cost over quality. Optional system instructions via -i.
 argument-hint: "<text> [-i <instructions>]"
-allowed-tools: Bash(zerogpu chat *)
+allowed-tools: Bash(zerogpu chat_completions *)
 metadata:
   openclaw:
     requires:
@@ -15,17 +15,15 @@ metadata:
 
 > **Sends your input to ZeroGPU's hosted API** for inference. This is not local processing. Don't pass secrets, credentials, or regulated data you aren't cleared to share with a third party. See the plugin README's "Data & privacy" section.
 
-Call the Liquid AI edge model. `$ARGUMENTS` is the raw prompt. Pass it verbatim, with no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
+Call the Liquid AI edge model. Run this with the `exec` tool, pasting the user's prompt into the heredoc verbatim — no escaping or quoting required (the quoted heredoc handles every shell metacharacter, newline, quote, and paren safely):
 
-```!
-ZGPU_TEXT=$(cat <<'ZGPU_END_OF_INPUT'
-$ARGUMENTS
+```bash
+zerogpu chat_completions -m LFM2.5-1.2B-Instruct <<'ZGPU_END_OF_INPUT'
+<the user's prompt, verbatim>
 ZGPU_END_OF_INPUT
-)
-zerogpu chat "$ZGPU_TEXT" -m LFM2.5-1.2B-Instruct
 ```
 
-If the user supplied system instructions, append `-i "<instructions>"` after the model flag.
+If the user supplied system instructions, add `-i '<instructions>'` after the model flag, writing any `'` inside them as `'\''`.
 
 Output is the assistant's answer as plain text. Relay it as-is, without rewriting or expanding it. At 1.2B parameters this model is terse and occasionally mechanical; that is expected. If the answer is too weak for the task, the `chat` skill runs the same prompt on `gpt-oss-120b`.
 

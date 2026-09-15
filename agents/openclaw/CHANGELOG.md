@@ -1,5 +1,30 @@
 # Changelog
 
+## 4.4.0
+
+The plugin no longer breaks when the `zerogpu` CLI changes its models. Every inference skill now names its own model and calls one of the CLI's model-agnostic endpoint commands, added in `zerogpu-cli` 3.8.0, so a model the CLI adds, renames, or drops from a per-task command no longer changes what these skills send. Skill names and arguments are unchanged. `signin`, `status`, and `cost-savings` still wrap `zerogpu login`, `zerogpu status`, and `zerogpu cost_savings`.
+
+### Changed
+
+- **17 skills call `zerogpu chat_completions -m <model>`:** `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`, `chat-deepseek`, `chat-glm`, `zerogpu-summarize`, `classify-iab`, `classify-iab-enriched`, `classify-domain`, `classify-zero-shot`, `classify-structured`, `extract-entities`, `extract-json`, `extract-pii`, `redact-pii`, and `generate-followups`. Chat Completions serves every one of these models, including the ones some CLI commands send to `/v1/responses`, so one endpoint covers them all. Checked against the live API before the switch: `classify-iab`, `classify-iab-enriched`, `classify-domain`, `generate-followups`, `redact-pii`, `extract-pii`, `extract-entities`, `extract-json`, and `classify-structured` print output identical to the CLI commands they used to wrap.
+- **`moderate` calls `zerogpu moderations` and `embed` calls `zerogpu embeddings`.** Their models are not served on Chat Completions (`400 Model not supported`). This fixes the 4.3.0 known issue: both skills failed with an unknown-command error because the CLI never shipped `moderate` or `embed`. They work now.
+- **Skill bodies are now instructions for the agent's `exec` tool.** They used to be Claude Code dynamic-context blocks — a `` ```! `` fence with `$ARGUMENTS` substituted into it — and OpenClaw does neither: it does not run those blocks and does not substitute `$ARGUMENTS`, so the agent had to reinterpret each one. Every skill now shows the exact command to run, with a placeholder for the text, and the agent fills it in. `signin`, `status`, and `cost-savings` get the same treatment; the commands they run are unchanged.
+- **The options travel in the request.** The agent turns the same arguments as before into the new command: `-i` on the chat skills, `-l`/`--labels` and `-t` on `extract-entities`, `-s` on `classify-structured` and `extract-json`, `-t` and `-c` on `extract-pii`, and `-m` on `embed`. Labels, thresholds, and schemas go in `--metadata` with the `usecase` the gliner models require (`ner`, `classification`, `json`, `extract-pii`, `redact`), and zero-shot labels go in the system message as `[a, b, c]`, the only place `deberta-v3-small` reads them. `classify-zero-shot`'s argument hint no longer advertises `-t`, which the CLI never accepted for zero-shot.
+- **`zerogpu-summarize`** sends the same system prompt as `zerogpu summarize`, through `-i`.
+- **`chat-thinking`** prints the full response (`--raw`), and the agent shows the reasoning, then the answer. On Chat Completions the reasoning is a separate field rather than part of the text.
+- **`redact-pii`** now tells the agent the output is JSON and to lead with `redacted_text`. The output itself is unchanged; the old wording described it as plain text.
+- **The text reaches the CLI on stdin** through a quoted heredoc rather than as a command-line argument, so very large prompts to the 1M-context models no longer risk the OS argument-length limit.
+- **`moderate` and `embed`** no longer print a stray backtick in their savings note.
+
+### Requires
+
+- `zerogpu-cli` >= 3.8.0 (`npm install -g zerogpu-cli@latest`). On an older CLI every inference skill fails with `error: unknown command 'chat_completions'` (or `'moderations'` / `'embeddings'`).
+
+### Known issues
+
+- **`chat-thinking` was not verified live.** `LFM2.5-1.2B-Thinking` returned `500` on both `/v1/responses` and `/v1/chat/completions` throughout testing, so the new reasoning-then-answer handling has not been checked against a real response.
+- **`chat-qwen` can come back empty.** `qwen3-30b-a3b-fp8` sometimes spends its whole completion budget on reasoning and returns no content, which prints `Response did not contain any message content.` The old `zerogpu chat -m qwen3-30b-a3b-fp8` fails the same way on the same prompts.
+
 ## 4.3.1
 
 Maintenance release: the plugin now releases and publishes itself from CI. **No skill, model, or output changes.** All 22 skills behave exactly as they do in 4.3.0.

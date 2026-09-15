@@ -2,7 +2,7 @@
 name: classify-iab-enriched
 description: Enriched IAB classification — returns audience categories plus topics, keywords, and inferred intent. Use when the user wants richer ad/audience signals than plain IAB labels (e.g. "give me topics, keywords, and intent for this passage").
 argument-hint: "<text>"
-allowed-tools: Bash(zerogpu classify_iab_enriched*)
+allowed-tools: Bash(zerogpu chat_completions *)
 metadata:
   openclaw:
     requires:
@@ -15,14 +15,12 @@ metadata:
 
 > **Sends your input to ZeroGPU's hosted API** for inference — this is not local processing. Don't pass secrets, credentials, or regulated data you aren't cleared to share with a third party. See the plugin README's "Data & privacy" section.
 
-Run enriched IAB classification. `$ARGUMENTS` is the raw source text — pass it verbatim, no escaping or quoting required (the heredoc below handles every shell metacharacter, newline, quote, and paren safely):
+Run enriched IAB classification. Run this with the `exec` tool, pasting the source text into the heredoc verbatim — no escaping or quoting required (the quoted heredoc handles every shell metacharacter, newline, quote, and paren safely):
 
-```!
-ZGPU_TEXT=$(cat <<'ZGPU_END_OF_INPUT'
-$ARGUMENTS
+```bash
+zerogpu chat_completions -m zlm-v2-iab-classify-edge-enriched <<'ZGPU_END_OF_INPUT'
+<the source text, verbatim>
 ZGPU_END_OF_INPUT
-)
-zerogpu classify_iab_enriched "$ZGPU_TEXT"
 ```
 
 Output is a JSON object with `categories`, `topics`, `keywords`, and `intent`.
