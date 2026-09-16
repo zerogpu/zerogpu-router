@@ -1,6 +1,6 @@
 ---
 name: chat-glm
-description: Chat with glm-5.2, a 753B MoE flagship with a 1M-token context window. Use when the input is too large for the other chat skills — an entire repository, a book-length document, a long agent transcript — or for long-horizon reasoning the smaller models cannot hold together. This is the most expensive model on the platform, roughly 7x the cost of `chat`, so prefer chat for anything that fits in its 131K context.
+description: Chat with glm-5.2, a 753B MoE flagship with a 262K-token context window. Use when the input is too large for the other chat skills — an entire repository, a book-length document, a long agent transcript, though chat-deepseek holds four times as much — or for long-horizon reasoning the smaller models cannot hold together. This is the most expensive model on the platform, roughly 7x the cost of `chat`, so prefer chat for anything that fits in its 131K context.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu chat_completions *)
 ---
@@ -13,7 +13,7 @@ $ARGUMENTS
 ZGPU_END_OF_INPUT
 ```
 
-Reach for this only when the size or horizon of the task actually needs it. At \$1.10 / \$3.50 per 1M input/output tokens, glm-5.2 costs about seven times `/zerogpu-router:chat` on input and six times on output (`gpt-oss-120b`, \$0.15 / \$0.60), and over fifty times the 1.2B edge models. For a prompt that fits in 131K tokens, `/zerogpu-router:chat` is the right call. For coding and agentic work at the same 1M context, `/zerogpu-router:chat-deepseek` is far cheaper.
+Reach for this only when the size or horizon of the task actually needs it. At \$1.10 / \$3.50 per 1M input/output tokens, glm-5.2 costs about seven times `/zerogpu-router:chat` on input and six times on output (`gpt-oss-120b`, \$0.15 / \$0.60), and over fifty times the 1.2B edge models. For a prompt that fits in 131K tokens, `/zerogpu-router:chat` is the right call. For coding and agentic work, `/zerogpu-router:chat-deepseek` is far cheaper and holds four times the context.
 
 Output is the assistant's answer as plain text — the model's reasoning trace comes back in a separate field and is not printed. Relay the answer as-is — do not rewrite or expand it.
 

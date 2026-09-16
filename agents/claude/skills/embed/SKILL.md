@@ -13,7 +13,7 @@ zerogpu embeddings -m all-minilm-l6-v2 <<'ZGPU_END_OF_INPUT'
 ZGPU_END_OF_INPUT
 ```
 
-Defaults to `all-minilm-l6-v2` (22.7M parameters, 256-token window), the general-purpose choice for semantic similarity over short chunks. Use `-m bge-small-en-v1.5` instead (33.4M parameters, 512-token window) when the request asks for it, for English retrieval, for chunks longer than 256 tokens, or when retrieval quality is the bottleneck. Both cost \$0.50 per 1M input tokens and bill nothing on output, and both return 384-dimensional vectors, so they are interchangeable in an existing index.
+Defaults to `all-minilm-l6-v2` (22.7M parameters, 512-token window), the general-purpose choice for semantic similarity over short chunks. Use `-m bge-small-en-v1.5` instead (33M parameters, 512-token window) when the request asks for it, for English retrieval, or when retrieval quality is the bottleneck. Both cost \$0.004 per 1M input tokens and bill nothing on output, and both return 384-dimensional vectors, so they are interchangeable in an existing index.
 
 Output is OpenAI's embeddings envelope as JSON: `data[].embedding` holds the vector, `data[].index` maps it back to its input, and `usage` reports input tokens. Do not print the raw vector back to the user — it is 384 floats and unreadable. Say what was embedded, which model produced it, and how many dimensions came back. Print or write the numbers only if the user explicitly asks for the vector or is piping it somewhere.
 
