@@ -16,10 +16,11 @@ Work the three loops in order: **[correct](#1-correct-what-disagrees)**, **[rena
 | In scope — edit | Out of scope — never edit |
 | --- | --- |
 | `agents/openclaw/plugin/skills/*/SKILL.md` (not the `metadata.openclaw` block) | `agents/claude/**`, `.claude-plugin/**` — the Claude Code plugin has its own sync |
-| `agents/openclaw/plugin/README.md`, `agents/openclaw/README.md` | root `README.md` — its Routes table covers both plugins; list its stale lines in the PR body instead |
-| `agents/openclaw/plugin/openclaw.plugin.json` (`version`; `skills` and `description` on a removal) | older sections of `agents/openclaw/CHANGELOG.md` — they are history |
-| `agents/openclaw/plugin/package.json` (`version`; `description` on a removal) | `dist/`, `node_modules/`, `tsconfig.json`, the `openclaw` compat block in `package.json` |
-| `agents/openclaw/plugin/package-lock.json` (version, via npm only) | `docs/`, `.github/`, the root `package.json`, this skill |
+| `agents/openclaw/plugin/README.md`, `agents/openclaw/README.md` | older sections of `agents/openclaw/CHANGELOG.md` — they are history |
+| root `README.md`, under [one rule](#the-root-readme) — it covers both plugins | `dist/`, `node_modules/`, `tsconfig.json`, the `openclaw` compat block in `package.json` |
+| `agents/openclaw/plugin/openclaw.plugin.json` (`version`; `skills` and `description` on a removal) | `docs/`, `.github/`, the root `package.json`, this skill |
+| `agents/openclaw/plugin/package.json` (`version`; `description` on a removal) | |
+| `agents/openclaw/plugin/package-lock.json` (version, via npm only) | |
 | `agents/openclaw/plugin/src/index.ts` (`description` on a removal) | |
 | `agents/openclaw/CHANGELOG.md` (a new top section) | |
 
@@ -39,7 +40,7 @@ python3 .claude/skills/openclaw-model-sync/scripts/audit-models.py
 | `RENAME` | a model a skill calls that the API now serves under a longer id, plus every file to update | [loop 2](#2-follow-renames) |
 | `ORPHAN` | a model a skill calls that the API does not return, plus every file to clean | [loop 3](#3-remove-what-is-gone) |
 | `COUNT` | the `N task-specific skills` count in the plugin README disagrees with the skills that call a model | fix the number |
-| `SHARED` | a stale mention in the root `README.md` | nothing — list it in the PR body |
+| `[shared with the Claude Code plugin]` | the finding is in the root `README.md` | [the root README rule](#the-root-readme) |
 | `NOTE` | an API model no skill calls | nothing — the sync [never creates a skill](#new-models); list them in the summary |
 
 Flags: `--model <id>` (one model, repeatable), `--save` / `--json` (snapshot then re-run offline), `--strict` (exit 1 when anything is reported). The script only reports; every edit is by hand.
@@ -68,14 +69,14 @@ Work each `PROSE` line. Each names the file, the line, what it says, and what th
 The audit only checks lines that name a model or a skill, so sweep for every old value you changed:
 
 ```bash
-grep -rn "1M\|131K\|\\\\\$0.07\|7x\|sixteenth\|fifty" agents/openclaw --exclude=CHANGELOG.md --exclude-dir=node_modules --exclude-dir=dist
+grep -rn "1M\|131K\|\\\\\$0.07\|7x\|sixteenth\|fifty" agents/openclaw README.md --exclude=CHANGELOG.md --exclude-dir=node_modules --exclude-dir=dist
 ```
 
 ## 2. Follow renames
 
 A model a skill calls that an API id extends — `deepseek-v4-flash` in the skill, `deepseek-v4-flash-0731` in the API — is the same model under a new id, provided exactly one API id extends it. The audit prints it as `RENAME` with every file under `REPLACE:`.
 
-Replace the old id with the new one in place: the `-m` in the skill's command, its description, and its body; the plugin README's skill table row; and any other skill or README that names it. Keep the skill's name, its endpoint command, and its wording. Then correct whatever values drifted with it ([loop 1](#1-correct-what-disagrees)). A rename is a **minor** bump.
+Replace the old id with the new one in place: the `-m` in the skill's command, its description, and its body; the plugin README's skill table row; the root README's Routes table, where the id is the same model for both plugins; and any other skill or README that names it. Keep the skill's name, its endpoint command, and its wording. Then correct whatever values drifted with it ([loop 1](#1-correct-what-disagrees)). A rename is a **minor** bump.
 
 ## 3. Remove what is gone
 
@@ -90,9 +91,25 @@ A model a skill calls that the API does not return, with no single successor, is
 3. **`agents/openclaw/plugin/README.md`** — delete its row in "The skills you get", its name in the Data & privacy list of content skills, and any Try it example that uses it; update `N task-specific skills`. The same for any mention in `agents/openclaw/README.md`.
 4. **Other skills** — every pointer to it (`` use `<skill>` ``, `` the `<skill>` skill ``) is rewritten without it, or deleted when the sentence only existed to point there. Check descriptions too.
 5. **Descriptions** — `description` in `openclaw.plugin.json` and `package.json`, and in `src/index.ts`: drop a capability word only if no remaining skill provides it.
-6. **Cascade.** When a removal leaves a list, sentence, or table naming nothing, delete it rather than leaving it empty.
+6. **Root `README.md`** — under [the root README rule](#the-root-readme): correct what the removal makes wrong for both plugins, and keep the skill's Routes row if the Claude Code plugin still has that skill.
+7. **Cascade.** When a removal leaves a list, sentence, or table naming nothing, delete it rather than leaving it empty.
 
 ## Rules
+
+### The root README
+
+`README.md` at the repo root documents both plugins, so it is edited under one rule: **change what is true for both, leave what is only true for the Claude Code plugin.**
+
+**Only when required.** Touch it only where the audit reports a line the API contradicts, or where this run's own change made a line wrong. Most runs change nothing there, and a run that corrects a skill's price does not touch the root README unless that price appears in it. Never rewrite, reword, restructure, or tidy it, and never bring it in line with the plugin README.
+
+- **Model facts are shared.** A renamed id, a price, a context window, a parameter count is the same model whichever plugin calls it. Correct them wherever they appear — the Routes tables, the quick-start prose, the cost lines.
+- **Skill rows and shared counts are not.** A skill this sync deletes may still exist in the Claude Code plugin, where its row stays true. Remove a Routes row only when that skill is gone from both:
+  ```bash
+  ls agents/claude/skills/            # does the skill still exist there?
+  ```
+  If it does, leave the row and the counts that cover both plugins ("twenty-two auto-invoked skills: nineteen task routes and three account utilities"), and say so in the PR body. If it does not, remove the row and correct those counts.
+- **Lines about the OpenClaw plugin alone** — the "OpenClaw quick start" section, its examples, and the note about `zerogpu-summarize` — are this sync's to correct.
+- **Never touch** the Claude Code quick start, its `/zerogpu-router:` examples, or the Claude install lines.
 
 ### New models
 
@@ -111,15 +128,15 @@ API-sourced facts only: id, task, `maxTokens`, input/output price, parameter cou
 Verification gates the PR: nothing is pushed until all of it passes.
 
 ```bash
-python3 .claude/skills/openclaw-model-sync/scripts/audit-models.py --strict   # expect: only NOTE and SHARED lines
+python3 .claude/skills/openclaw-model-sync/scripts/audit-models.py --strict   # expect: only NOTE lines
 (cd agents/openclaw/plugin && npm ci && npm run build && npm pack --dry-run)
 ```
 
 Confirm every renamed or removed id is gone from the plugin, and nothing outside scope changed:
 
 ```bash
-grep -rn "<old-id>" agents/openclaw --exclude=CHANGELOG.md --exclude-dir=node_modules --exclude-dir=dist
-git status --short | grep -v ' agents/openclaw/'   # expect: no output
+grep -rn "<old-id>" agents/openclaw README.md --exclude=CHANGELOG.md --exclude-dir=node_modules --exclude-dir=dist
+git status --short | grep -vE ' (agents/openclaw/|README\.md$)'   # expect: no output
 ```
 
 After step 5's bump and changelog, run the release checks CI runs on the PR — matching versions, manifest matching the skills on disk, a version above `main`'s, and the CHANGELOG heading:
@@ -155,7 +172,7 @@ If a check fails, fix the cause and re-run it. If it still fails, commit nothing
 
 Once verification passes, ship it. No questions, no waiting.
 
-**Nothing changed?** If the audit was clean apart from `NOTE` and `SHARED` lines and no file was modified, bump nothing, write no changelog, create no branch and no PR. Report "already in sync" and stop.
+**Nothing changed?** If the audit was clean apart from `NOTE` lines and no file was modified, bump nothing, write no changelog, create no branch and no PR. Report "already in sync" and stop.
 
 ```bash
 # 1. a fresh branch cut from up-to-date main — never commit on main
@@ -216,7 +233,7 @@ Rules for the section:
 
 ```bash
 # 2. stage only what the sync touched — never `git add -A`
-git add agents/openclaw/plugin/skills/... agents/openclaw/plugin/README.md agents/openclaw/README.md \
+git add agents/openclaw/plugin/skills/... agents/openclaw/plugin/README.md agents/openclaw/README.md README.md \
         agents/openclaw/plugin/openclaw.plugin.json agents/openclaw/plugin/package.json \
         agents/openclaw/plugin/package-lock.json agents/openclaw/CHANGELOG.md
 git status --short          # confirm nothing unrelated is staged — no dist/, no node_modules/
@@ -261,13 +278,13 @@ Automated model-catalog sync for the OpenClaw plugin. The dashboard API is the s
 
 ## Not changed
 - API models with no skill: <ids>
-- Stale lines in the root `README.md`, which is shared with the Claude Code plugin: <file:line — what>
+- Kept in the root `README.md` for the Claude Code plugin, which still has them: <rows, counts>
 
 ## CHANGELOG
 <the new section, verbatim>
 
 ## Verification
-- `audit-models.py --strict` — clean apart from NOTE and SHARED lines
+- `audit-models.py --strict` — clean apart from NOTE lines
 - `npm ci`, `npm run build`, `npm pack --dry-run` pass
 - versions match across `package.json`, `openclaw.plugin.json`, and `package-lock.json`, above `main`'s; the manifest matches the skills on disk; the top CHANGELOG section matches
 
@@ -289,4 +306,4 @@ Rules for this step:
 
 ## 6. Report
 
-One pass, no questions: values corrected, claims rewritten, models renamed, model options dropped, skills deleted, the version bump and why, API models with no skill, stale root-README lines left for the shared routes table, any claim that could not be sourced, and the PR URL (or the branch name and the exact error if the PR could not be opened).
+One pass, no questions: values corrected, claims rewritten, models renamed, model options dropped, skills deleted, the version bump and why, API models with no skill, what was changed and what was deliberately kept in the shared root README, any claim that could not be sourced, and the PR URL (or the branch name and the exact error if the PR could not be opened).

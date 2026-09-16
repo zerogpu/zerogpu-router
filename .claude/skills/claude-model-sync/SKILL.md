@@ -16,9 +16,10 @@ Work the three loops in order: **[correct](#1-correct-what-disagrees)**, **[rena
 | In scope — edit | Out of scope — never edit |
 | --- | --- |
 | `agents/claude/skills/*/SKILL.md` | `agents/openclaw/**` — the OpenClaw plugin has its own sync |
-| `agents/claude/README.md` | root `README.md` — its Routes table covers both plugins; list its stale lines in the PR body instead |
-| `.claude-plugin/marketplace.json` (description only) | older sections of `agents/claude/CHANGELOG.md` — they are history |
-| `agents/claude/.claude-plugin/plugin.json` (`version`, and `description` on a removal) | `docs/`, `.github/`, `package.json`, this skill |
+| `agents/claude/README.md` | older sections of `agents/claude/CHANGELOG.md` — they are history |
+| root `README.md`, under [one rule](#the-root-readme) — it covers both plugins | `docs/`, `.github/`, root `package.json`, this skill |
+| `.claude-plugin/marketplace.json` (description only) | |
+| `agents/claude/.claude-plugin/plugin.json` (`version`, and `description` on a removal) | |
 | `agents/claude/CHANGELOG.md` (a new top section) | |
 
 **The plugin does not depend on CLI model changes.** Every inference skill calls one of the `zerogpu` CLI's model-agnostic endpoint commands — `chat_completions`, `moderations`, `embeddings` — and names its model with `-m`. Those commands take any model id, so a model sync never needs a CLI release. Never change the `zerogpu-cli >= 3.8.0` requirement, and never switch a skill to a per-task CLI command.
@@ -35,7 +36,7 @@ python3 .claude/skills/claude-model-sync/scripts/audit-models.py
 | `RENAME` | a model a skill calls that the API now serves under a longer id, plus every file to update | [loop 2](#2-follow-renames) |
 | `ORPHAN` | a model a skill calls that the API does not return, plus every file to clean | [loop 3](#3-remove-what-is-gone) |
 | `COUNT` | a skill count in the README or marketplace description that disagrees with `agents/claude/skills/` | fix the number |
-| `SHARED` | a stale mention in the root `README.md` | nothing — list it in the PR body |
+| `[shared with the OpenClaw plugin]` | the finding is in the root `README.md` | [the root README rule](#the-root-readme) |
 | `NOTE` | an API model no skill calls | nothing — the sync [never creates a skill](#new-models); list them in the summary |
 
 Flags: `--model <id>` (one model, repeatable), `--save` / `--json` (snapshot then re-run offline), `--strict` (exit 1 when anything is reported). The script only reports; every edit is by hand.
@@ -64,14 +65,14 @@ Work each `PROSE` line. Each names the file, the line, what it says, and what th
 The audit only checks lines that name a model or a skill, so sweep for every old value you changed:
 
 ```bash
-grep -rn "1M\|131K\|\\\\\$0.07\|7x\|sixteenth\|fifty" agents/claude .claude-plugin --exclude=CHANGELOG.md
+grep -rn "1M\|131K\|\\\\\$0.07\|7x\|sixteenth\|fifty" agents/claude .claude-plugin README.md --exclude=CHANGELOG.md
 ```
 
 ## 2. Follow renames
 
 A model a skill calls that an API id extends — `deepseek-v4-flash` in the skill, `deepseek-v4-flash-0731` in the API — is the same model under a new id, provided exactly one API id extends it. The audit prints it as `RENAME` with every file under `REPLACE:`.
 
-Replace the old id with the new one in place: the `-m` in the skill's command, its description, and its body; the README section's **Model** and **Wraps** lines, tables, examples, and the skills reference row; and any other skill that names it. Keep the skill's name, its endpoint command, and its wording. Then correct whatever values drifted with it ([loop 1](#1-correct-what-disagrees)). A rename is a **minor** bump.
+Replace the old id with the new one in place: the `-m` in the skill's command, its description, and its body; the README section's **Model** and **Wraps** lines, tables, examples, and the skills reference row; the root README's Routes table, where the id is the same model for both plugins; and any other skill that names it. Keep the skill's name, its endpoint command, and its wording. Then correct whatever values drifted with it ([loop 1](#1-correct-what-disagrees)). A rename is a **minor** bump.
 
 ## 3. Remove what is gone
 
@@ -85,9 +86,25 @@ A model a skill calls that the API does not return, with no single successor, is
 2. **`agents/claude/README.md`** — delete its `### /zerogpu-router:<skill>` section and the `---` separator after it, its row in the Skills reference table, and every Quick start or cross-reference mention. Update `all N skills`.
 3. **Other skills** — every `/zerogpu-router:<skill>` pointer is rewritten without it, or deleted when the sentence only existed to point there. Check descriptions too.
 4. **`.claude-plugin/marketplace.json`** — the skill count in the description, and the capability word (`follow-ups`, `moderation`) if no remaining skill provides it. The same check for `description` in `agents/claude/.claude-plugin/plugin.json`.
-5. **Cascade.** When a removal leaves a list, sentence, or table naming nothing, delete it rather than leaving it empty.
+5. **Root `README.md`** — under [the root README rule](#the-root-readme): correct what the removal makes wrong for both plugins, and keep the skill's Routes row if the OpenClaw plugin still has that skill.
+6. **Cascade.** When a removal leaves a list, sentence, or table naming nothing, delete it rather than leaving it empty.
 
 ## Rules
+
+### The root README
+
+`README.md` at the repo root documents both plugins, so it is edited under one rule: **change what is true for both, leave what is only true for the OpenClaw plugin.**
+
+**Only when required.** Touch it only where the audit reports a line the API contradicts, or where this run's own change made a line wrong. Most runs change nothing there, and a run that corrects a skill's price does not touch the root README unless that price appears in it. Never rewrite, reword, restructure, or tidy it, and never bring it in line with this plugin's README.
+
+- **Model facts are shared.** A renamed id, a price, a context window, a parameter count is the same model whichever plugin calls it. Correct them wherever they appear — the Routes tables, the quick-start prose, the cost lines.
+- **Skill rows and shared counts are not.** A skill this sync deletes may still exist in the OpenClaw plugin, where its row stays true. Remove a Routes row only when that skill is gone from both:
+  ```bash
+  ls agents/openclaw/plugin/skills/            # does the skill still exist there?
+  ```
+  If it does, leave the row and the counts that cover both plugins ("twenty-two auto-invoked skills: nineteen task routes and three account utilities"), and say so in the PR body. If it does not, remove the row and correct those counts.
+- **Lines about the Claude Code plugin alone** — the "Claude Code quick start" section and its skill counts — are this sync's to correct.
+- **Never touch** the OpenClaw quick start, its examples, the OpenClaw install lines, or the note about `zerogpu-summarize`.
 
 ### New models
 
@@ -106,7 +123,7 @@ API-sourced facts only: id, task, `maxTokens`, input/output price, parameter cou
 Verification gates the PR: nothing is pushed until all of it passes.
 
 ```bash
-python3 .claude/skills/claude-model-sync/scripts/audit-models.py --strict   # expect: only NOTE and SHARED lines
+python3 .claude/skills/claude-model-sync/scripts/audit-models.py --strict   # expect: only NOTE lines
 claude plugin validate .
 claude plugin validate ./agents/claude
 ```
@@ -116,8 +133,8 @@ If `claude` is not on `PATH`, run `npx -y @anthropic-ai/claude-code plugin valid
 Confirm every renamed or removed id is gone from the plugin, and nothing outside scope changed:
 
 ```bash
-grep -rn "<old-id>" agents/claude .claude-plugin --exclude=CHANGELOG.md
-git status --short | grep -vE ' (agents/claude/|\.claude-plugin/)'   # expect: no output
+grep -rn "<old-id>" agents/claude .claude-plugin README.md --exclude=CHANGELOG.md
+git status --short | grep -vE ' (agents/claude/|\.claude-plugin/|README\.md$)'   # expect: no output
 ```
 
 After step 5's bump and changelog, run the same release check CI runs on the PR:
@@ -136,7 +153,7 @@ If a check fails, fix the cause and re-run it. If it still fails, commit nothing
 
 Once verification passes, ship it. No questions, no waiting.
 
-**Nothing changed?** If the audit was clean apart from `NOTE` and `SHARED` lines and no file was modified, bump nothing, write no changelog, create no branch and no PR. Report "already in sync" and stop.
+**Nothing changed?** If the audit was clean apart from `NOTE` lines and no file was modified, bump nothing, write no changelog, create no branch and no PR. Report "already in sync" and stop.
 
 ```bash
 # 1. a fresh branch cut from up-to-date main — never commit on main
@@ -189,7 +206,7 @@ Rules for the section:
 
 ```bash
 # 2. stage only what the sync touched — never `git add -A`
-git add agents/claude/skills/... agents/claude/README.md .claude-plugin/marketplace.json \
+git add agents/claude/skills/... agents/claude/README.md README.md .claude-plugin/marketplace.json \
         agents/claude/.claude-plugin/plugin.json agents/claude/CHANGELOG.md
 git status --short          # confirm nothing unrelated is staged
 ```
@@ -233,13 +250,13 @@ Automated model-catalog sync for the Claude Code plugin. The dashboard API is th
 
 ## Not changed
 - API models with no skill: <ids>
-- Stale lines in the root `README.md`, which is shared with the OpenClaw plugin: <file:line — what>
+- Kept in the root `README.md` for the OpenClaw plugin, which still has them: <rows, counts>
 
 ## CHANGELOG
 <the new section, verbatim>
 
 ## Verification
-- `audit-models.py --strict` — clean apart from NOTE and SHARED lines
+- `audit-models.py --strict` — clean apart from NOTE lines
 - `claude plugin validate .` and `claude plugin validate ./agents/claude` pass
 - `plugin.json` version above `main`'s, and the top CHANGELOG section matches it
 
@@ -261,4 +278,4 @@ Rules for this step:
 
 ## 6. Report
 
-One pass, no questions: values corrected, claims rewritten, models renamed, model options dropped, skills deleted, the version bump and why, API models with no skill, stale root-README lines left for the shared routes table, any claim that could not be sourced, and the PR URL (or the branch name and the exact error if the PR could not be opened).
+One pass, no questions: values corrected, claims rewritten, models renamed, model options dropped, skills deleted, the version bump and why, API models with no skill, what was changed and what was deliberately kept in the shared root README, any claim that could not be sourced, and the PR URL (or the branch name and the exact error if the PR could not be opened).

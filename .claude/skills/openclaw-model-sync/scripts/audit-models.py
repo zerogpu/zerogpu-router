@@ -12,9 +12,11 @@ Reports:
   * ORPHAN  — a model a skill calls that the API does not return, plus every file to clean
   * COUNT   — a skill count that disagrees with agents/openclaw/plugin/skills
   * NOTE    — an API model no skill calls (nothing to do: the sync never creates a skill)
-  * SHARED  — a stale mention in a file shared with the Claude Code plugin (report, never edit)
 
 Read-only. Every finding is prose, so it is located for the caller to edit by hand.
+
+The repo's root README is scanned like any other file, but its findings carry
+`[shared with the Claude Code plugin]` — read "The root README" in SKILL.md before editing one.
 
 A line is "about" the models it names, the models of any skill it references in
 backticks (`chat`, `chat-glm`), and — inside a SKILL.md — that skill's own models.
@@ -46,9 +48,9 @@ CHANGELOG = "agents/openclaw/CHANGELOG.md"
 SKIP_DIRS = {"node_modules", "dist"}
 # History and generated files: never scanned.
 SKIP_FILES = {CHANGELOG, "agents/openclaw/plugin/package-lock.json"}
-# Scanned so renames and removals are visible, never edited: the root README's Routes
-# table documents the Claude Code plugin too.
-SHARED = ["README.md"]
+# The root README documents the Claude Code plugin too, so it is edited under the rule in
+# SKILL.md ("The root README") — model facts yes, another plugin's skill rows no.
+ROOT_README = "README.md"
 
 # (file, pattern) — the number counts the skills that call a model.
 COUNTS = [(PLUGIN_README, re.compile(r"(\d+) task-specific skills"))]
@@ -211,13 +213,17 @@ def locations(root, mid, skills, rename):
         for skill, calls in skills.items():
             if list(calls) == [mid]:
                 hits.append(f"REMOVE: {MANIFEST}  (drop \"./skills/{skill}\" from skills)")
-    for rel in SHARED:
-        lines = [n + 1 for n, line in enumerate(read_lines(root, rel)) if mentions(line, mid)]
-        if lines:
-            hits.append(
-                f"SHARED: {rel}:{', '.join(map(str, lines))}  "
-                "(shared with the Claude Code plugin — leave it; list it in the PR body)"
-            )
+    lines = [n + 1 for n, line in enumerate(read_lines(root, ROOT_README)) if mentions(line, mid)]
+    if lines:
+        note = (
+            "(replace every mention — a renamed id is the same model for both plugins)"
+            if rename
+            else "(strip its mentions, but keep a skill row the Claude Code plugin still has)"
+        )
+        hits.append(
+            f"{'REPLACE' if rename else 'REMOVE'}: {ROOT_README}:{', '.join(map(str, lines))}  "
+            f"{note}  [shared with the Claude Code plugin]"
+        )
     return hits
 
 
@@ -279,8 +285,9 @@ def main():
 
     # --- prose: stale numbers in skills and the READMEs ------------------------------
     prose = []
-    for rel in [f"{SKILLS_DIR}/{s}/SKILL.md" for s in skills] + READMES:
+    for rel in [f"{SKILLS_DIR}/{s}/SKILL.md" for s in skills] + READMES + [ROOT_README]:
         own = skill_of(rel)
+        shared = "  [shared with the Claude Code plugin]" if rel == ROOT_README else ""
         for n, line in enumerate(read_lines(root, rel)):
             about = {mid for mid in known_ids if mentions(line, mid)}
             if own:
@@ -291,7 +298,7 @@ def main():
                 continue
             fs = [f for f in map(facts, sorted(about)) if f]
             for claim in stale_numbers(line, fs):
-                prose.append(f"PROSE: {rel}:{n + 1}: {claim}: {line.strip()[:120]}")
+                prose.append(f"PROSE: {rel}:{n + 1}: {claim}{shared}: {line.strip()[:120]}")
     prose = list(dict.fromkeys(prose))
     for p in prose:
         print(p)

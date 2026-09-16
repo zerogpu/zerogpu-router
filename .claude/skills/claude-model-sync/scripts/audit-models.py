@@ -12,9 +12,11 @@ Reports:
   * ORPHAN  — a model a skill calls that the API does not return, plus every file to clean
   * COUNT   — a skill count that disagrees with agents/claude/skills
   * NOTE    — an API model no skill calls (nothing to do: the sync never creates a skill)
-  * SHARED  — a stale mention in a file shared with the OpenClaw plugin (report, never edit)
 
 Read-only. Every finding is prose, so it is located for the caller to edit by hand.
+
+The repo's root README is scanned like any other file, but its findings carry
+`[shared with the OpenClaw plugin]` — read "The root README" in SKILL.md before editing one.
 
 A line is "about" the models it names, the models of any skill it references
 (`/zerogpu-router:chat`, `chat-glm`), and — inside a SKILL.md or under a README skill
@@ -43,9 +45,9 @@ README = "agents/claude/README.md"
 CHANGELOG = "agents/claude/CHANGELOG.md"
 MARKETPLACE = ".claude-plugin/marketplace.json"
 PLUGIN_PATHS = ["agents/claude", ".claude-plugin"]
-# Scanned so renames and removals are visible, never edited: the root README's Routes
-# table documents the OpenClaw plugin too.
-SHARED = ["README.md"]
+# The root README documents the OpenClaw plugin too, so it is edited under the rule in
+# SKILL.md ("The root README") — model facts yes, another plugin's skill rows no.
+ROOT_README = "README.md"
 
 COUNTS = [
     (MARKETPLACE, re.compile(r"(\d+) auto-invoked skills")),
@@ -208,13 +210,17 @@ def locations(root, mid, skills, rename):
         else:
             note = "(replace the mention)" if rename else "(rewrite or delete the mention)"
         hits.append(f"{'REPLACE' if rename else 'REMOVE'}: {rel} ({count} line{'s' if count != 1 else ''})  {note}")
-    for rel in SHARED:
-        lines = [n + 1 for n, line in enumerate(read_lines(root, rel)) if mentions(line, mid)]
-        if lines:
-            hits.append(
-                f"SHARED: {rel}:{', '.join(map(str, lines))}  "
-                "(shared with the OpenClaw plugin — leave it; list it in the PR body)"
-            )
+    lines = [n + 1 for n, line in enumerate(read_lines(root, ROOT_README)) if mentions(line, mid)]
+    if lines:
+        note = (
+            "(replace every mention — a renamed id is the same model for both plugins)"
+            if rename
+            else "(strip its mentions, but keep a skill row the OpenClaw plugin still has)"
+        )
+        hits.append(
+            f"{'REPLACE' if rename else 'REMOVE'}: {ROOT_README}:{', '.join(map(str, lines))}  "
+            f"{note}  [shared with the OpenClaw plugin]"
+        )
     return hits
 
 
@@ -276,7 +282,7 @@ def main():
 
     # --- prose: stale numbers in skills and the plugin README ----------------------
     prose = []
-    for rel in [f"{SKILLS_DIR}/{s}/SKILL.md" for s in skills] + [README]:
+    for rel in [f"{SKILLS_DIR}/{s}/SKILL.md" for s in skills] + [README, ROOT_README]:
         own = skill_of(rel)
         for n, line in enumerate(read_lines(root, rel)):
             if rel == README:
@@ -293,8 +299,9 @@ def main():
             if wanted and not (about & wanted or {successors.get(w) for w in about} & wanted):
                 continue
             fs = [f for f in map(facts, sorted(about)) if f]
+            shared = "  [shared with the OpenClaw plugin]" if rel == ROOT_README else ""
             for claim in stale_numbers(line, fs):
-                prose.append(f"PROSE: {rel}:{n + 1}: {claim}: {line.strip()[:120]}")
+                prose.append(f"PROSE: {rel}:{n + 1}: {claim}{shared}: {line.strip()[:120]}")
     prose = list(dict.fromkeys(prose))
     for p in prose:
         print(p)
