@@ -132,7 +132,7 @@ Full walkthrough (prerequisites, every skill documented in detail, troubleshooti
 
 ## Routes
 
-ZeroGPU Router exposes twenty-two auto-invoked skills: nineteen task routes and three account utilities.
+ZeroGPU Router exposes twenty-one auto-invoked skills: eighteen task routes and three account utilities.
 
 **Chat and generation**
 
@@ -145,7 +145,6 @@ ZeroGPU Router exposes twenty-two auto-invoked skills: nineteen task routes and 
 | `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash-0731` |
 | `chat-glm` | Most capable, 262K-token context, ~7x the cost | `glm-5.2` |
 | `summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
-| `generate-followups` | Suggested next questions for a passage | `zlm-v1-followup-questions-edge` |
 
 On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its own `summarize` skill (for URLs, videos, and PDFs), and two skills cannot share a name. Skill names are otherwise identical across both agents.
 
