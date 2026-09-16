@@ -13,7 +13,7 @@ $ARGUMENTS
 ZGPU_END_OF_INPUT
 ```
 
-At \$0.16 / \$0.38 per 1M input/output tokens this is the only 1M-context model on the platform — roughly a seventh of `/zerogpu-router:chat-glm` on input and a ninth on output. Prefer it whenever the task is code or tool-use rather than sheer input size. For a prompt that fits in 131K tokens, `/zerogpu-router:chat` costs about the same on input and over half again as much on output, so choose on task fit rather than price.
+At \$0.16 / \$0.38 per 1M input/output tokens this is the cheaper of the two 1M-context models on the platform — roughly a seventh of `/zerogpu-router:chat-glm` on input and a ninth on output. Prefer it whenever the task is code or tool-use rather than sheer input size. For a prompt that fits in 131K tokens, `/zerogpu-router:chat` costs about the same on input and over half again as much on output, so choose on task fit rather than price.
 
 Output is the assistant's answer as plain text — the model's reasoning trace comes back in a separate field and is not printed. Relay the answer as-is — do not rewrite or expand it.
 

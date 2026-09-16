@@ -326,7 +326,7 @@ Coding and agentic chat with a 1M-token context: reading or writing code across 
 
 **Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
-At \$0.16 / \$0.38 per 1M input/output tokens this is the only 1M-context model on the platform — about a seventh of `chat-glm` on input and a ninth on output. Prefer it when the task is code or tool-use rather than sheer input size.
+At \$0.16 / \$0.38 per 1M input/output tokens this is the cheaper of the two 1M-context models on the platform — about a seventh of `chat-glm` on input and a ninth on output. Prefer it when the task is code or tool-use rather than sheer input size.
 
 ---
 
