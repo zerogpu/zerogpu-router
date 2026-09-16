@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.1
+
+Model catalog sync against the dashboard API. Every price, context window, and parameter count the plugin states still matches what the API serves; the one claim that no longer held was `chat-deepseek`'s, which called itself the only 1M-context model on the platform. The API now serves a second one, so the line says "the cheaper of the two" again — it is still the 1M-context model this plugin routes to. Skill names and outputs are unchanged apart from the note below.
+
+### Changed
+
+- **`chat-deepseek`: `deepseek-v4-flash-0731` is the cheaper of the two 1M-context models, not the only one.** Corrected in the skill body and the README. Its own numbers are unchanged — \$0.16 / \$0.38 per 1M input/output tokens, a 1M-token context, roughly a seventh of `chat-glm` on input and a ninth on output — and it remains the skill to reach for when the input is too large for `chat`.
+
 ## 3.0.0
 
 Model catalog sync against the dashboard API. `generate-followups` is gone — the model behind it is no longer served — and `chat-deepseek` now calls the version-pinned `deepseek-v4-flash-0731`. Several numbers the chat skills advertise were wrong enough to steer Claude to the wrong model: `chat-glm` claimed a 1M-token context it no longer has (it is 262K, a quarter of `chat-deepseek`'s), and `chat-deepseek` claimed a price roughly half its real one. Embeddings are far cheaper than the plugin said. Skill names and outputs are unchanged apart from the notes below.
