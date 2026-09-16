@@ -1,6 +1,6 @@
 ---
 name: chat-qwen
-description: Chat with qwen3-30b-a3b-fp8, a 30.5B MoE model with strong multilingual coverage (100+ languages, 32K context). Use for non-English prompts, translation-adjacent tasks, or mid-weight questions the 1.2B edge models handle poorly.
+description: Chat with qwen3-30b-a3b-fp8, a 30B MoE model with strong multilingual coverage (100+ languages, 32K context). Use for non-English prompts, translation-adjacent tasks, or mid-weight questions the 1.2B edge models handle poorly.
 argument-hint: "<text> [-i <instructions>]"
 allowed-tools: Bash(zerogpu chat_completions *)
 metadata:

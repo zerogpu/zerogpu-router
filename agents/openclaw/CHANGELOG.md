@@ -1,5 +1,21 @@
 # Changelog
 
+## 5.0.0
+
+Model catalog sync: `chat-deepseek` now calls the version-pinned `deepseek-v4-flash-0731`, `chat-glm` carries a 262K-token context rather than 1M, and the `embed` and chat skills state prices and model sizes the API actually serves — numbers the agent reads out of skill descriptions when it picks a route. `generate-followups` is gone, because its model is no longer served. Skill names and arguments are unchanged apart from the notes below.
+
+### Changed
+
+- **`chat-deepseek` calls `deepseek-v4-flash-0731`.** The API renamed `deepseek-v4-flash`, and the old id no longer resolves. Its price is \$0.16 / \$0.38 per 1M input/output tokens, not \$0.07 / \$0.14, so it is now roughly a seventh of `chat-glm` on input and a ninth on output — not a sixteenth — and `chat` no longer undercuts it on output.
+- **`chat-glm`: the context window is 262K tokens, not 1M.** Corrected in its description, which the agent matches on, and in `chat`, `chat-deepseek`, and both READMEs. `chat-deepseek` now holds the platform's largest context, so `chat-glm` is described as the most capable model rather than the largest-context one, and the two are no longer paired as "the two 1M-context models".
+- **`embed`: both models cost \$0.004 per 1M input tokens, not \$0.50.** `all-minilm-l6-v2` takes a 512-token window, not 256, and `bge-small-en-v1.5` is 33M parameters, not 33.4M. Since both windows are 512, chunk length is no longer a reason to switch models, and that hint is gone.
+- **`chat`: `gpt-oss-120b` is 120B parameters, not 117B.** Corrected in its description.
+- **`chat-qwen`: `qwen3-30b-a3b-fp8` is 30B parameters, not 30.5B.** Corrected in its description.
+
+### Removed
+
+- **`generate-followups`.** `zlm-v1-followup-questions-edge` is no longer served by the ZeroGPU API, so the skill failed on every call. Skill count goes from 19 to 18.
+
 ## 4.4.0
 
 The plugin no longer breaks when the `zerogpu` CLI changes its models. Every inference skill now names its own model and calls one of the CLI's model-agnostic endpoint commands, added in `zerogpu-cli` 3.8.0, so a model the CLI adds, renames, or drops from a per-task command no longer changes what these skills send. Skill names and arguments are unchanged. `signin`, `status`, and `cost-savings` still wrap `zerogpu login`, `zerogpu status`, and `zerogpu cost_savings`.
