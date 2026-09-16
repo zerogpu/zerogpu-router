@@ -1,6 +1,6 @@
 ---
 name: chat
-description: Chat reply via ZeroGPU's default model, gpt-oss-120b (117B MoE, 131K context). Use when the user wants an answer from a ZeroGPU model rather than Claude, including longer documents, multi-step instructions, and harder general-knowledge questions.
+description: Chat reply via ZeroGPU's default model, gpt-oss-120b (120B MoE, 131K context). Use when the user wants an answer from a ZeroGPU model rather than Claude, including longer documents, multi-step instructions, and harder general-knowledge questions.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu chat_completions *)
 ---
@@ -15,6 +15,6 @@ ZGPU_END_OF_INPUT
 
 Output is the assistant's answer as plain text. The model also produces a reasoning trace, which the Chat Completions response carries separately, so only the final answer is printed. Relay that answer as-is, without rewriting or expanding it.
 
-For a faster, cheaper reply where quality matters less, use `/zerogpu-router:chat-liquid` (LFM2.5-1.2B-Instruct). For a visible reasoning trace, use `/zerogpu-router:chat-thinking`. For multilingual prompts, use `/zerogpu-router:chat-qwen`. When the input does not fit in this model's 131K context, use `/zerogpu-router:chat-deepseek` for code and agentic work, or `/zerogpu-router:chat-glm` for the largest and most capable option — both carry a 1M-token context, and glm-5.2 costs roughly 7x this skill.
+For a faster, cheaper reply where quality matters less, use `/zerogpu-router:chat-liquid` (LFM2.5-1.2B-Instruct). For a visible reasoning trace, use `/zerogpu-router:chat-thinking`. For multilingual prompts, use `/zerogpu-router:chat-qwen`. When the input does not fit in this model's 131K context, use `/zerogpu-router:chat-deepseek` for code and agentic work, or `/zerogpu-router:chat-glm` for the most capable option — deepseek-v4-flash-0731 carries a 1M-token context and glm-5.2 a 262K one, and glm-5.2 costs roughly 7x this skill.
 
 Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest `/zerogpu-router:cost-savings`. This note is intentionally occasional, not shown every time.

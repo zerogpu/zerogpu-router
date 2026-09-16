@@ -210,7 +210,7 @@ Pass `--json` for the raw data, or `--reset` to clear the history.
 
 The default ZeroGPU chat skill. Handles work the 1.2B edge models can't carry (long documents, multi-step instructions, harder general-knowledge questions) at a fraction of frontier-model cost.
 
-- **Model:** `gpt-oss-120b` (117B MoE, 131,072-token context)
+- **Model:** `gpt-oss-120b` (120B MoE, 131,072-token context)
 - **Wraps:** `zerogpu chat_completions -m gpt-oss-120b`
 - **When Claude auto-invokes:** you've signalled "use a ZeroGPU model" or "don't use Claude for this" and the task isn't one of the specialized skills below.
 
@@ -228,7 +228,7 @@ The default ZeroGPU chat skill. Handles work the 1.2B edge models can't carry (l
 
 **Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; Chat Completions returns it in a separate field, so only the final answer is printed.
 
-Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts. When the input exceeds this model's 131K context, use `chat-deepseek` for code and agentic work or `chat-glm` for the most capable option — both carry a 1M-token context.
+Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts. When the input exceeds this model's 131K context, use `chat-deepseek` for code and agentic work or `chat-glm` for the most capable option — `deepseek-v4-flash-0731` carries a 1M-token context, `glm-5.2` a 262K one.
 
 ---
 
@@ -284,7 +284,7 @@ Same as `chat`, but the model returns its reasoning trace alongside the answer.
 
 Heavier chat tuned for multilingual work: 100+ languages, useful when the prompt or the expected answer isn't English.
 
-- **Model:** `qwen3-30b-a3b-fp8` (30.5B MoE, 32,768-token context)
+- **Model:** `qwen3-30b-a3b-fp8` (30B MoE, 32,768-token context)
 - **Wraps:** `zerogpu chat_completions -m qwen3-30b-a3b-fp8`
 - **When Claude auto-invokes:** non-English prompts, translation-adjacent tasks, mid-weight questions the edge models handle poorly.
 
@@ -308,8 +308,8 @@ Heavier chat tuned for multilingual work: 100+ languages, useful when the prompt
 
 Coding and agentic chat with a 1M-token context: reading or writing code across a large codebase, porting and refactoring, planning multi-step automation.
 
-- **Model:** `deepseek-v4-flash` (284B MoE, 13B active per token, 1,048,576-token context)
-- **Wraps:** `zerogpu chat_completions -m deepseek-v4-flash`
+- **Model:** `deepseek-v4-flash-0731` (284B MoE, 13B active per token, 1,048,576-token context)
+- **Wraps:** `zerogpu chat_completions -m deepseek-v4-flash-0731`
 - **When Claude auto-invokes:** code-heavy prompts, repo-scale questions, multi-step tool-use planning — especially when the input is too large for `chat`'s 131K context.
 
 **Synopsis**
@@ -326,17 +326,17 @@ Coding and agentic chat with a 1M-token context: reading or writing code across 
 
 **Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
-At \$0.07 / \$0.14 per 1M input/output tokens this is the cheaper of the two 1M-context models — about a sixteenth of `chat-glm`. Prefer it when the task is code or tool-use rather than sheer input size.
+At \$0.16 / \$0.38 per 1M input/output tokens this is the only 1M-context model on the platform — about a seventh of `chat-glm` on input and a ninth on output. Prefer it when the task is code or tool-use rather than sheer input size.
 
 ---
 
 ### `/zerogpu-router:chat-glm`
 
-The largest and most capable model on the platform, with a 1M-token context for whole repositories, book-length documents, and long agent transcripts.
+The most capable model on the platform, with a 262K-token context for whole repositories, book-length documents, and long agent transcripts.
 
-- **Model:** `glm-5.2` (753B MoE, 8 of 256 experts per token, 1,048,576-token context)
+- **Model:** `glm-5.2` (753B MoE, 8 of 256 experts per token, 262,144-token context)
 - **Wraps:** `zerogpu chat_completions -m glm-5.2`
-- **When Claude auto-invokes:** long-horizon reasoning, or input that genuinely does not fit anywhere else.
+- **When Claude auto-invokes:** long-horizon reasoning, or input too large for `chat` that isn't code or agentic work.
 
 **Synopsis**
 
@@ -727,38 +727,6 @@ a revised 2025 budget by mid-December.
 
 ---
 
-### `/zerogpu-router:generate-followups`
-
-Generate the questions a reader would naturally ask next about a passage: "people also ask" style prompts, conversation continuations, suggested next steps.
-
-- **Model:** `zlm-v1-followup-questions-edge`
-- **Wraps:** `zerogpu chat_completions -m zlm-v1-followup-questions-edge`
-- **When Claude auto-invokes:** "what should I ask next?", "suggest follow-up questions", building a related-questions widget.
-
-**Synopsis**
-
-```
-/zerogpu-router:generate-followups <text>
-```
-
-**Example**
-
-```text
-/zerogpu-router:generate-followups "The Fed held rates steady at its March meeting, citing sticky core inflation."
-```
-
-**Output (illustrative)**
-
-```json
-[
-  "What are the implications of this decision?",
-  "Can you provide more context on the Fed's recent moves?",
-  "How do other central banks handle similar inflation?"
-]
-```
-
----
-
 ### `/zerogpu-router:moderate`
 
 Screen a passage for unsafe, harmful, or policy-sensitive content and get back a safety verdict.
@@ -828,16 +796,16 @@ Turn text into a 384-dimensional vector for semantic search, RAG retrieval, clus
 
 | Model | Params | Window | Best for |
 | --- | --- | --- | --- |
-| `all-minilm-l6-v2` | 22.7M | 256 tokens | General semantic similarity over short chunks |
-| `bge-small-en-v1.5` | 33.4M | 512 tokens | English retrieval, longer chunks, ranking quality |
+| `all-minilm-l6-v2` | 22.7M | 512 tokens | General semantic similarity over short chunks |
+| `bge-small-en-v1.5` | 33M | 512 tokens | English retrieval, ranking quality |
 
-Both cost \$0.50 per 1M input tokens, bill nothing on output, and return 384-dimensional vectors, so they are interchangeable in an existing index. The models are served only by the Embeddings API, so this skill calls `zerogpu embeddings` rather than Chat Completions. Inputs past the window are truncated, so chunk long documents and embed the chunks.
+Both cost \$0.004 per 1M input tokens, bill nothing on output, and return 384-dimensional vectors, so they are interchangeable in an existing index. The models are served only by the Embeddings API, so this skill calls `zerogpu embeddings` rather than Chat Completions. Inputs past the window are truncated, so chunk long documents and embed the chunks.
 
 ---
 
 ## Skills reference
 
-Quick lookup table: all 22 skills at a glance.
+Quick lookup table: all 21 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -848,8 +816,8 @@ Quick lookup table: all 22 skills at a glance.
 | `/zerogpu-router:chat-liquid <text>` | Fastest, cheapest chat via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat-liquid "Explain WebSockets in two sentences."` |
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (shows reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
 | `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
-| `/zerogpu-router:chat-deepseek <text>` | Coding and agentic chat via `deepseek-v4-flash` (1M context) | `/zerogpu-router:chat-deepseek "Port this module to async/await."` |
-| `/zerogpu-router:chat-glm <text>` | Most capable, 1M context via `glm-5.2` (~7x the cost) | `/zerogpu-router:chat-glm "Which services would a payments outage take down?"` |
+| `/zerogpu-router:chat-deepseek <text>` | Coding and agentic chat via `deepseek-v4-flash-0731` (1M context) | `/zerogpu-router:chat-deepseek "Port this module to async/await."` |
+| `/zerogpu-router:chat-glm <text>` | Most capable, 262K context via `glm-5.2` (~7x the cost) | `/zerogpu-router:chat-glm "Which services would a payments outage take down?"` |
 | `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification | `/zerogpu-router:classify-iab "The Lakers signed a new point guard."` |
 | `/zerogpu-router:classify-iab-enriched <text>` | IAB + topics/keywords/intent | `/zerogpu-router:classify-iab-enriched "Compare the Tesla Model Y and Hyundai Ioniq 5."` |
 | `/zerogpu-router:classify-domain <domain>` | IAB classification from a hostname, no page fetch | `/zerogpu-router:classify-domain "espn.com"` |
@@ -860,7 +828,6 @@ Quick lookup table: all 22 skills at a glance.
 | `/zerogpu-router:redact-pii <text>` | Mask PII in-line with `[LABEL]` placeholders | `/zerogpu-router:redact-pii "Email John at john@acme.com"` |
 | `/zerogpu-router:extract-json <text> -s '…'` | Schema-driven JSON extraction | `/zerogpu-router:extract-json "..." -s '{"contact":["name::str::Full name"]}'` |
 | `/zerogpu-router:summarize <text>` | Summarize with `llama-3.1-8b-instruct-fast` | `/zerogpu-router:summarize "The board met Thursday to review Q3 results..."` |
-| `/zerogpu-router:generate-followups <text>` | Suggested next questions for a passage | `/zerogpu-router:generate-followups "The Fed held rates steady..."` |
 | `/zerogpu-router:moderate <text>` | Safety verdict across OpenAI's 13 categories | `/zerogpu-router:moderate "Screen this user comment before we publish it."` |
 | `/zerogpu-router:embed <text> [-m …]` | 384-dim embedding for search, RAG, dedupe | `/zerogpu-router:embed "ZeroGPU runs inference at the edge." -m bge-small-en-v1.5` |
 

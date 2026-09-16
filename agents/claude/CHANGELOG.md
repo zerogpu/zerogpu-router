@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.0.0
+
+Model catalog sync against the dashboard API. `generate-followups` is gone — the model behind it is no longer served — and `chat-deepseek` now calls the version-pinned `deepseek-v4-flash-0731`. Several numbers the chat skills advertise were wrong enough to steer Claude to the wrong model: `chat-glm` claimed a 1M-token context it no longer has (it is 262K, a quarter of `chat-deepseek`'s), and `chat-deepseek` claimed a price roughly half its real one. Embeddings are far cheaper than the plugin said. Skill names and outputs are unchanged apart from the notes below.
+
+### Changed
+
+- **`chat-deepseek` calls `deepseek-v4-flash-0731`.** The API renamed `deepseek-v4-flash`, and the old id no longer resolves. Its price is \$0.16 / \$0.38 per 1M input/output tokens, not \$0.07 / \$0.14, so it is no longer "about a sixteenth" of `chat-glm` — it is roughly a seventh on input and a ninth on output. It is also now the only 1M-context model on the platform, so the "cheaper of the two" framing is gone, and `chat` is no longer cheaper across the board: the two are within a cent on input and `chat` costs over half again as much on output.
+- **`chat-glm`: the context window is 262K tokens, not 1M.** Corrected in its description, which Claude matches on, and in `chat`, `chat-deepseek`, and the README. `chat-deepseek` now holds four times as much, so `chat-glm` is no longer the largest context on the platform — only the most capable and still the most expensive. Requests too big for 262K should go to `chat-deepseek`.
+- **`chat`: `gpt-oss-120b` is 120B parameters, not 117B.** Corrected in its description and the README.
+- **`chat-qwen`: `qwen3-30b-a3b-fp8` is 30B parameters, not 30.5B.** Corrected in its description and the README.
+- **`embed`: both models cost \$0.004 per 1M input tokens, not \$0.50.** `all-minilm-l6-v2` also takes a 512-token window, not 256, and `bge-small-en-v1.5` is 33M parameters, not 33.4M. The two windows now match, so a longer chunk is no longer a reason to pick `bge-small-en-v1.5` over the default; English retrieval and ranking quality still are.
+
+### Removed
+
+- **`generate-followups`.** `zlm-v1-followup-questions-edge` is no longer served by the ZeroGPU API, so the skill failed on every call. Skill count goes from 22 to 21.
+
 ## 2.3.0
 
 The plugin no longer breaks when the `zerogpu` CLI changes its models. Every inference skill now calls one of the CLI's model-agnostic endpoint commands, added in `zerogpu-cli` 3.8.0, and names its model itself, so a model the CLI adds, renames, or drops from a per-task command no longer changes what these skills send. Skill names are unchanged, and so is every skill's output apart from the notes below. `signin`, `status`, and `cost-savings` still wrap `zerogpu login`, `zerogpu status`, and `zerogpu cost_savings`.
