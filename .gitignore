@@ -45,5 +45,7 @@ logs/
 
 # --- Claude Code project-local state ---
 # .claude-plugin/marketplace.json IS the plugin install manifest and must stay committed.
-.claude/
+# .claude/skills/ holds repo skills (model-sync) that routines run, so it is committed too.
+.claude/*
+!.claude/skills/
 
