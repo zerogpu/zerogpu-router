@@ -132,7 +132,7 @@ Full walkthrough (prerequisites, every skill documented in detail, troubleshooti
 
 ## Routes
 
-ZeroGPU Router exposes twenty-one auto-invoked skills: eighteen task routes and three account utilities.
+ZeroGPU Router exposes twenty-four auto-invoked skills: twenty-one task routes and three account utilities.
 
 **Chat and generation**
 
