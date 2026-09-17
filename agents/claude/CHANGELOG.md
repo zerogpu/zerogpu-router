@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.1.0
+
+Model catalog sync against the dashboard API. Three models the API serves had no skill calling them, so three skills are new: `chat-deepseek-v4-1-flash` for the V4.1 Flash line, `moderate-llama` for Meta's Llama Guard safety classifier, and `extract-signals` for one-call contextual enrichment. Every price, context window, and parameter count the plugin already stated still matches what the API serves, and `chat-deepseek` remains the cheaper of the two 1M-context models. Skill names and outputs are unchanged apart from the notes below.
+
+### Added
+
+- **`chat-deepseek-v4-1-flash`.** Calls `deepseek-v4.1-flash`, a sparse MoE model on DeepSeek's Causal Encoder-Decoder architecture (8B active on input, 16B on output) with function calling and a higher-effort reasoning mode. Same 1,048,576-token context as `chat-deepseek`, at \$0.30 / \$1.20 per 1M input/output tokens — roughly twice `chat-deepseek` on input and three times on output, so `chat-deepseek` stays the default for ordinary coding and agentic work.
+- **`moderate-llama`.** Calls `llama-guard-4-12b`, Meta's dense 12B safety classifier derived from Llama 4 Scout, which returns a safe/unsafe verdict with the policy categories a violation falls under. A 163,840-token context at \$0.18 / \$0.18 per 1M input/output tokens, for passages and transcripts too long for `moderate`'s 800-token window; `moderate` stays cheaper and still returns OpenAI's 13-category envelope.
+- **`extract-signals`.** Calls `zlm-v1-signal-extract`, an 80M model that turns free text into topics, keywords, intent, and other contextual attributes in a single call, for enrichment, contextual targeting, agent routing, and analytics pipelines. A 400-token context at \$0.02 / \$0.05 per 1M input/output tokens.
+- Skill count goes from 21 to 24.
+
 ## 3.0.1
 
 Model catalog sync against the dashboard API. Every price, context window, and parameter count the plugin states still matches what the API serves; the one claim that no longer held was `chat-deepseek`'s, which called itself the only 1M-context model on the platform. The API now serves a second one, so the line says "the cheaper of the two" again — it is still the 1M-context model this plugin routes to. Skill names and outputs are unchanged apart from the note below.
