@@ -19,7 +19,7 @@ Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded
 
 Our open-weight models are the most cost-effective on the market right now. You'll find models here you won't see anywhere else, and we add roughly one a day.
 
-- **18 task-specific skills:** `zerogpu-summarize`, `classify-iab`, `redact-pii`, `extract-json`, and more
+- **21 task-specific skills:** `zerogpu-summarize`, `classify-iab`, `redact-pii`, `extract-json`, and more
 - **Nothing to host or register:** each skill shells out to the local `zerogpu` CLI through the agent's `exec` tool
 - **Unaffected by CLI model updates:** each skill names its own model and calls the CLI's model-agnostic `chat_completions`, `moderations`, or `embeddings` command
 - **Savings you can see:** every call logs its model, usage, and a real dollar figure
@@ -139,6 +139,7 @@ Note the card last-four is left untouched. The PII model covers standard categor
 | `extract-pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
 | `extract-entities` | People, places, companies, dates, custom entities | `gliner2-base-v1` |
 | `extract-json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
+| `extract-signals` | Topics, keywords, intent and other contextual signals | `zlm-v1-signal-extract` |
 
 **Generation**
 
@@ -150,6 +151,7 @@ Note the card last-four is left untouched. The PII model covers standard categor
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 | `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
 | `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash-0731` |
+| `chat-deepseek-v4-1-flash` | 1M-token context with higher-effort reasoning and function calling | `deepseek-v4.1-flash` |
 | `chat-glm` | Most capable, 262K-token context, ~7x the cost | `glm-5.2` |
 
 **Moderation and embeddings**
@@ -157,6 +159,7 @@ Note the card last-four is left untouched. The PII model covers standard categor
 | Skill | Workload | Backing model |
 |---|---|---|
 | `moderate` | Safety verdict across OpenAI's 13 moderation categories | `zlm-v1-moderation-edge` |
+| `moderate-llama` | Safe/unsafe verdict with the policy categories named | `llama-guard-4-12b` |
 | `embed` | Text to 384-dimensional vectors for search, RAG, dedupe | `all-minilm-l6-v2`, `bge-small-en-v1.5` |
 
 **Account**
@@ -175,7 +178,7 @@ Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)**: token 
 
 ## Data & privacy
 
-**These skills are not local processing.** Every content skill (`zerogpu-summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `moderate`, `embed`, `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
+**These skills are not local processing.** Every content skill (`zerogpu-summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `moderate`, `moderate-llama`, `embed`, `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`, `chat-deepseek`, `chat-deepseek-v4-1-flash`, `chat-glm`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
 
 Before using these skills:
 

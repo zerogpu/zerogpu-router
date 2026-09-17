@@ -1,5 +1,20 @@
 # Changelog
 
+## 5.1.0
+
+Model catalog sync: three models the ZeroGPU API now serves get skills — `chat-deepseek-v4-1-flash` for the V4.1 Flash line, `moderate-llama` for long-form safety screening, and `extract-signals` for structured contextual signals. `chat-deepseek` no longer claims to be the only 1M-context model, a claim the agent reads when it picks between the two. Skill names and arguments are unchanged apart from the notes below.
+
+### Added
+
+- **`chat-deepseek-v4-1-flash`.** Calls `deepseek-v4.1-flash`, a sparse MoE model on DeepSeek's Causal Encoder-Decoder architecture (8B active on input, 16B on output) that keeps the 1M-token context of the V4 Flash line and adds function calling and a higher-effort reasoning mode. \$0.30 / \$1.20 per 1M input/output tokens — roughly twice `chat-deepseek` on input and three times on output, so `chat-deepseek` stays the cheaper choice at the same context size.
+- **`moderate-llama`.** Calls `llama-guard-4-12b`, Meta's dense 12B safety classifier derived from Llama 4 Scout, which returns a safe/unsafe verdict plus the policy categories a violation falls under, over a 164K-token context. \$0.18 / \$0.18 per 1M input/output tokens. Use it for long passages, whole transcripts, or a model's own reply; `moderate` remains far cheaper for short text and returns OpenAI's 13-category envelope.
+- **`extract-signals`.** Calls `zlm-v1-signal-extract` (80M, 400-token context, \$0.02 / \$0.05 per 1M input/output tokens), which turns a passage into topics, keywords, intent, and other contextual attributes in one call — for enrichment, contextual targeting, agent routing, and analytics pipelines.
+- Skill count goes from 21 to 24, of which 21 are task routes.
+
+### Changed
+
+- **`chat-deepseek` is the cheaper of two 1M-context models, not the only one.** `deepseek-v4.1-flash` now carries the same 1M-token window, so the description no longer claims the platform's largest context outright — it is four times `chat-glm`'s — and the body compares the two on price instead.
+
 ## 5.0.0
 
 Model catalog sync: `chat-deepseek` now calls the version-pinned `deepseek-v4-flash-0731`, `chat-glm` carries a 262K-token context rather than 1M, and the `embed` and chat skills state prices and model sizes the API actually serves — numbers the agent reads out of skill descriptions when it picks a route. `generate-followups` is gone, because its model is no longer served. Skill names and arguments are unchanged apart from the notes below.
