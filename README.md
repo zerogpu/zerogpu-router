@@ -35,7 +35,7 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific sk
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
 - **OpenClaw:** install the `zerogpu` CLI plus **`zerogpu-router`** (see [agents/openclaw/](agents/openclaw/)). Skills run locally through your agent's Bash tools.
-- **Claude Code:** install the `zerogpu` CLI plus the marketplace plugin and you get 11 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
+- **Claude Code:** install the `zerogpu` CLI plus the marketplace plugin and you get 21 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
 - **Cheap by default:** small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings:** every routed task returns model, latency, and a real `savings_usd` figure.
 - **CLI, no infra:** everything runs through the local `zerogpu` CLI your agent already calls. No servers, MCP endpoints, or infra to stand up.
@@ -84,7 +84,7 @@ Next: loop in support leadership, send an updated enterprise quote by Friday.
 
 ## Claude Code quick start
 
-The Claude Code plugin ships 14 skills: 11 inference skills that Claude auto-invokes when your request matches ("summarize this", "redact the PII", "classify by sentiment and topic"), plus the manual `signin`, `status`, and `cost-savings` skills. You can also call any skill manually with `/zerogpu-router:<name>`. Run `/zerogpu-router:cost-savings` anytime to see how much you've saved by routing trivial work to ZeroGPU.
+The Claude Code plugin ships 24 skills: 21 inference skills that Claude auto-invokes when your request matches ("summarize this", "redact the PII", "classify by sentiment and topic"), plus the manual `signin`, `status`, and `cost-savings` skills. You can also call any skill manually with `/zerogpu-router:<name>`. Run `/zerogpu-router:cost-savings` anytime to see how much you've saved by routing trivial work to ZeroGPU.
 
 Grab a ZeroGPU API key at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
@@ -143,6 +143,7 @@ ZeroGPU Router exposes twenty-one auto-invoked skills: eighteen task routes and 
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 | `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
 | `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash-0731` |
+| `chat-deepseek-v4-1-flash` | 1M-token context with higher-effort reasoning and function calling | `deepseek-v4.1-flash` |
 | `chat-glm` | Most capable, 262K-token context, ~7x the cost | `glm-5.2` |
 | `summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
 
@@ -164,6 +165,7 @@ On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its
 |---|---|---|
 | `extract-entities` | Extract people, places, companies, dates, custom entities | `gliner2-base-v1` |
 | `extract-json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
+| `extract-signals` | Topics, keywords, intent and other contextual signals | `zlm-v1-signal-extract` |
 | `extract-pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
 | `redact-pii` | Mask emails, phones, names, addresses, other PII | `gliner-multi-pii-v1` |
 
@@ -172,6 +174,7 @@ On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its
 | Skill | Workload | Model |
 |---|---|---|
 | `moderate` | Safety verdict across OpenAI's 13 moderation categories | `zlm-v1-moderation-edge` |
+| `moderate-llama` | Safe/unsafe verdict with the policy categories named | `llama-guard-4-12b` |
 | `embed` | Text to 384-dimensional vectors for search, RAG, dedupe | `all-minilm-l6-v2`, `bge-small-en-v1.5` |
 
 **Account** (manual only): `signin`, `status`, `cost-savings`.

@@ -330,6 +330,32 @@ At \$0.16 / \$0.38 per 1M input/output tokens this is the cheaper of the two 1M-
 
 ---
 
+### `/zerogpu-router:chat-deepseek-v4-1-flash`
+
+The V4.1 Flash line: the same 1M-token context as `chat-deepseek`, on DeepSeek's Causal Encoder-Decoder architecture, with function calling and a higher-effort reasoning mode alongside fast non-thinking replies.
+
+- **Model:** `deepseek-v4.1-flash` (sparse MoE, 8B active on input and 16B on output, 1,048,576-token context)
+- **Wraps:** `zerogpu chat_completions -m deepseek-v4.1-flash`
+- **When Claude auto-invokes:** large codebases, long documents, extended conversations, and multi-step agent tasks where the extra reasoning effort or function calling is worth the higher price.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-deepseek-v4-1-flash <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-deepseek-v4-1-flash Here is the whole service package. Plan the migration to the new billing API, step by step, and flag every call site that changes.
+```
+
+**Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
+
+At \$0.30 / \$1.20 per 1M input/output tokens this is the pricier of the two 1M-context models — roughly twice `chat-deepseek` on input and three times on output, and about a quarter of `chat-glm` on input and a third on output. For ordinary coding and agentic work at the same context size, `chat-deepseek` is cheaper.
+
+---
+
 ### `/zerogpu-router:chat-glm`
 
 The most capable model on the platform, with a 262K-token context for whole repositories, book-length documents, and long agent transcripts.
@@ -691,6 +717,32 @@ Pull specific named fields out of free text into a structured JSON object, defin
 
 ---
 
+### `/zerogpu-router:extract-signals`
+
+Turn a passage into structured signals — topics, keywords, intent, and other contextual attributes — in one inference call, for enrichment and routing pipelines rather than for a human reader.
+
+- **Model:** `zlm-v1-signal-extract` (80M, 400-token context)
+- **Wraps:** `zerogpu chat_completions -m zlm-v1-signal-extract`
+- **When Claude auto-invokes:** "what signals are in this text?", content enrichment, contextual targeting, agent routing, recommendation and analytics pipelines.
+
+**Synopsis**
+
+```
+/zerogpu-router:extract-signals <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:extract-signals "How can I pay using my credit card?"
+```
+
+**Output:** a structured JSON object of the signals found — topics, keywords, intent, and other contextual attributes.
+
+At \$0.02 / \$0.05 per 1M input/output tokens it is built for high-volume work. The window is 400 tokens, so send the passage itself rather than a whole document. For IAB audience and content categories alongside these signals, use `classify-iab-enriched`.
+
+---
+
 ### `/zerogpu-router:summarize`
 
 Condense a passage into a short summary.
@@ -763,6 +815,32 @@ Returns OpenAI's moderations envelope across all 13 safety categories, so it dro
 
 ---
 
+### `/zerogpu-router:moderate-llama`
+
+Screen a passage with a dedicated safety classifier that names the policy categories a violation falls under, over a context large enough for a whole transcript.
+
+- **Model:** `llama-guard-4-12b` (dense 12B derived from Llama 4 Scout, 163,840-token context)
+- **Wraps:** `zerogpu chat_completions -m llama-guard-4-12b`
+- **When Claude auto-invokes:** moderation requests too long for `moderate`'s 800-token window, screening a model's own reply as well as the prompt, brand-safety and policy-enforcement checks.
+
+**Synopsis**
+
+```
+/zerogpu-router:moderate-llama <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:moderate-llama "Screen this whole support transcript before we publish it as a case study."
+```
+
+**Output:** the model's verdict as plain text — safe or unsafe, with the relevant policy categories when it detects a violation.
+
+It evaluates incoming prompts and generated responses, in multiple languages. At \$0.18 / \$0.18 per 1M input/output tokens it costs nine times `moderate` (`zlm-v1-moderation-edge`, \$0.02 / \$0.05) on input and under four times on output, so keep `moderate` for short passages and for OpenAI's 13-category envelope, and use this one when the text is longer or you want the violated policy categories named.
+
+---
+
 ### `/zerogpu-router:embed`
 
 Turn text into a 384-dimensional vector for semantic search, RAG retrieval, clustering, or deduplication.
@@ -805,7 +883,7 @@ Both cost \$0.004 per 1M input tokens, bill nothing on output, and return 384-di
 
 ## Skills reference
 
-Quick lookup table: all 21 skills at a glance.
+Quick lookup table: all 24 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -817,6 +895,7 @@ Quick lookup table: all 21 skills at a glance.
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (shows reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
 | `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
 | `/zerogpu-router:chat-deepseek <text>` | Coding and agentic chat via `deepseek-v4-flash-0731` (1M context) | `/zerogpu-router:chat-deepseek "Port this module to async/await."` |
+| `/zerogpu-router:chat-deepseek-v4-1-flash <text>` | V4.1 Flash: 1M context with higher-effort reasoning via `deepseek-v4.1-flash` | `/zerogpu-router:chat-deepseek-v4-1-flash "Plan the migration to the new billing API."` |
 | `/zerogpu-router:chat-glm <text>` | Most capable, 262K context via `glm-5.2` (~7x the cost) | `/zerogpu-router:chat-glm "Which services would a payments outage take down?"` |
 | `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification | `/zerogpu-router:classify-iab "The Lakers signed a new point guard."` |
 | `/zerogpu-router:classify-iab-enriched <text>` | IAB + topics/keywords/intent | `/zerogpu-router:classify-iab-enriched "Compare the Tesla Model Y and Hyundai Ioniq 5."` |
@@ -827,8 +906,10 @@ Quick lookup table: all 21 skills at a glance.
 | `/zerogpu-router:extract-pii <text>` | Extract PII entities (returns JSON) | `/zerogpu-router:extract-pii "Contact Jane at jane@example.com"` |
 | `/zerogpu-router:redact-pii <text>` | Mask PII in-line with `[LABEL]` placeholders | `/zerogpu-router:redact-pii "Email John at john@acme.com"` |
 | `/zerogpu-router:extract-json <text> -s '…'` | Schema-driven JSON extraction | `/zerogpu-router:extract-json "..." -s '{"contact":["name::str::Full name"]}'` |
+| `/zerogpu-router:extract-signals <text>` | Topics, keywords, intent and other contextual signals | `/zerogpu-router:extract-signals "How can I pay using my credit card?"` |
 | `/zerogpu-router:summarize <text>` | Summarize with `llama-3.1-8b-instruct-fast` | `/zerogpu-router:summarize "The board met Thursday to review Q3 results..."` |
 | `/zerogpu-router:moderate <text>` | Safety verdict across OpenAI's 13 categories | `/zerogpu-router:moderate "Screen this user comment before we publish it."` |
+| `/zerogpu-router:moderate-llama <text>` | Safe/unsafe verdict with policy categories via `llama-guard-4-12b` | `/zerogpu-router:moderate-llama "Screen this whole support transcript."` |
 | `/zerogpu-router:embed <text> [-m …]` | 384-dim embedding for search, RAG, dedupe | `/zerogpu-router:embed "ZeroGPU runs inference at the edge." -m bge-small-en-v1.5` |
 
 For the options the skills pass to the CLI (`-m`, `-i`, `--metadata`, `--raw`), run `zerogpu chat_completions --help`.
