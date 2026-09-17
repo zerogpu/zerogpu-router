@@ -11,7 +11,7 @@ Reports:
               file to update
   * ORPHAN  — a model a skill calls that the API does not return, plus every file to clean
   * COUNT   — a skill count that disagrees with agents/claude/skills
-  * NOTE    — an API model no skill calls (nothing to do: the sync never creates a skill)
+  * ADD     — an API model no skill calls, with the endpoint a new skill for it uses
 
 Read-only. Every finding is prose, so it is located for the caller to edit by hand.
 
@@ -103,6 +103,16 @@ def parse_skills(root):
                 models.setdefault(mid, endpoint)
         skills[name] = models
     return skills
+
+
+def endpoint_for(m):
+    """The CLI endpoint command a new skill for this API model runs."""
+    task = m.get("taskDisplayName") or ""
+    if task == "Text Embedding":
+        return "embeddings"
+    if task == "Text Moderation" or "moderation" in (m.get("modelType") or ""):
+        return "moderations"
+    return "chat_completions"
 
 
 def mentions(line, mid):
@@ -336,7 +346,8 @@ def main():
     called = plugin_ids | {s for s in successors.values() if s}
     for mid, m in api.items():
         if mid not in called and (not wanted or mid in wanted):
-            print(f"NOTE: {mid} ({m.get('taskDisplayName') or '?'}) — no skill calls it")
+            print(f"ADD: {mid} ({m.get('taskDisplayName') or '?'}) — no skill calls it; endpoint: {endpoint_for(m)}")
+            findings += 1
 
     print(f"\n{findings} finding(s).")
     return 1 if (args.strict and findings) else 0
