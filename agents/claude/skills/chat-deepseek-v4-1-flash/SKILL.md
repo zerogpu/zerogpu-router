@@ -1,6 +1,6 @@
 ---
 name: chat-deepseek-v4-1-flash
-description: Chat with deepseek-v4.1-flash, a sparse MoE model on DeepSeek's Causal Encoder-Decoder architecture (8B active on input, 16B on output) with a 1M-token context window. Use for large codebases, long documents, extended conversations, and multi-step agent tasks that want higher-effort reasoning or function calling. Costs about twice chat-deepseek on input and three times on output.
+description: Chat with deepseek-v4.1-flash, a sparse MoE model on DeepSeek's Causal Encoder-Decoder architecture (8B active on input, 16B on output) with a 1M-token context window. Use for large codebases, long documents, extended conversations, and multi-step agent tasks that want higher-effort reasoning or function calling. Costs about an eighth of chat-glm on input and a sixth on output, with four times its context.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu chat_completions *)
 ---
@@ -13,7 +13,7 @@ $ARGUMENTS
 ZGPU_END_OF_INPUT
 ```
 
-At \$0.30 / \$1.20 per 1M input/output tokens this is the pricier of the two 1M-context models on the platform — roughly twice `/zerogpu-router:chat-deepseek` on input and three times on output, and about a quarter of `/zerogpu-router:chat-glm` on input and a third on output. Prefer it when the task wants V4.1's higher-effort reasoning or function calling; for ordinary coding and agentic work at the same context size, `chat-deepseek` is cheaper.
+At \$0.14 / \$0.57 per 1M input/output tokens this is the middle of the three 1M-context models on the platform — about an eighth of `/zerogpu-router:chat-glm` on input and a sixth on output, and roughly half again as much as `/zerogpu-router:chat-glm-5-3-flash` on both. Prefer it when the task wants V4.1's higher-effort reasoning or function calling; for ordinary coding and agentic work at the same context size, `chat-glm-5-3-flash` is cheaper.
 
 Output is the assistant's answer as plain text — the model's reasoning trace comes back in a separate field and is not printed. Relay the answer as-is — do not rewrite or expand it.
 
