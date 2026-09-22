@@ -144,6 +144,10 @@ ZeroGPU Router exposes twenty-four auto-invoked skills: twenty-one task routes a
 | `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
 | `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash-0731` |
 | `chat-deepseek-v4-1-flash` | 1M-token context with higher-effort reasoning and function calling | `deepseek-v4.1-flash` |
+| `chat-glm-5-3-flash` | Coding and long-horizon agents, cheapest 1M-token context | `glm-5.3-flash` |
+| `chat-gpt-4-1-mini` | 1M-token context, instruction following and tool calling | `gpt-4.1-mini` |
+| `chat-gpt-5-6-luna` | Cost-optimized high-volume chat, 272K-token context | `gpt-5.6-luna` |
+| `chat-gpt-5-4-nano` | High-volume, latency-sensitive routing and extraction, 400K-token context | `gpt-5.4-nano` |
 | `chat-glm` | Most capable, 262K-token context, ~7x the cost | `glm-5.2` |
 | `summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
 

@@ -228,7 +228,7 @@ The default ZeroGPU chat skill. Handles work the 1.2B edge models can't carry (l
 
 **Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; Chat Completions returns it in a separate field, so only the final answer is printed.
 
-Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts. When the input exceeds this model's 131K context, use `chat-deepseek` for code and agentic work or `chat-glm` for the most capable option — `deepseek-v4-flash-0731` carries a 1M-token context, `glm-5.2` a 262K one.
+Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts. When the input exceeds this model's 131K context, use `chat-glm-5-3-flash` or `chat-deepseek-v4-1-flash` for code and agentic work or `chat-glm` for the most capable option — `glm-5.3-flash` and `deepseek-v4.1-flash` each carry a 1M-token context, `glm-5.2` a 262K one.
 
 ---
 
@@ -304,39 +304,13 @@ Heavier chat tuned for multilingual work: 100+ languages, useful when the prompt
 
 ---
 
-### `/zerogpu-router:chat-deepseek`
-
-Coding and agentic chat with a 1M-token context: reading or writing code across a large codebase, porting and refactoring, planning multi-step automation.
-
-- **Model:** `deepseek-v4-flash-0731` (284B MoE, 13B active per token, 1,048,576-token context)
-- **Wraps:** `zerogpu chat_completions -m deepseek-v4-flash-0731`
-- **When Claude auto-invokes:** code-heavy prompts, repo-scale questions, multi-step tool-use planning — especially when the input is too large for `chat`'s 131K context.
-
-**Synopsis**
-
-```
-/zerogpu-router:chat-deepseek <text>
-```
-
-**Example**
-
-```text
-/zerogpu-router:chat-deepseek Port this callback-based module to async/await and flag any behaviour changes.
-```
-
-**Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
-
-At \$0.16 / \$0.38 per 1M input/output tokens this is the cheaper of the two 1M-context models on the platform — about a seventh of `chat-glm` on input and a ninth on output. Prefer it when the task is code or tool-use rather than sheer input size.
-
----
-
 ### `/zerogpu-router:chat-deepseek-v4-1-flash`
 
-The V4.1 Flash line: the same 1M-token context as `chat-deepseek`, on DeepSeek's Causal Encoder-Decoder architecture, with function calling and a higher-effort reasoning mode alongside fast non-thinking replies.
+The V4.1 Flash line: a 1M-token context on DeepSeek's Causal Encoder-Decoder architecture, with function calling and a higher-effort reasoning mode alongside fast non-thinking replies.
 
 - **Model:** `deepseek-v4.1-flash` (sparse MoE, 8B active on input and 16B on output, 1,048,576-token context)
 - **Wraps:** `zerogpu chat_completions -m deepseek-v4.1-flash`
-- **When Claude auto-invokes:** large codebases, long documents, extended conversations, and multi-step agent tasks where the extra reasoning effort or function calling is worth the higher price.
+- **When Claude auto-invokes:** large codebases, long documents, extended conversations, and multi-step agent tasks where the extra reasoning effort or function calling is worth it.
 
 **Synopsis**
 
@@ -352,7 +326,111 @@ The V4.1 Flash line: the same 1M-token context as `chat-deepseek`, on DeepSeek's
 
 **Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
-At \$0.30 / \$1.20 per 1M input/output tokens this is the pricier of the two 1M-context models — roughly twice `chat-deepseek` on input and three times on output, and about a quarter of `chat-glm` on input and a third on output. For ordinary coding and agentic work at the same context size, `chat-deepseek` is cheaper.
+At \$0.14 / \$0.57 per 1M input/output tokens this is the middle of the three 1M-context models — about an eighth of `chat-glm` on input and a sixth on output, and roughly half again as much as `chat-glm-5-3-flash` on both. For ordinary coding and agentic work at the same context size, `chat-glm-5-3-flash` is cheaper.
+
+---
+
+### `/zerogpu-router:chat-glm-5-3-flash`
+
+Z.ai's efficient open-weight model for coding and long-horizon agent work: hybrid sparse and linear attention over a 1M-token context, with function calling and adjustable reasoning effort.
+
+- **Model:** `glm-5.3-flash` (1,048,576-token context)
+- **Wraps:** `zerogpu chat_completions -m glm-5.3-flash`
+- **When Claude auto-invokes:** repo-scale code questions, long documents, and multi-step agent runs where the input is too large for `chat`'s 131K context and price matters.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-glm-5-3-flash <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-glm-5-3-flash Here is the whole service package. Plan the migration to the new billing API, step by step.
+```
+
+**Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
+
+At \$0.10 / \$0.35 per 1M input/output tokens this is the cheapest of the three 1M-context models — about an eleventh of `chat-glm` on input and a tenth on output, and roughly two thirds of `chat-deepseek-v4-1-flash` on both.
+
+---
+
+### `/zerogpu-router:chat-gpt-4-1-mini`
+
+OpenAI's fast, cost-efficient GPT-4.1 model: strong instruction following and tool calling across a 1M-token context at low latency.
+
+- **Model:** `gpt-4.1-mini` (1,047,576-token context)
+- **Wraps:** `zerogpu chat_completions -m gpt-4.1-mini`
+- **When Claude auto-invokes:** very large inputs where instruction fidelity, function calling, or structured outputs matter more than price.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-gpt-4-1-mini <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-gpt-4-1-mini Here is our full API spec. Generate a typed client, following the conventions in the existing SDK verbatim.
+```
+
+**Output:** the assistant's answer as plain text.
+
+At \$0.40 / \$1.60 per 1M input/output tokens this is the priciest of the three 1M-context models — four times `chat-glm-5-3-flash` on input and over four times on output, and roughly three times `chat-deepseek-v4-1-flash` on both. It is still about a third of `chat-glm` on input and under half on output, with four times its context.
+
+---
+
+### `/zerogpu-router:chat-gpt-5-6-luna`
+
+The cost-optimized model of OpenAI's GPT-5.6 family, for cost-sensitive, high-volume work: adjustable reasoning effort, function calling, and structured outputs over a 272K-token context.
+
+- **Model:** `gpt-5.6-luna` (272,000-token context)
+- **Wraps:** `zerogpu chat_completions -m gpt-5.6-luna`
+- **When Claude auto-invokes:** high-volume coding, chat, reasoning, RAG, summarization, and translation work that exceeds `chat`'s 131K context.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-gpt-5-6-luna <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-gpt-5-6-luna Summarize this quarter's full incident log and group the incidents by root cause.
+```
+
+**Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
+
+At \$0.20 / \$1.20 per 1M input/output tokens it costs about a fifth of `chat-glm` on input and a third on output, over a 272K window slightly larger than `glm-5.2`'s 262K. For a prompt that fits in 131K tokens, `chat` is cheaper on both.
+
+---
+
+### `/zerogpu-router:chat-gpt-5-4-nano`
+
+The most cost-efficient model in OpenAI's GPT-5.4 family, built for high-volume and latency-sensitive work — classification, extraction, routing, sub-agent tasks — with function calling and structured outputs.
+
+- **Model:** `gpt-5.4-nano` (400,000-token context)
+- **Wraps:** `zerogpu chat_completions -m gpt-5.4-nano`
+- **When Claude auto-invokes:** throughput- and latency-sensitive prompts, routing and sub-agent steps, or extraction over inputs too large for `chat`'s 131K context.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-gpt-5-4-nano <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-gpt-5-4-nano Route each of these 200 support tickets to the right queue and return one line per ticket.
+```
+
+**Output:** the assistant's answer as plain text.
+
+At \$0.20 / \$1.25 per 1M input/output tokens it matches `chat-gpt-5-6-luna` on input and costs marginally more on output, over a 400K window rather than 272K. It is about a fifth of `chat-glm` on input and a third on output.
 
 ---
 
@@ -883,7 +961,7 @@ Both cost \$0.004 per 1M input tokens, bill nothing on output, and return 384-di
 
 ## Skills reference
 
-Quick lookup table: all 24 skills at a glance.
+Quick lookup table: all 27 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -894,8 +972,11 @@ Quick lookup table: all 24 skills at a glance.
 | `/zerogpu-router:chat-liquid <text>` | Fastest, cheapest chat via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat-liquid "Explain WebSockets in two sentences."` |
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (shows reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
 | `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
-| `/zerogpu-router:chat-deepseek <text>` | Coding and agentic chat via `deepseek-v4-flash-0731` (1M context) | `/zerogpu-router:chat-deepseek "Port this module to async/await."` |
 | `/zerogpu-router:chat-deepseek-v4-1-flash <text>` | V4.1 Flash: 1M context with higher-effort reasoning via `deepseek-v4.1-flash` | `/zerogpu-router:chat-deepseek-v4-1-flash "Plan the migration to the new billing API."` |
+| `/zerogpu-router:chat-glm-5-3-flash <text>` | Cheapest 1M context, coding and long-horizon agents via `glm-5.3-flash` | `/zerogpu-router:chat-glm-5-3-flash "Plan the migration to the new billing API."` |
+| `/zerogpu-router:chat-gpt-4-1-mini <text>` | 1M context with strong instruction following and tool calling via `gpt-4.1-mini` | `/zerogpu-router:chat-gpt-4-1-mini "Generate a typed client from this API spec."` |
+| `/zerogpu-router:chat-gpt-5-6-luna <text>` | Cost-optimized GPT-5.6, 272K context via `gpt-5.6-luna` | `/zerogpu-router:chat-gpt-5-6-luna "Summarize this quarter's incident log."` |
+| `/zerogpu-router:chat-gpt-5-4-nano <text>` | High-volume, latency-sensitive routing and extraction, 400K context via `gpt-5.4-nano` | `/zerogpu-router:chat-gpt-5-4-nano "Route each of these tickets to a queue."` |
 | `/zerogpu-router:chat-glm <text>` | Most capable, 262K context via `glm-5.2` (~7x the cost) | `/zerogpu-router:chat-glm "Which services would a payments outage take down?"` |
 | `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification | `/zerogpu-router:classify-iab "The Lakers signed a new point guard."` |
 | `/zerogpu-router:classify-iab-enriched <text>` | IAB + topics/keywords/intent | `/zerogpu-router:classify-iab-enriched "Compare the Tesla Model Y and Hyundai Ioniq 5."` |

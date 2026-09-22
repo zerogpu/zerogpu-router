@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.2.0
+
+Model catalog sync against the dashboard API. The API stopped serving `deepseek-v4-flash-0731`, so `chat-deepseek` is gone — every call it made already failed — and four models the API serves had no skill calling them, so four chat skills are new. `chat-deepseek-v4-1-flash` was also advertising roughly twice its real price, which steered Claude away from it: it is one of the cheapest long-context options on the platform, not the pricier one. Skill names and outputs are unchanged apart from the notes below.
+
+### Added
+
+- **`chat-glm-5-3-flash`.** Calls `glm-5.3-flash`, Z.ai's efficient open-weight model for coding and long-horizon agent tasks, whose hybrid sparse and linear attention holds a 1,048,576-token context with function calling and adjustable reasoning effort. At \$0.10 / \$0.35 per 1M input/output tokens it is the cheapest of the three 1M-context models — about an eleventh of `chat-glm` on input and a tenth on output — and it takes over the long-context coding pointers `chat-deepseek` used to carry.
+- **`chat-gpt-4-1-mini`.** Calls `gpt-4.1-mini`, OpenAI's fast, cost-efficient GPT-4.1 model, strong at instruction following and tool calling across a 1,047,576-token context at low latency. At \$0.40 / \$1.60 per 1M input/output tokens it is the priciest of the three 1M-context models, still about a third of `chat-glm` on input and under half on output.
+- **`chat-gpt-5-6-luna`.** Calls `gpt-5.6-luna`, the cost-optimized model of OpenAI's GPT-5.6 family, with adjustable reasoning effort, function calling, and structured outputs over a 272,000-token context. \$0.20 / \$1.20 per 1M input/output tokens, for cost-sensitive high-volume work that does not fit in `chat`'s 131K window.
+- **`chat-gpt-5-4-nano`.** Calls `gpt-5.4-nano`, the most cost-efficient model in OpenAI's GPT-5.4 family, built for high-volume and latency-sensitive work — classification, extraction, routing, sub-agent tasks — with function calling and structured outputs over a 400,000-token context. \$0.20 / \$1.25 per 1M input/output tokens, matching `chat-gpt-5-6-luna` on input over a larger window.
+- Skill count goes from 23 to 27 with these four — 24 to 27 net of the removal below.
+
+### Changed
+
+- **`chat-deepseek-v4-1-flash`: \$0.14 / \$0.57 per 1M input/output tokens, not \$0.30 / \$1.20.** Corrected in its description, which Claude matches on, and in the README. It is no longer "the pricier of the two 1M-context models" but the middle of three: about an eighth of `chat-glm` on input and a sixth on output, and roughly half again as much as `chat-glm-5-3-flash`.
+- **`chat` and `chat-glm` point past 131K and 262K at the new long-context skills.** Both used to send overflow to `chat-deepseek`; they now name `chat-glm-5-3-flash` and `chat-deepseek-v4-1-flash`, which each hold four times `chat-glm`'s context. `chat-glm`'s own numbers are unchanged — 753B, a 262,144-token context, \$1.10 / \$3.50 per 1M input/output tokens, still the most expensive model on the platform.
+
+### Removed
+
+- **`chat-deepseek`.** `deepseek-v4-flash-0731` is no longer served by the ZeroGPU API, so the skill failed on every call. For coding and agentic work at a 1M-token context, use `chat-glm-5-3-flash` or `chat-deepseek-v4-1-flash`. Skill count goes from 24 to 23 before the additions above.
+
 ## 3.1.0
 
 Model catalog sync against the dashboard API. Three models the API serves had no skill calling them, so three skills are new: `chat-deepseek-v4-1-flash` for the V4.1 Flash line, `moderate-llama` for Meta's Llama Guard safety classifier, and `extract-signals` for one-call contextual enrichment. Every price, context window, and parameter count the plugin already stated still matches what the API serves, and `chat-deepseek` remains the cheaper of the two 1M-context models. Skill names and outputs are unchanged apart from the notes below.
