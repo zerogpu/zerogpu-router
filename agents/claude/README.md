@@ -2,7 +2,7 @@
 
 Offload cheap, well-defined NLP tasks (classification, summarization, entity & JSON extraction, transcription and speech, short chat) from Claude to ZeroGPU's edge-optimized small language models, directly from your Claude Code session.
 
-Every ZeroGPU task is exposed as a Claude Code skill. Each skill names its own model and calls the `zerogpu` CLI's model-agnostic endpoint commands (`chat_completions`, `moderations`, `embeddings`), so the plugin keeps working when the CLI's model list changes. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
+Every ZeroGPU task is exposed as a Claude Code skill. Each skill names its own model and calls the `zerogpu` CLI's model-agnostic endpoint commands (`chat_completions`, `moderations`, `embeddings`), so the plugin keeps working when the CLI's model list changes. Claude auto-invokes the right skill when your request matches (e.g. "extract the people and companies from this", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
 
 ---
 
@@ -197,7 +197,7 @@ Routed calls:     58
 Since:            Apr 12, 2026
 ```
 
-Every routed call (chat, classify, extract, redact, summarize, …) records the frontier-model tokens it offloaded and the estimated dollars saved, persisted in `~/.zerogpu/savings.json` alongside your credentials. **Token counts are actual** (the API's usage report). The **dollar figure is a rounded estimate** of the frontier-model spend avoided: what those exact tokens would have cost on the baseline model minus the real ZeroGPU cost. The baseline defaults to `claude-opus-4-8` and is overridable via the `ZEROGPU_SAVINGS_MODEL` environment variable (e.g. `claude-sonnet-4-6`).
+Every routed call (chat, classify, extract, summarize, …) records the frontier-model tokens it offloaded and the estimated dollars saved, persisted in `~/.zerogpu/savings.json` alongside your credentials. **Token counts are actual** (the API's usage report). The **dollar figure is a rounded estimate** of the frontier-model spend avoided: what those exact tokens would have cost on the baseline model minus the real ZeroGPU cost. The baseline defaults to `claude-opus-4-8` and is overridable via the `ZEROGPU_SAVINGS_MODEL` environment variable (e.g. `claude-sonnet-4-6`).
 
 You don't have to ask: after some responses a short `💰 ZeroGPU savings so far: …` note appears automatically on a balanced cadence (≈ once every 4–5 routed calls, never twice in a row) so the running total stays visible without nagging.
 
@@ -305,11 +305,11 @@ Heavier chat tuned for multilingual work: 100+ languages, useful when the prompt
 
 ### `/zerogpu-router:chat-qwen3-6-35b-a3b`
 
-A fast, open-weight multimodal model for work that spans text, images, and video: visual question answering, document and screenshot analysis, video understanding, and tool calling.
+A fast, open-weight Mixture-of-Experts model with structured output and tool calling, over the smallest context window of the chat models.
 
 - **Model:** `qwen3.6-35b-a3b` (35B Mixture-of-Experts, 16,384-token context)
 - **Wraps:** `zerogpu chat_completions -m qwen3.6-35b-a3b`
-- **When Claude auto-invokes:** prompts that involve images, screenshots, documents, or video alongside text, and agent workflows over multimodal content.
+- **When Claude auto-invokes:** content extraction and agent workflows over a passage that fits in 16K tokens, where structured output or tool calling matters.
 
 **Synopsis**
 
@@ -320,12 +320,12 @@ A fast, open-weight multimodal model for work that spans text, images, and video
 **Example**
 
 ```text
-/zerogpu-router:chat-qwen3-6-35b-a3b Here is the dashboard screenshot. Which panel is reporting the regression, and what does its axis say?
+/zerogpu-router:chat-qwen3-6-35b-a3b Pull the owner, severity, and next action out of each incident note below, as JSON.
 ```
 
 **Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
-At \$0.20 / \$1.50 per 1M input/output tokens it costs twice `chat-qwen` on input and over three times on output, over half its context, so reach for it when the task actually involves images or video. Its 16,384-token window is the smallest of the chat models.
+At \$0.20 / \$1.50 per 1M input/output tokens it costs twice `chat-qwen` on input and over three times on output, over half its context, so `chat-qwen` is the better default for text. Its 16,384-token window is the smallest of the chat models. The model accepts images and video, but this skill sends the request as text through `chat_completions`, so image and video prompts are out of its reach.
 
 ---
 
@@ -461,7 +461,7 @@ At \$0.20 / \$1.25 per 1M input/output tokens it matches `chat-gpt-5-6-luna` on 
 
 ### `/zerogpu-router:chat-gpt-6-luna`
 
-The most efficient model of OpenAI's GPT-6 family, built for high-volume, cost-sensitive work: reads text and images, with adjustable reasoning effort, function calling, and structured outputs over a 272K-token context.
+The most efficient model of OpenAI's GPT-6 family, built for high-volume, cost-sensitive work: adjustable reasoning effort, function calling, and structured outputs over a 272K-token context.
 
 - **Model:** `gpt-6-luna` (272,000-token context)
 - **Wraps:** `zerogpu chat_completions -m gpt-6-luna`
@@ -1050,18 +1050,20 @@ Turn speech into text with the smallest model in the Whisper family, for high-vo
 **Synopsis**
 
 ```
-/zerogpu-router:transcribe <audio>
+/zerogpu-router:transcribe <request>
 ```
 
 **Example**
 
 ```text
-/zerogpu-router:transcribe Transcribe the attached standup recording.
+/zerogpu-router:transcribe Transcribe this call segment.
 ```
 
-**Output:** the transcript as plain text.
+**Output:** the model's response as the API returns it.
 
-It recognizes speech across many languages and can translate speech into English. At \$0.02 per minute of audio it is priced for high-volume transcription and bills nothing per token. It is the only speech-to-text model on the platform.
+It recognizes speech across many languages and can translate speech into English. At \$0.02 per minute of audio it is priced for high-volume transcription and bills nothing per token.
+
+This skill sends the request as text, which is what `zerogpu chat_completions` carries, so it cannot upload a recording on its own: the audio has to be supplied in the form the ZeroGPU API accepts for this model. See [docs.zerogpu.ai](https://docs.zerogpu.ai).
 
 ---
 
@@ -1085,7 +1087,7 @@ Generate speech from text, with expressive delivery and voice cloning, at low la
 /zerogpu-router:speak Read this release note aloud so I can check how it sounds.
 ```
 
-**Output:** the model's response carrying the generated audio. The raw payload is binary or encoded audio and is not printed.
+**Output:** the model's response as the API returns it. An encoded audio payload is not printed back to the user. `zerogpu chat_completions` writes to stdout and takes no output-file option, so this skill does not save a playable file.
 
 At \$0.01 per minute of generated audio it is the cheapest audio model on the platform and bills nothing per token.
 
@@ -1104,7 +1106,7 @@ Quick lookup table: all 32 skills at a glance.
 | `/zerogpu-router:chat-liquid <text>` | Fastest, cheapest chat via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat-liquid "Explain WebSockets in two sentences."` |
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (shows reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
 | `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
-| `/zerogpu-router:chat-qwen3-6-35b-a3b <text>` | Multimodal chat over text, images, and video via `qwen3.6-35b-a3b` | `/zerogpu-router:chat-qwen3-6-35b-a3b "Which panel in this screenshot shows the regression?"` |
+| `/zerogpu-router:chat-qwen3-6-35b-a3b <text>` | 35B MoE chat with structured output and tool calling via `qwen3.6-35b-a3b` | `/zerogpu-router:chat-qwen3-6-35b-a3b "Pull owner and severity out of each incident note, as JSON."` |
 | `/zerogpu-router:chat-deepseek-v4-1-flash <text>` | V4.1 Flash: 1M context with higher-effort reasoning via `deepseek-v4.1-flash` | `/zerogpu-router:chat-deepseek-v4-1-flash "Plan the migration to the new billing API."` |
 | `/zerogpu-router:chat-glm-5-3-flash <text>` | Cheapest 1M context, coding and long-horizon agents via `glm-5.3-flash` | `/zerogpu-router:chat-glm-5-3-flash "Plan the migration to the new billing API."` |
 | `/zerogpu-router:chat-gpt-4-1-mini <text>` | 1M context with strong instruction following and tool calling via `gpt-4.1-mini` | `/zerogpu-router:chat-gpt-4-1-mini "Generate a typed client from this API spec."` |
@@ -1127,7 +1129,7 @@ Quick lookup table: all 32 skills at a glance.
 | `/zerogpu-router:moderate <text>` | Safety verdict across OpenAI's 13 categories | `/zerogpu-router:moderate "Screen this user comment before we publish it."` |
 | `/zerogpu-router:moderate-llama <text>` | Safe/unsafe verdict with policy categories via `llama-guard-4-12b` | `/zerogpu-router:moderate-llama "Screen this whole support transcript."` |
 | `/zerogpu-router:embed <text> [-m …]` | 384-dim embedding for search, RAG, dedupe | `/zerogpu-router:embed "ZeroGPU runs inference at the edge." -m bge-small-en-v1.5` |
-| `/zerogpu-router:transcribe <audio>` | Speech to text via `whisper-tiny` | `/zerogpu-router:transcribe "Transcribe the attached standup recording."` |
+| `/zerogpu-router:transcribe <request>` | Speech to text via `whisper-tiny` | `/zerogpu-router:transcribe "Transcribe this call segment."` |
 | `/zerogpu-router:speak <text>` | Text to speech via `chatterbox-nano` | `/zerogpu-router:speak "Read this release note aloud."` |
 
 For the options the skills pass to the CLI (`-m`, `-i`, `--metadata`, `--raw`), run `zerogpu chat_completions --help`.

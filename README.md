@@ -84,7 +84,7 @@ Next: loop in support leadership, send an updated enterprise quote by Friday.
 
 ## Claude Code quick start
 
-The Claude Code plugin ships 32 skills: 29 inference skills that Claude auto-invokes when your request matches ("summarize this", "redact the PII", "classify by sentiment and topic"), plus the manual `signin`, `status`, and `cost-savings` skills. You can also call any skill manually with `/zerogpu-router:<name>`. Run `/zerogpu-router:cost-savings` anytime to see how much you've saved by routing trivial work to ZeroGPU.
+The Claude Code plugin ships 32 skills: 29 inference skills that Claude auto-invokes when your request matches ("summarize this", "extract the people and companies from this", "classify by sentiment and topic"), plus the manual `signin`, `status`, and `cost-savings` skills. You can also call any skill manually with `/zerogpu-router:<name>`. Run `/zerogpu-router:cost-savings` anytime to see how much you've saved by routing trivial work to ZeroGPU.
 
 Grab a ZeroGPU API key at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 

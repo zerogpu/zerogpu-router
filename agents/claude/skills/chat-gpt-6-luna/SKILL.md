@@ -1,6 +1,6 @@
 ---
 name: chat-gpt-6-luna
-description: Chat with gpt-6-luna, the most efficient model of OpenAI's GPT-6 family, which reads text and images across a 272K-token context window with adjustable reasoning effort, function calling, and structured outputs. Use for high-volume, cost-sensitive coding, chat, reasoning, RAG, summarization, and translation work. Half the price of chat-gpt-5-6-luna on input over the same context.
+description: Chat with gpt-6-luna, the most efficient model of OpenAI's GPT-6 family, built for high-volume, cost-sensitive work, with a 272K-token context window, adjustable reasoning effort, function calling, and structured outputs. Use for high-volume, cost-sensitive coding, chat, reasoning, RAG, summarization, and translation work. Half the price of chat-gpt-5-6-luna on input over the same context.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu chat_completions *)
 ---

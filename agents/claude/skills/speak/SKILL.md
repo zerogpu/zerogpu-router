@@ -13,8 +13,8 @@ $ARGUMENTS
 ZGPU_END_OF_INPUT
 ```
 
-Output is the model's response carrying the generated audio. Say what was synthesized and where the audio came back — do not print the raw payload, which is binary or encoded audio.
+Output is the model's response as the API returns it. Report what was synthesized and relay the response's own reference to the audio — do not print an encoded audio payload back to the user.
 
-At \$0.01 per minute of generated audio it is the cheapest audio model on the platform and bills nothing per token. For the other direction, `/zerogpu-router:transcribe` turns speech into text.
+At \$0.01 per minute of generated audio it is the cheapest audio model on the platform and bills nothing per token. `zerogpu chat_completions` writes the response to stdout and takes no output-file option, so this skill does not save a playable file; if the user needs one, say so rather than reporting a path that does not exist. For the other direction, `/zerogpu-router:transcribe` is the speech-to-text route.
 
 Savings note: only if the command output literally contains a line starting with `💰 ZeroGPU savings`, append that exact line, unchanged, as the last line of your reply. If no such line is present, say nothing about savings and do not mention or suggest `/zerogpu-router:cost-savings` — this note is intentionally occasional, not shown every time.
