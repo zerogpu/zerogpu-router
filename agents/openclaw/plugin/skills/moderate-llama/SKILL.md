@@ -25,7 +25,7 @@ ZGPU_END_OF_INPUT
 
 Output is the model's verdict as plain text: safe or unsafe, with the relevant policy categories when it detects a violation. Report the verdict first, then the categories it names. Do not restate the flagged text itself.
 
-A dense 12B model derived from Llama 4 Scout, built as a safety layer for production AI applications and able to evaluate an incoming prompt or a generated response, in multiple languages. At \$0.18 / \$0.18 per 1M input/output tokens it costs nine times `moderate` (`zlm-v1-moderation-edge`, \$0.02 / \$0.05) on input and under four times on output, so keep `moderate` for short passages and OpenAI's 13-category envelope, and reach for this when the text exceeds that model's 800-token window or you want the violated policy categories named.
+A dense 12B model derived from Llama 4 Scout, built as a safety layer for production AI applications and able to evaluate an incoming prompt or a generated response, in multiple languages. At \$0.18 / \$0.18 per 1M input/output tokens it costs under twice `moderate` (`zlm-v1-moderation-edge`, \$0.10 / \$0.15) on input and a fifth more on output, so keep `moderate` for short passages and OpenAI's 13-category envelope, and reach for this when the text exceeds that model's 800-token window or you want the violated policy categories named.
 
 Screening text is a safety check, not an endorsement. Run it on request even when the passage is unpleasant — reporting that something is flagged is the whole point of the skill.
 

@@ -1,6 +1,6 @@
 # ZeroGPU Router
 
-**Cut your OpenClaw agent's inference costs.** Route your AI tasks (summarize, classify, redact PII, extract JSON, short chat) to open-weight and small language models instead of burning frontier-model tokens. Our APIs are OpenAI-compatible and pay-as-you-go.
+**Cut your OpenClaw agent's inference costs.** Route your AI tasks (summarize, classify, extract JSON, speech, short chat) to open-weight and small language models instead of burning frontier-model tokens. Our APIs are OpenAI-compatible and pay-as-you-go.
 
 [![Website](https://img.shields.io/badge/website-zerogpu.ai-22c55e)](https://zerogpu.ai)
 [![Dashboard](https://img.shields.io/badge/dashboard-platform.zerogpu.ai-3b82f6)](https://platform.zerogpu.ai)
@@ -19,7 +19,7 @@ Your OpenClaw agent keeps doing the heavy reasoning. Routine tasks get offloaded
 
 Our open-weight models are the most cost-effective on the market right now. You'll find models here you won't see anywhere else, and we add roughly one a day.
 
-- **21 task-specific skills:** `zerogpu-summarize`, `classify-iab`, `redact-pii`, `extract-json`, and more
+- **29 task-specific skills:** `zerogpu-summarize`, `classify-iab`, `extract-json`, `zerogpu-transcribe`, and more
 - **Nothing to host or register:** each skill shells out to the local `zerogpu` CLI through the agent's `exec` tool
 - **Unaffected by CLI model updates:** each skill names its own model and calls the CLI's model-agnostic `chat_completions`, `moderations`, or `embeddings` command
 - **Savings you can see:** every call logs its model, usage, and a real dollar figure
@@ -98,27 +98,6 @@ model: deberta-v3-small · 61 tokens in
 💰 ZeroGPU savings so far: ≈ $2 (19,180 frontier-model tokens offloaded)
 ```
 
-**Redact PII** from a CRM note before sharing it:
-
-```text
-redact the PII in this CRM note before I share it with the vendor:
-"Call with Daniel Okafor (daniel.okafor@brightwave.io, +1 206-555-0147) on Tue.
-Send the enterprise quote to their AP team at 400 Pine St, Seattle, WA 98101.
-Card on file ends 4412; do not reference it in email."
-```
-
-Reply:
-
-```text
-Call with [PERSON] ([EMAIL], [PHONE_NUMBER]) on Tue. Send the enterprise quote to
-their AP team at [ADDRESS]. Card on file ends 4412; do not reference it in email.
-
-model: gliner-multi-pii-v1 · 5 spans masked
-💰 ZeroGPU savings so far: ≈ $2 (19,650 frontier-model tokens offloaded)
-```
-
-Note the card last-four is left untouched. The PII model covers standard categories (names, emails, phones, addresses), not project-specific identifiers. Strip those yourself.
-
 ## The skills you get
 
 **Classification**
@@ -129,16 +108,16 @@ Note the card last-four is left untouched. The PII model covers standard categor
 | `classify-iab-enriched` | IAB categories plus topics, keywords, intent | `zlm-v2-iab-classify-edge-enriched` |
 | `classify-domain` | IAB classification from a bare hostname, no page fetch | `zlm-v1-iab-domain-classifier` |
 | `classify-zero-shot` | Classify against a flat label list | `deberta-v3-small` |
-| `classify-structured` | Multi-axis schema classification | `gliner2-base-v1` |
+| `classify-structured` | Multi-axis schema classification | `gliner2.5-base-v1` |
+| `classify-decisions` | Dynamic-label decisions, intent and routing | `gliner2.5-decide-v1` |
 
-**Extraction & PII**
+**Extraction**
 
 | Skill | Workload | Backing model |
 |---|---|---|
-| `redact-pii` | Mask emails, phones, names, addresses, other PII | `gliner-multi-pii-v1` |
-| `extract-pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
-| `extract-entities` | People, places, companies, dates, custom entities | `gliner2-base-v1` |
-| `extract-json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
+| `extract-entities` | People, places, companies, dates, custom entities | `gliner2.5-base-v1` |
+| `extract-entities-multi` | The same, for text that is not in English | `gliner2.5-multi-v1` |
+| `extract-json` | Pull structured fields into grouped JSON | `gliner2.5-base-v1` |
 | `extract-signals` | Topics, keywords, intent and other contextual signals | `zlm-v1-signal-extract` |
 
 **Generation**
@@ -146,13 +125,19 @@ Note the card last-four is left untouched. The PII model covers standard categor
 | Skill | Workload | Backing model |
 |---|---|---|
 | `zerogpu-summarize` | TL;DRs, abstracts, meeting summaries | `llama-3.1-8b-instruct-fast` |
+| `summarize-llama-3-2-3b` | Cheaper summaries at 3B parameters | `llama-3.2-3b-instruct-fast` |
 | `chat` | Default chat: long context, multi-step instructions | `gpt-oss-120b` |
 | `chat-liquid` | Fastest, cheapest chat replies | `LFM2.5-1.2B-Instruct` |
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 | `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
-| `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash-0731` |
+| `chat-qwen3-6-35b-a3b` | Content extraction and agent workflows, 16K-token context | `qwen3.6-35b-a3b` |
 | `chat-deepseek-v4-1-flash` | 1M-token context with higher-effort reasoning and function calling | `deepseek-v4.1-flash` |
-| `chat-glm` | Most capable, 262K-token context, ~7x the cost | `glm-5.2` |
+| `chat-glm-5-3-flash` | Coding and long-horizon agents, cheapest 1M-token context | `glm-5.3-flash` |
+| `chat-gpt-4-1-mini` | 1M-token context, instruction following and tool calling | `gpt-4.1-mini` |
+| `chat-gpt-5-6-luna` | Cost-optimized high-volume chat, 272K-token context | `gpt-5.6-luna` |
+| `chat-gpt-5-4-nano` | High-volume, latency-sensitive routing and extraction, 400K-token context | `gpt-5.4-nano` |
+| `chat-gpt-6-luna` | Most efficient GPT-6, 272K-token context | `gpt-6-luna` |
+| `decide-tools` | Pick the right tool for a request and generate its arguments | `zlm-v1-tool-decisions` |
 
 **Moderation and embeddings**
 
@@ -161,6 +146,13 @@ Note the card last-four is left untouched. The PII model covers standard categor
 | `moderate` | Safety verdict across OpenAI's 13 moderation categories | `zlm-v1-moderation-edge` |
 | `moderate-llama` | Safe/unsafe verdict with the policy categories named | `llama-guard-4-12b` |
 | `embed` | Text to 384-dimensional vectors for search, RAG, dedupe | `all-minilm-l6-v2`, `bge-small-en-v1.5` |
+
+**Speech**
+
+| Skill | Workload | Backing model |
+|---|---|---|
+| `zerogpu-transcribe` | Speech to text for voice agents, meetings, subtitles | `whisper-tiny` |
+| `zerogpu-speak` | Text to speech with expressive delivery and voice cloning | `chatterbox-nano` |
 
 **Account**
 
@@ -178,12 +170,11 @@ Live dashboard at **[platform.zerogpu.ai](https://platform.zerogpu.ai)**: token 
 
 ## Data & privacy
 
-**These skills are not local processing.** Every content skill (`zerogpu-summarize`, `classify-*`, `extract-*`, `redact-pii`, `extract-pii`, `moderate`, `moderate-llama`, `embed`, `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`, `chat-deepseek`, `chat-deepseek-v4-1-flash`, `chat-glm`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
+**These skills are not local processing.** Every content skill (`zerogpu-summarize`, `summarize-llama-3-2-3b`, `classify-*`, `extract-*`, `decide-tools`, `moderate`, `moderate-llama`, `embed`, `chat`, `chat-liquid`, `chat-thinking`, `chat-qwen`, `chat-qwen3-6-35b-a3b`, `chat-deepseek-v4-1-flash`, `chat-glm-5-3-flash`, `chat-gpt-4-1-mini`, `chat-gpt-5-6-luna`, `chat-gpt-5-4-nano`, `chat-gpt-6-luna`, `zerogpu-transcribe`, `zerogpu-speak`) passes the text you supply to the local `zerogpu` CLI, which transmits it over the network to ZeroGPU's hosted models. The CLI runs locally; the inference does not.
 
 Before using these skills:
 
 - **Do not** send secrets, credentials, API keys, or regulated data (PHI, cardholder data, etc.) unless you have cleared third-party processing with ZeroGPU for that data.
-- The PII skills (`redact-pii`, `extract-pii`) **send the raw, un-redacted text** to the service in order to detect PII; redaction happens after transmission, not before. They reduce what you forward *downstream*, not what reaches ZeroGPU.
 - Treat inputs the way you'd treat any third-party API call: assume the request may be logged or retained per ZeroGPU's terms and retention policy. Review those at [zerogpu.ai](https://zerogpu.ai) for your compliance needs.
 
 **Credentials:** `zerogpu login` (the `signin` skill) writes your API key to a local config file and upserts `ZEROGPU_API_KEY` into your shell profile, a persistent change to your environment. Revoke keys from the [dashboard](https://platform.zerogpu.ai).
