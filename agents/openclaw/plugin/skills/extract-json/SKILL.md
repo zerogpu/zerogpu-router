@@ -1,6 +1,6 @@
 ---
 name: extract-json
-description: Schema-driven structured JSON extraction (gliner2-base-v1). Use when the user wants to pull specific named fields out of free text into a JSON object — contact info, invoice details, order data, profile attributes — defined by a per-field type/description schema.
+description: Schema-driven structured JSON extraction (gliner2.5-base-v1). Use when the user wants to pull specific named fields out of free text into a JSON object — contact info, invoice details, order data, profile attributes — defined by a per-field type/description schema.
 argument-hint: "<text> -s '<json schema>'"
 allowed-tools: Bash(zerogpu chat_completions *)
 metadata:
@@ -20,7 +20,7 @@ Run structured JSON extraction. The user gives the source text and the fields to
 Run this with the `exec` tool, putting the schema in `--metadata` and pasting the text into the heredoc verbatim — no escaping, the quoted heredoc handles every shell metacharacter, newline, quote, and paren:
 
 ```bash
-zerogpu chat_completions -m gliner2-base-v1 --metadata '{"usecase":"json","schema":{"contact":["name::str::Full name","email::str::Email address","phone::str::Phone number"]}}' <<'ZGPU_END_OF_INPUT'
+zerogpu chat_completions -m gliner2.5-base-v1 --metadata '{"usecase":"json","schema":{"contact":["name::str::Full name","email::str::Email address","phone::str::Phone number"]}}' <<'ZGPU_END_OF_INPUT'
 <the source text, verbatim>
 ZGPU_END_OF_INPUT
 ```

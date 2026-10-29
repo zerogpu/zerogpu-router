@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Cut inference costs without dumbing down your agent.</strong><br/>
-  Route summarize, classify, PII redaction, JSON extraction, and short chat to small/nano models via the <code>zerogpu</code> CLI, executed locally by your agent's Bash tools.
+  Route summarize, classify, JSON extraction, and short chat to small/nano models via the <code>zerogpu</code> CLI, executed locally by your agent's Bash tools.
 </p>
 
 <p align="center">
@@ -30,7 +30,7 @@
 
 ## What is ZeroGPU Router?
 
-ZeroGPU Router is a smart task router for AI agents. It exposes task-specific skills (summarize, classify, redact PII, extract JSON, and more) that shell out to the local `zerogpu` CLI, backed by small language models that run for a fraction of the cost of a frontier model.
+ZeroGPU Router is a smart task router for AI agents. It exposes task-specific skills (summarize, classify, extract JSON, and more) that shell out to the local `zerogpu` CLI, backed by small language models that run for a fraction of the cost of a frontier model.
 
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
@@ -132,7 +132,7 @@ Full walkthrough (prerequisites, every skill documented in detail, troubleshooti
 
 ## Routes
 
-ZeroGPU Router exposes twenty-four auto-invoked skills: twenty-one task routes and three account utilities.
+ZeroGPU Router exposes thirty-two auto-invoked skills: twenty-nine task routes and three account utilities.
 
 **Chat and generation**
 
@@ -143,7 +143,6 @@ ZeroGPU Router exposes twenty-four auto-invoked skills: twenty-one task routes a
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 | `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
 | `chat-qwen3-6-35b-a3b` | Multimodal chat over text, images, and video | `qwen3.6-35b-a3b` |
-| `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash-0731` |
 | `chat-deepseek-v4-1-flash` | 1M-token context with higher-effort reasoning and function calling | `deepseek-v4.1-flash` |
 | `chat-glm-5-3-flash` | Coding and long-horizon agents, cheapest 1M-token context | `glm-5.3-flash` |
 | `chat-gpt-4-1-mini` | 1M-token context, instruction following and tool calling | `gpt-4.1-mini` |
@@ -151,11 +150,10 @@ ZeroGPU Router exposes twenty-four auto-invoked skills: twenty-one task routes a
 | `chat-gpt-5-4-nano` | High-volume, latency-sensitive routing and extraction, 400K-token context | `gpt-5.4-nano` |
 | `chat-gpt-6-luna` | Most efficient GPT-6, 272K-token context | `gpt-6-luna` |
 | `decide-tools` | Pick the right tool for a request and generate its arguments | `zlm-v1-tool-decisions` |
-| `chat-glm` | Most capable, 262K-token context, ~7x the cost | `glm-5.2` |
 | `summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
 | `summarize-llama-3-2-3b` | Cheaper summaries at 3B parameters | `llama-3.2-3b-instruct-fast` |
 
-On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its own `summarize` skill (for URLs, videos, and PDFs), and two skills cannot share a name. Skill names are otherwise identical across both agents.
+On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its own `summarize` skill (for URLs, videos, and PDFs), and two skills cannot share a name. The `transcribe` and `speak` skills carry the same `zerogpu-` prefix there, for the same reason. Skill names are otherwise identical across both agents.
 
 **Classification**
 
@@ -176,8 +174,6 @@ On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its
 | `extract-entities-multi` | The same, for text that is not in English | `gliner2.5-multi-v1` |
 | `extract-json` | Pull structured fields into grouped JSON | `gliner2.5-base-v1` |
 | `extract-signals` | Topics, keywords, intent and other contextual signals | `zlm-v1-signal-extract` |
-| `extract-pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
-| `redact-pii` | Mask emails, phones, names, addresses, other PII | `gliner-multi-pii-v1` |
 
 **Moderation and embeddings**
 

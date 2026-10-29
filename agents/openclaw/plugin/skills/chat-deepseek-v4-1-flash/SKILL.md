@@ -1,6 +1,6 @@
 ---
 name: chat-deepseek-v4-1-flash
-description: Chat with deepseek-v4.1-flash, a sparse MoE model on DeepSeek's Causal Encoder-Decoder architecture (8B active on input, 16B on output) with a 1M-token context window. Use for large codebases, long documents, extended conversations, and multi-step agent tasks that want higher-effort reasoning or function calling. Costs about twice chat-deepseek on input and three times on output.
+description: Chat with deepseek-v4.1-flash, a sparse MoE model on DeepSeek's Causal Encoder-Decoder architecture (8B active on input, 16B on output) with a 1M-token context window. Use for large codebases, long documents, extended conversations, and multi-step agent tasks that want higher-effort reasoning or function calling. Costs twice chat on input and output alike, over eight times its context.
 argument-hint: "<text> [-i <instructions>]"
 allowed-tools: Bash(zerogpu chat_completions *)
 metadata:
@@ -25,7 +25,7 @@ ZGPU_END_OF_INPUT
 
 If the user supplied system instructions, add `-i '<instructions>'` after the model flag, writing any `'` inside them as `'\''`.
 
-At \$0.30 / \$1.20 per 1M input/output tokens this is the pricier of the two 1M-context models on the platform — roughly twice `chat-deepseek` on input and three times on output, and about a quarter of `chat-glm` on input and a third on output. Prefer it when the task wants V4.1's higher-effort reasoning or function calling; for ordinary coding and agentic work at the same context size, `chat-deepseek` is cheaper.
+At \$0.30 / \$1.20 per 1M input/output tokens this is the middle of the three 1M-context models on the platform — three times `chat-glm-5-3-flash` on input and over three times on output, and roughly three quarters of `chat-gpt-4-1-mini` on both. Prefer it when the task wants V4.1's higher-effort reasoning or function calling; for ordinary coding and agentic work at the same context size, `chat-glm-5-3-flash` is cheaper.
 
 Output is the assistant's answer as plain text — the model's reasoning trace comes back in a separate field and is not printed. Relay the answer as-is — do not rewrite or expand it.
 

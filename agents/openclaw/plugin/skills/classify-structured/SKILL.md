@@ -1,6 +1,6 @@
 ---
 name: classify-structured
-description: Multi-axis classification using a JSON schema mapping categories to allowed labels (gliner2-base-v1). Use when the user wants to classify text along several dimensions at once, e.g. "classify by sentiment and topic" with explicit label sets per axis.
+description: Multi-axis classification using a JSON schema mapping categories to allowed labels (gliner2.5-base-v1). Use when the user wants to classify text along several dimensions at once, e.g. "classify by sentiment and topic" with explicit label sets per axis.
 argument-hint: "<text> -s '<json schema>'"
 allowed-tools: Bash(zerogpu chat_completions *)
 metadata:
@@ -20,7 +20,7 @@ Run schema-driven classification. The user gives the text and the schema — eac
 Run this with the `exec` tool, putting the schema in `--metadata` and pasting the text into the heredoc verbatim — no escaping, the quoted heredoc handles every shell metacharacter, newline, quote, and paren:
 
 ```bash
-zerogpu chat_completions -m gliner2-base-v1 --metadata '{"usecase":"classification","schema":{"sentiment":["positive","negative","neutral"],"topic":["support","billing","product"]}}' <<'ZGPU_END_OF_INPUT'
+zerogpu chat_completions -m gliner2.5-base-v1 --metadata '{"usecase":"classification","schema":{"sentiment":["positive","negative","neutral"],"topic":["support","billing","product"]}}' <<'ZGPU_END_OF_INPUT'
 <the source text, verbatim>
 ZGPU_END_OF_INPUT
 ```
