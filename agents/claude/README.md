@@ -1,8 +1,8 @@
 # ZeroGPU Router for Claude Code
 
-Offload cheap, well-defined NLP tasks (classification, summarization, entity & PII extraction, short chat) from Claude to ZeroGPU's edge-optimized small language models, directly from your Claude Code session.
+Offload cheap, well-defined NLP tasks (classification, summarization, entity & JSON extraction, transcription and speech, short chat) from Claude to ZeroGPU's edge-optimized small language models, directly from your Claude Code session.
 
-Every ZeroGPU task is exposed as a Claude Code skill. Each skill names its own model and calls the `zerogpu` CLI's model-agnostic endpoint commands (`chat_completions`, `moderations`, `embeddings`), so the plugin keeps working when the CLI's model list changes. Claude auto-invokes the right skill when your request matches (e.g. "redact the PII in this paragraph", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
+Every ZeroGPU task is exposed as a Claude Code skill. Each skill names its own model and calls the `zerogpu` CLI's model-agnostic endpoint commands (`chat_completions`, `moderations`, `embeddings`), so the plugin keeps working when the CLI's model list changes. Claude auto-invokes the right skill when your request matches (e.g. "extract the people and companies from this", "summarize this article", "classify this by sentiment and topic"), or you can call any of them by name with `/zerogpu-router:<skill>`.
 
 ---
 
@@ -81,7 +81,7 @@ Once installed, try any of these directly in Claude Code:
 Claude picks the right skill based on what you say:
 
 ```text
-Redact PII from this support ticket before I paste it into our public bug tracker:
+Pull every person, company, and email address out of this support ticket:
 
 Hi team, this is Sarah Chen (sarah.chen@northwind-labs.com, +1 415-555-0182).
 Our prod database started throwing connection timeouts around 2:14 AM PT last
@@ -91,13 +91,12 @@ our CFO Priya Patel at priya.patel@northwind-labs.com, billing address 1455
 Market St, Suite 600, San Francisco, CA 94103. Please call me back at the
 number above.
 ```
-→ Claude routes to `redact-pii`. Names, emails, phone numbers, social handles, and street addresses come back replaced by uppercase label placeholders like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]`, safe to paste into a public tracker, and the raw PII never enters Claude's context window. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) aren't in the model's label set. Strip those yourself or use `/zerogpu-router:extract-entities` with custom labels.
+→ Claude routes to `extract-entities` with the labels you named, and `gliner2.5-base-v1` returns the spans it found for each one. The labels are yours to choose, so project-specific identifiers (internal hostnames, contract numbers, card last-fours) work as well as the standard entity types — name them in the request. For a passage that is not in English, Claude routes to `extract-entities-multi` instead.
 
 ```text
-Pull all the email addresses and phone numbers out of this:
-"Reach Maria at maria@acme.io or 415-555-0188"
+Read this release note aloud so I can check how it sounds.
 ```
-→ Claude routes to `extract-pii`.
+→ Claude routes to `speak`.
 
 ```text
 Classify this support ticket by sentiment and topic:
@@ -114,7 +113,7 @@ Call any skill explicitly with `/zerogpu-router:<name> <args>`:
 ```
 
 ```text
-/zerogpu-router:redact-pii Email John Smith at john@acme.com about invoice 12345.
+/zerogpu-router:extract-entities "Email John Smith at john@acme.com about invoice 12345." -l person -l email
 ```
 
 ```text
@@ -198,7 +197,7 @@ Routed calls:     58
 Since:            Apr 12, 2026
 ```
 
-Every routed call (chat, classify, extract, redact, summarize, …) records the frontier-model tokens it offloaded and the estimated dollars saved, persisted in `~/.zerogpu/savings.json` alongside your credentials. **Token counts are actual** (the API's usage report). The **dollar figure is a rounded estimate** of the frontier-model spend avoided: what those exact tokens would have cost on the baseline model minus the real ZeroGPU cost. The baseline defaults to `claude-opus-4-8` and is overridable via the `ZEROGPU_SAVINGS_MODEL` environment variable (e.g. `claude-sonnet-4-6`).
+Every routed call (chat, classify, extract, summarize, …) records the frontier-model tokens it offloaded and the estimated dollars saved, persisted in `~/.zerogpu/savings.json` alongside your credentials. **Token counts are actual** (the API's usage report). The **dollar figure is a rounded estimate** of the frontier-model spend avoided: what those exact tokens would have cost on the baseline model minus the real ZeroGPU cost. The baseline defaults to `claude-opus-4-8` and is overridable via the `ZEROGPU_SAVINGS_MODEL` environment variable (e.g. `claude-sonnet-4-6`).
 
 You don't have to ask: after some responses a short `💰 ZeroGPU savings so far: …` note appears automatically on a balanced cadence (≈ once every 4–5 routed calls, never twice in a row) so the running total stays visible without nagging.
 
@@ -228,7 +227,7 @@ The default ZeroGPU chat skill. Handles work the 1.2B edge models can't carry (l
 
 **Output:** the assistant's answer as plain text. The model emits a reasoning trace as well; Chat Completions returns it in a separate field, so only the final answer is printed.
 
-Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts. When the input exceeds this model's 131K context, use `chat-glm-5-3-flash` or `chat-deepseek-v4-1-flash` for code and agentic work or `chat-glm` for the most capable option — `glm-5.3-flash` and `deepseek-v4.1-flash` each carry a 1M-token context, `glm-5.2` a 262K one.
+Reach for `chat-liquid` when speed and cost matter more than quality, `chat-thinking` for a visible reasoning trace, or `chat-qwen` for multilingual prompts. When the input exceeds this model's 131K context, use `chat-glm-5-3-flash` or `chat-deepseek-v4-1-flash` for code and agentic work, or `chat-gpt-4-1-mini` when instruction following and tool calling matter most — `glm-5.3-flash`, `deepseek-v4.1-flash`, and `gpt-4.1-mini` each carry a 1M-token context.
 
 ---
 
@@ -304,6 +303,32 @@ Heavier chat tuned for multilingual work: 100+ languages, useful when the prompt
 
 ---
 
+### `/zerogpu-router:chat-qwen3-6-35b-a3b`
+
+A fast, open-weight Mixture-of-Experts model with structured output and tool calling, over the smallest context window of the chat models.
+
+- **Model:** `qwen3.6-35b-a3b` (35B Mixture-of-Experts, 16,384-token context)
+- **Wraps:** `zerogpu chat_completions -m qwen3.6-35b-a3b`
+- **When Claude auto-invokes:** content extraction and agent workflows over a passage that fits in 16K tokens, where structured output or tool calling matters.
+
+**Synopsis**
+
+```
+/zerogpu-router:chat-qwen3-6-35b-a3b <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:chat-qwen3-6-35b-a3b Pull the owner, severity, and next action out of each incident note below, as JSON.
+```
+
+**Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
+
+At \$0.20 / \$1.50 per 1M input/output tokens it costs twice `chat-qwen` on input and over three times on output, over half its context, so `chat-qwen` is the better default for text. Its 16,384-token window is the smallest of the chat models. The model accepts images and video, but this skill sends the request as text through `chat_completions`, so image and video prompts are out of its reach.
+
+---
+
 ### `/zerogpu-router:chat-deepseek-v4-1-flash`
 
 The V4.1 Flash line: a 1M-token context on DeepSeek's Causal Encoder-Decoder architecture, with function calling and a higher-effort reasoning mode alongside fast non-thinking replies.
@@ -326,7 +351,7 @@ The V4.1 Flash line: a 1M-token context on DeepSeek's Causal Encoder-Decoder arc
 
 **Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
-At \$0.14 / \$0.57 per 1M input/output tokens this is the middle of the three 1M-context models — about an eighth of `chat-glm` on input and a sixth on output, and roughly half again as much as `chat-glm-5-3-flash` on both. For ordinary coding and agentic work at the same context size, `chat-glm-5-3-flash` is cheaper.
+At \$0.30 / \$1.20 per 1M input/output tokens this is the middle of the three 1M-context models — three times `chat-glm-5-3-flash` on input and over three times on output, and roughly three quarters of `chat-gpt-4-1-mini` on both. For ordinary coding and agentic work at the same context size, `chat-glm-5-3-flash` is cheaper.
 
 ---
 
@@ -352,7 +377,7 @@ Z.ai's efficient open-weight model for coding and long-horizon agent work: hybri
 
 **Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
-At \$0.10 / \$0.35 per 1M input/output tokens this is the cheapest of the three 1M-context models — about an eleventh of `chat-glm` on input and a tenth on output, and roughly two thirds of `chat-deepseek-v4-1-flash` on both.
+At \$0.10 / \$0.35 per 1M input/output tokens this is the cheapest of the three 1M-context models — a third of `chat-deepseek-v4-1-flash` on input and under a third on output, and a quarter of `chat-gpt-4-1-mini` on input and under a quarter on output.
 
 ---
 
@@ -378,7 +403,7 @@ OpenAI's fast, cost-efficient GPT-4.1 model: strong instruction following and to
 
 **Output:** the assistant's answer as plain text.
 
-At \$0.40 / \$1.60 per 1M input/output tokens this is the priciest of the three 1M-context models — four times `chat-glm-5-3-flash` on input and over four times on output, and roughly three times `chat-deepseek-v4-1-flash` on both. It is still about a third of `chat-glm` on input and under half on output, with four times its context.
+At \$0.40 / \$1.60 per 1M input/output tokens this is the priciest of the three 1M-context models — four times `chat-glm-5-3-flash` on input and over four times on output, and a third again as much as `chat-deepseek-v4-1-flash` on both. It is the most expensive model on the platform, roughly 2.7x `chat` on input and output alike and twenty times the 1.2B edge models on input.
 
 ---
 
@@ -404,7 +429,7 @@ The cost-optimized model of OpenAI's GPT-5.6 family, for cost-sensitive, high-vo
 
 **Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
 
-At \$0.20 / \$1.20 per 1M input/output tokens it costs about a fifth of `chat-glm` on input and a third on output, over a 272K window slightly larger than `glm-5.2`'s 262K. For a prompt that fits in 131K tokens, `chat` is cheaper on both.
+At \$0.20 / \$1.20 per 1M input/output tokens it costs twice `chat-gpt-6-luna` on input and over twice on output, over the same 272K window, and a third more than `chat` on input with twice its output price. For a prompt that fits in 131K tokens, `chat` is cheaper on both.
 
 ---
 
@@ -430,33 +455,59 @@ The most cost-efficient model in OpenAI's GPT-5.4 family, built for high-volume 
 
 **Output:** the assistant's answer as plain text.
 
-At \$0.20 / \$1.25 per 1M input/output tokens it matches `chat-gpt-5-6-luna` on input and costs marginally more on output, over a 400K window rather than 272K. It is about a fifth of `chat-glm` on input and a third on output.
+At \$0.20 / \$1.25 per 1M input/output tokens it matches `chat-gpt-5-6-luna` on input and costs marginally more on output, over a 400K window rather than 272K. It is twice `chat-gpt-6-luna` on input and two and a half times on output.
 
 ---
 
-### `/zerogpu-router:chat-glm`
+### `/zerogpu-router:chat-gpt-6-luna`
 
-The most capable model on the platform, with a 262K-token context for whole repositories, book-length documents, and long agent transcripts.
+The most efficient model of OpenAI's GPT-6 family, built for high-volume, cost-sensitive work: adjustable reasoning effort, function calling, and structured outputs over a 272K-token context.
 
-- **Model:** `glm-5.2` (753B MoE, 8 of 256 experts per token, 262,144-token context)
-- **Wraps:** `zerogpu chat_completions -m glm-5.2`
-- **When Claude auto-invokes:** long-horizon reasoning, or input too large for `chat` that isn't code or agentic work.
+- **Model:** `gpt-6-luna` (272,000-token context)
+- **Wraps:** `zerogpu chat_completions -m gpt-6-luna`
+- **When Claude auto-invokes:** high-volume coding, chat, reasoning, RAG, summarization, and translation work that exceeds `chat`'s 131K context and should cost as little as possible.
 
 **Synopsis**
 
 ```
-/zerogpu-router:chat-glm <text>
+/zerogpu-router:chat-gpt-6-luna <text>
 ```
 
 **Example**
 
 ```text
-/zerogpu-router:chat-glm Here is our entire service directory. Which services would a payments outage take down, and in what order?
+/zerogpu-router:chat-gpt-6-luna Summarize this quarter's full incident log and group the incidents by root cause.
 ```
 
-**Output:** the assistant's answer as plain text. Its reasoning trace comes back in a separate field and is not printed.
+**Output:** the assistant's answer as plain text.
 
-**Cost:** \$1.10 / \$3.50 per 1M input/output tokens — roughly 7x `chat` (`gpt-oss-120b`, \$0.15 / \$0.60) on input and 6x on output, and over 50x the 1.2B edge models. It is the one skill here where the usual savings framing does not apply, so reach for it only when the size or horizon of the task actually requires it.
+At \$0.10 / \$0.50 per 1M input/output tokens it costs half `chat-gpt-5-6-luna` on input and under half on output, over the same 272K window, and two thirds of `chat` on input for a window twice as large. Prefer it over `chat-gpt-5-6-luna` unless the task specifically wants GPT-5.6's behaviour.
+
+---
+
+### `/zerogpu-router:decide-tools`
+
+Turn a request into a tool decision: which tool to call and the inputs to call it with, in a single inference step, or `NO_TOOL` when none is needed.
+
+- **Model:** `zlm-v1-tool-decisions` (0.6B, 24,576-token context)
+- **Wraps:** `zerogpu chat_completions -m zlm-v1-tool-decisions`
+- **When Claude auto-invokes:** agent routing questions — "which tool should handle this?", "does this need a tool at all?" — rather than requests to answer the question itself.
+
+**Synopsis**
+
+```
+/zerogpu-router:decide-tools <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:decide-tools Will it rain in Austin this week, and what is the latest news on the Longhorns?
+```
+
+**Output:** the model's decision as plain text — the tool it selected and the inputs it generated, or `NO_TOOL`.
+
+At \$0.05 / \$0.15 per 1M input/output tokens it costs a third of `chat` on input and a quarter on output, small enough to sit in front of every turn of an agent loop.
 
 ---
 
@@ -609,8 +660,8 @@ Claude reads the arguments and runs the command itself, putting the labels in th
 
 Schema-driven, multi-axis classification: one chosen label per category.
 
-- **Model:** `gliner2-base-v1`
-- **Wraps:** `zerogpu chat_completions -m gliner2-base-v1` with `usecase: "classification"`
+- **Model:** `gliner2.5-base-v1`
+- **Wraps:** `zerogpu chat_completions -m gliner2.5-base-v1` with `usecase: "classification"`
 - **When Claude auto-invokes:** "classify by sentiment and topic", any request that names multiple classification dimensions with explicit label sets.
 
 **Synopsis**
@@ -643,12 +694,48 @@ Claude reads the arguments and runs the command itself, sending the schema as `m
 
 ---
 
+### `/zerogpu-router:classify-decisions`
+
+Dynamic-label decisions and routing: supply the decision heads and their options at request time, and get one chosen option per head.
+
+- **Model:** `gliner2.5-decide-v1` (486M)
+- **Wraps:** `zerogpu chat_completions -m gliner2.5-decide-v1` with `usecase: "decide"`
+- **When Claude auto-invokes:** "which queue does this ticket belong in?", intent detection, triage, agent and tool routing, deciding when a human handoff is needed.
+
+**Synopsis**
+
+```
+/zerogpu-router:classify-decisions <text> -s '<json labels>'
+```
+
+**Arguments**
+
+| Name | Required | Description |
+| --- | --- | --- |
+| `text` | yes | Text to decide on. |
+| `-s`, `--schema <json>` | **yes** | JSON object mapping each decision head to its allowed options. |
+
+Claude reads the arguments and runs the command itself, sending the heads as `metadata` with `usecase: "decide"`. Several heads may be decided in one call.
+
+**Example**
+
+```text
+/zerogpu-router:classify-decisions "The customer says their payment failed and they want someone to call them." \
+  -s '{"intent":["payment_issue","refund","account_access","general_question"],"handoff":["yes","no"]}'
+```
+
+**Output:** a JSON object holding the chosen option per decision head.
+
+At \$0.004 per 1M input tokens, billing nothing on output, it is the cheapest classifier on the platform — a fifth of `classify-structured` on input. Use `classify-structured` for schema-shaped classification and this one for routing and triage at volume.
+
+---
+
 ### `/zerogpu-router:extract-entities`
 
 Custom-label named-entity recognition. You define the entity labels; the model finds spans.
 
-- **Model:** `gliner2-base-v1`
-- **Wraps:** `zerogpu chat_completions -m gliner2-base-v1` with `usecase: "ner"`
+- **Model:** `gliner2.5-base-v1`
+- **Wraps:** `zerogpu chat_completions -m gliner2.5-base-v1` with `usecase: "ner"`
 - **When Claude auto-invokes:** "extract all people, organizations, and locations from this", "find every product mention."
 
 **Synopsis**
@@ -688,73 +775,40 @@ Claude reads the arguments and runs the command itself, sending the labels and t
 
 ---
 
-### `/zerogpu-router:extract-pii`
+### `/zerogpu-router:extract-entities-multi`
 
-Extract personally identifiable information entities **without modifying the source text**.
+Custom-label named-entity recognition for text that is not in English. You define the entity labels; the model finds spans.
 
-- **Model:** `gliner-multi-pii-v1`
-- **Wraps:** `zerogpu chat_completions -m gliner-multi-pii-v1` with `usecase: "extract-pii"`, threshold `0.5`
-- **When Claude auto-invokes:** "find all PII", "what personal info is in this?", "list emails/phones/names."
-
-**Synopsis**
-
-```
-/zerogpu-router:extract-pii <text>
-```
-
-**Example**
-
-```text
-/zerogpu-router:extract-pii Contact Jane Doe at jane@example.com, SSN 123-45-6789.
-```
-
-**Output (illustrative)**
-
-```json
-{
-  "entities": [
-    { "text": "Jane Doe", "label": "person", "start": 8, "end": 16, "score": 0.9995 },
-    { "text": "jane@example.com", "label": "email", "start": 20, "end": 36, "score": 0.9814 },
-    { "text": "123-45-6789", "label": "social security number", "start": 42, "end": 53, "score": 0.9928 }
-  ]
-}
-```
-
-If you want to **mask** PII inline rather than extract it, use `/zerogpu-router:redact-pii` instead.
-
----
-
-### `/zerogpu-router:redact-pii`
-
-Detect PII and replace each span in-line with a `[LABEL]` placeholder. Use this before sharing or logging sensitive text.
-
-- **Model:** `gliner-multi-pii-v1` (with `mask: "label"`)
-- **Wraps:** `zerogpu chat_completions -m gliner-multi-pii-v1` with `usecase: "redact"`
-- **When Claude auto-invokes:** "redact", "scrub", "mask", "anonymize", or "sanitize this for sharing."
+- **Model:** `gliner2.5-multi-v1` (287M, built on mDeBERTa-v3-base)
+- **Wraps:** `zerogpu chat_completions -m gliner2.5-multi-v1` with `usecase: "ner"`
+- **When Claude auto-invokes:** entity extraction from non-English passages — "extract the people and companies from this German contract."
 
 **Synopsis**
 
 ```
-/zerogpu-router:redact-pii <text>
+/zerogpu-router:extract-entities-multi <text> (-l <label>... | --labels a,b,c) [-t <0..1>]
 ```
+
+**Arguments**
+
+| Name | Required | Default | Description |
+| --- | --- | --- | --- |
+| `text` | yes | n/a | Source text. |
+| `-l <label>` / `--labels <a,b,c>` | yes (one) | n/a | Entity labels to extract. |
+| `-t`, `--threshold <number>` | optional | `0.3` | Minimum confidence in `[0, 1]`. |
+
+Claude reads the arguments and runs the command itself, sending the labels and threshold as `metadata` with `usecase: "ner"`.
 
 **Example**
 
 ```text
-/zerogpu-router:redact-pii Email John Smith at john@acme.com about invoice 12345.
+/zerogpu-router:extract-entities-multi "Tim Cook traf Sundar Pichai am Montag in Cupertino." \
+  --labels person,organization,location -t 0.4
 ```
 
-**Output (truncated)**
+**Output:** a JSON object whose `entities` maps each label to the spans found.
 
-```json
-{
-  "redacted_text": "Email [PERSON] at [EMAIL] about invoice 12345.",
-  "entities": [
-    { "text": "John Smith", "label": "person", "start": 6, "end": 16, "score": 0.9981 },
-    { "text": "john@acme.com", "label": "email", "start": 20, "end": 33, "score": 0.9311 }
-  ]
-}
-```
+At \$0.02 / \$0.05 per 1M input/output tokens it matches `extract-entities` exactly, so the choice is about language, not cost. It also supports `usecase: "json"` and `usecase: "classification"`, the shapes `extract-json` and `classify-structured` use.
 
 ---
 
@@ -762,8 +816,8 @@ Detect PII and replace each span in-line with a `[LABEL]` placeholder. Use this 
 
 Pull specific named fields out of free text into a structured JSON object, defined by a per-field schema.
 
-- **Model:** `gliner2-base-v1`
-- **Wraps:** `zerogpu chat_completions -m gliner2-base-v1` with `usecase: "json"`
+- **Model:** `gliner2.5-base-v1`
+- **Wraps:** `zerogpu chat_completions -m gliner2.5-base-v1` with `usecase: "json"`
 - **When Claude auto-invokes:** "extract the contact info as JSON", "parse this invoice", "pull these fields out."
 
 **Synopsis**
@@ -817,7 +871,7 @@ Turn a passage into structured signals — topics, keywords, intent, and other c
 
 **Output:** a structured JSON object of the signals found — topics, keywords, intent, and other contextual attributes.
 
-At \$0.02 / \$0.05 per 1M input/output tokens it is built for high-volume work. The window is 400 tokens, so send the passage itself rather than a whole document. For IAB audience and content categories alongside these signals, use `classify-iab-enriched`.
+At \$0.04 / \$0.10 per 1M input/output tokens it is built for high-volume work. The window is 400 tokens, so send the passage itself rather than a whole document. For IAB audience and content categories alongside these signals, use `classify-iab-enriched`.
 
 ---
 
@@ -857,6 +911,32 @@ a revised 2025 budget by mid-December.
 
 ---
 
+### `/zerogpu-router:summarize-llama-3-2-3b`
+
+Condense a passage into a short summary on the smaller, cheaper of the two summarization models.
+
+- **Model:** `llama-3.2-3b-instruct-fast` (3B, 131,072-token context)
+- **Wraps:** `zerogpu chat_completions -m llama-3.2-3b-instruct-fast`, with a system message instructing the model to summarize
+- **When Claude auto-invokes:** "summarize", "TL;DR", "condense this" where cost or throughput matters more than summary depth.
+
+**Synopsis**
+
+```
+/zerogpu-router:summarize-llama-3-2-3b <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:summarize-llama-3-2-3b "The board met Thursday to review Q3 results..."
+```
+
+**Output:** a short condensed summary string.
+
+At \$0.05 / \$0.30 per 1M input/output tokens it costs a third of `summarize` on input and marginally more on output, over the same 131K context. It shares `llama-3.1-8b-instruct-fast`'s summarization pipeline at 3B parameters rather than 8B, so prefer `summarize` when summary quality matters.
+
+---
+
 ### `/zerogpu-router:moderate`
 
 Screen a passage for unsafe, harmful, or policy-sensitive content and get back a safety verdict.
@@ -889,7 +969,7 @@ Screen a passage for unsafe, harmful, or policy-sensitive content and get back a
 }
 ```
 
-Returns OpenAI's moderations envelope across all 13 safety categories, so it drops into any pipeline written against `omni-moderation-latest`. The model is served only by the Moderations API, so this skill calls `zerogpu moderations` rather than Chat Completions. At \$0.02 / \$0.05 per 1M tokens it is cheap enough to sit inline in front of every response your app serves.
+Returns OpenAI's moderations envelope across all 13 safety categories, so it drops into any pipeline written against `omni-moderation-latest`. The model is served only by the Moderations API, so this skill calls `zerogpu moderations` rather than Chat Completions. At \$0.10 / \$0.15 per 1M tokens it is cheap enough to sit inline in front of every response your app serves.
 
 ---
 
@@ -915,7 +995,7 @@ Screen a passage with a dedicated safety classifier that names the policy catego
 
 **Output:** the model's verdict as plain text — safe or unsafe, with the relevant policy categories when it detects a violation.
 
-It evaluates incoming prompts and generated responses, in multiple languages. At \$0.18 / \$0.18 per 1M input/output tokens it costs nine times `moderate` (`zlm-v1-moderation-edge`, \$0.02 / \$0.05) on input and under four times on output, so keep `moderate` for short passages and for OpenAI's 13-category envelope, and use this one when the text is longer or you want the violated policy categories named.
+It evaluates incoming prompts and generated responses, in multiple languages. At \$0.18 / \$0.18 per 1M input/output tokens it costs under twice `moderate` (`zlm-v1-moderation-edge`, \$0.10 / \$0.15) on input and a fifth more on output, so keep `moderate` for short passages and for OpenAI's 13-category envelope, and use this one when the text is longer or you want the violated policy categories named.
 
 ---
 
@@ -959,9 +1039,63 @@ Both cost \$0.004 per 1M input tokens, bill nothing on output, and return 384-di
 
 ---
 
+### `/zerogpu-router:transcribe`
+
+Turn speech into text with the smallest model in the Whisper family, for high-volume and latency-sensitive audio.
+
+- **Model:** `whisper-tiny` (39M)
+- **Wraps:** `zerogpu chat_completions -m whisper-tiny`
+- **When Claude auto-invokes:** "transcribe this", meeting transcription, subtitles, podcast and voice-agent audio, audio indexing.
+
+**Synopsis**
+
+```
+/zerogpu-router:transcribe <request>
+```
+
+**Example**
+
+```text
+/zerogpu-router:transcribe Transcribe this call segment.
+```
+
+**Output:** the model's response as the API returns it.
+
+It recognizes speech across many languages and can translate speech into English. At \$0.02 per minute of audio it is priced for high-volume transcription and bills nothing per token.
+
+This skill sends the request as text, which is what `zerogpu chat_completions` carries, so it cannot upload a recording on its own: the audio has to be supplied in the form the ZeroGPU API accepts for this model. See [docs.zerogpu.ai](https://docs.zerogpu.ai).
+
+---
+
+### `/zerogpu-router:speak`
+
+Generate speech from text, with expressive delivery and voice cloning, at low latency.
+
+- **Model:** `chatterbox-nano` (110M, Resemble AI)
+- **Wraps:** `zerogpu chat_completions -m chatterbox-nano`
+- **When Claude auto-invokes:** "read this aloud", "narrate this", "turn this into audio" — voice agents, accessibility, audiobooks, content creation.
+
+**Synopsis**
+
+```
+/zerogpu-router:speak <text>
+```
+
+**Example**
+
+```text
+/zerogpu-router:speak Read this release note aloud so I can check how it sounds.
+```
+
+**Output:** the model's response as the API returns it. An encoded audio payload is not printed back to the user. `zerogpu chat_completions` writes to stdout and takes no output-file option, so this skill does not save a playable file.
+
+At \$0.01 per minute of generated audio it is the cheapest audio model on the platform and bills nothing per token.
+
+---
+
 ## Skills reference
 
-Quick lookup table: all 27 skills at a glance.
+Quick lookup table: all 32 skills at a glance.
 
 | Skill | Purpose | Example |
 | --- | --- | --- |
@@ -972,26 +1106,31 @@ Quick lookup table: all 27 skills at a glance.
 | `/zerogpu-router:chat-liquid <text>` | Fastest, cheapest chat via `LFM2.5-1.2B-Instruct` | `/zerogpu-router:chat-liquid "Explain WebSockets in two sentences."` |
 | `/zerogpu-router:chat-thinking <text>` | Chat with the Thinking variant (shows reasoning) | `/zerogpu-router:chat-thinking "If a train leaves at 3 PM going 60 mph, when does it cover 150 miles?"` |
 | `/zerogpu-router:chat-qwen <text>` | Heavier multilingual chat via `qwen3-30b-a3b-fp8` | `/zerogpu-router:chat-qwen "Explica los índices B-tree en dos frases."` |
+| `/zerogpu-router:chat-qwen3-6-35b-a3b <text>` | 35B MoE chat with structured output and tool calling via `qwen3.6-35b-a3b` | `/zerogpu-router:chat-qwen3-6-35b-a3b "Pull owner and severity out of each incident note, as JSON."` |
 | `/zerogpu-router:chat-deepseek-v4-1-flash <text>` | V4.1 Flash: 1M context with higher-effort reasoning via `deepseek-v4.1-flash` | `/zerogpu-router:chat-deepseek-v4-1-flash "Plan the migration to the new billing API."` |
 | `/zerogpu-router:chat-glm-5-3-flash <text>` | Cheapest 1M context, coding and long-horizon agents via `glm-5.3-flash` | `/zerogpu-router:chat-glm-5-3-flash "Plan the migration to the new billing API."` |
 | `/zerogpu-router:chat-gpt-4-1-mini <text>` | 1M context with strong instruction following and tool calling via `gpt-4.1-mini` | `/zerogpu-router:chat-gpt-4-1-mini "Generate a typed client from this API spec."` |
 | `/zerogpu-router:chat-gpt-5-6-luna <text>` | Cost-optimized GPT-5.6, 272K context via `gpt-5.6-luna` | `/zerogpu-router:chat-gpt-5-6-luna "Summarize this quarter's incident log."` |
 | `/zerogpu-router:chat-gpt-5-4-nano <text>` | High-volume, latency-sensitive routing and extraction, 400K context via `gpt-5.4-nano` | `/zerogpu-router:chat-gpt-5-4-nano "Route each of these tickets to a queue."` |
-| `/zerogpu-router:chat-glm <text>` | Most capable, 262K context via `glm-5.2` (~7x the cost) | `/zerogpu-router:chat-glm "Which services would a payments outage take down?"` |
+| `/zerogpu-router:chat-gpt-6-luna <text>` | Most efficient GPT-6, 272K context via `gpt-6-luna` | `/zerogpu-router:chat-gpt-6-luna "Summarize this quarter's incident log."` |
+| `/zerogpu-router:decide-tools <text>` | Pick a tool and generate its arguments via `zlm-v1-tool-decisions` | `/zerogpu-router:decide-tools "Will it rain in Austin this week?"` |
 | `/zerogpu-router:classify-iab <text>` | IAB taxonomy classification | `/zerogpu-router:classify-iab "The Lakers signed a new point guard."` |
 | `/zerogpu-router:classify-iab-enriched <text>` | IAB + topics/keywords/intent | `/zerogpu-router:classify-iab-enriched "Compare the Tesla Model Y and Hyundai Ioniq 5."` |
 | `/zerogpu-router:classify-domain <domain>` | IAB classification from a hostname, no page fetch | `/zerogpu-router:classify-domain "espn.com"` |
 | `/zerogpu-router:classify-zero-shot <text> -l …` | Zero-shot against custom labels | `/zerogpu-router:classify-zero-shot "fast laptop" -l positive -l negative` |
 | `/zerogpu-router:classify-structured <text> -s '…'` | Schema-based multi-axis classification | `/zerogpu-router:classify-structured "ticket text" -s '{"sentiment":["positive","negative"]}'` |
+| `/zerogpu-router:classify-decisions <text> -s '…'` | Dynamic-label decisions, intent and routing | `/zerogpu-router:classify-decisions "their payment failed" -s '{"intent":["payment_issue","refund"]}'` |
 | `/zerogpu-router:extract-entities <text> -l …` | Custom-label NER | `/zerogpu-router:extract-entities "Tim Cook met Sundar Pichai in Cupertino." -l person -l location` |
-| `/zerogpu-router:extract-pii <text>` | Extract PII entities (returns JSON) | `/zerogpu-router:extract-pii "Contact Jane at jane@example.com"` |
-| `/zerogpu-router:redact-pii <text>` | Mask PII in-line with `[LABEL]` placeholders | `/zerogpu-router:redact-pii "Email John at john@acme.com"` |
+| `/zerogpu-router:extract-entities-multi <text> -l …` | Custom-label NER for non-English text | `/zerogpu-router:extract-entities-multi "Tim Cook traf Sundar Pichai in Cupertino." -l person -l location` |
 | `/zerogpu-router:extract-json <text> -s '…'` | Schema-driven JSON extraction | `/zerogpu-router:extract-json "..." -s '{"contact":["name::str::Full name"]}'` |
 | `/zerogpu-router:extract-signals <text>` | Topics, keywords, intent and other contextual signals | `/zerogpu-router:extract-signals "How can I pay using my credit card?"` |
 | `/zerogpu-router:summarize <text>` | Summarize with `llama-3.1-8b-instruct-fast` | `/zerogpu-router:summarize "The board met Thursday to review Q3 results..."` |
+| `/zerogpu-router:summarize-llama-3-2-3b <text>` | Cheaper summaries with `llama-3.2-3b-instruct-fast` | `/zerogpu-router:summarize-llama-3-2-3b "The board met Thursday to review Q3 results..."` |
 | `/zerogpu-router:moderate <text>` | Safety verdict across OpenAI's 13 categories | `/zerogpu-router:moderate "Screen this user comment before we publish it."` |
 | `/zerogpu-router:moderate-llama <text>` | Safe/unsafe verdict with policy categories via `llama-guard-4-12b` | `/zerogpu-router:moderate-llama "Screen this whole support transcript."` |
 | `/zerogpu-router:embed <text> [-m …]` | 384-dim embedding for search, RAG, dedupe | `/zerogpu-router:embed "ZeroGPU runs inference at the edge." -m bge-small-en-v1.5` |
+| `/zerogpu-router:transcribe <request>` | Speech to text via `whisper-tiny` | `/zerogpu-router:transcribe "Transcribe this call segment."` |
+| `/zerogpu-router:speak <text>` | Text to speech via `chatterbox-nano` | `/zerogpu-router:speak "Read this release note aloud."` |
 
 For the options the skills pass to the CLI (`-m`, `-i`, `--metadata`, `--raw`), run `zerogpu chat_completions --help`.
 

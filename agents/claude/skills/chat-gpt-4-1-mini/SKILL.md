@@ -1,6 +1,6 @@
 ---
 name: chat-gpt-4-1-mini
-description: Chat with gpt-4.1-mini, OpenAI's fast, cost-efficient GPT-4.1 model, strong at instruction following and tool calling across a 1M-token context window at low latency, with function calling and structured outputs. Use for coding, chat, reasoning, RAG, summarization, and translation over very large inputs where instruction fidelity and tool calling matter more than price. It is the priciest of the three 1M-context models on the platform.
+description: Chat with gpt-4.1-mini, OpenAI's fast, cost-efficient GPT-4.1 model, strong at instruction following and tool calling across a 1M-token context window at low latency, with function calling and structured outputs. Use for coding, chat, reasoning, RAG, summarization, and translation over very large inputs where instruction fidelity and tool calling matter more than price. It is the priciest of the three 1M-context models, and the most expensive model on the platform.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu chat_completions *)
 ---
@@ -13,7 +13,7 @@ $ARGUMENTS
 ZGPU_END_OF_INPUT
 ```
 
-At \$0.40 / \$1.60 per 1M input/output tokens this is the priciest of the three 1M-context models on the platform — four times `/zerogpu-router:chat-glm-5-3-flash` on input and over four times on output, and roughly three times `/zerogpu-router:chat-deepseek-v4-1-flash` on both. It is still about a third of `/zerogpu-router:chat-glm` on input and under half on output, with four times its context. Prefer it when instruction following and tool calling matter more than price.
+At \$0.40 / \$1.60 per 1M input/output tokens this is the priciest of the three 1M-context models on the platform — four times `/zerogpu-router:chat-glm-5-3-flash` on input and over four times on output, and a third again as much as `/zerogpu-router:chat-deepseek-v4-1-flash` on both. It is the most expensive model on the platform, roughly 2.7x `/zerogpu-router:chat` on input and output alike and twenty times the 1.2B edge models on input. Prefer it when instruction following and tool calling matter more than price.
 
 Output is the assistant's answer as plain text. Relay the answer as-is — do not rewrite or expand it.
 

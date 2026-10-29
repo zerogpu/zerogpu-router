@@ -1,6 +1,6 @@
 ---
 name: chat-gpt-5-6-luna
-description: Chat with gpt-5.6-luna, the cost-optimized model of OpenAI's GPT-5.6 family, with a 272K-token context window, adjustable reasoning effort, function calling, and structured outputs. Use for cost-sensitive, high-volume coding, chat, reasoning, RAG, summarization, and translation work. Cheaper than chat-glm on input and output alike, over a slightly larger context.
+description: Chat with gpt-5.6-luna, the cost-optimized model of OpenAI's GPT-5.6 family, with a 272K-token context window, adjustable reasoning effort, function calling, and structured outputs. Use for cost-sensitive, high-volume coding, chat, reasoning, RAG, summarization, and translation work. Costs twice chat-gpt-6-luna on input and over twice on output, over the same 272K window.
 argument-hint: "<text>"
 allowed-tools: Bash(zerogpu chat_completions *)
 ---
@@ -13,7 +13,7 @@ $ARGUMENTS
 ZGPU_END_OF_INPUT
 ```
 
-At \$0.20 / \$1.20 per 1M input/output tokens this costs about a fifth of `/zerogpu-router:chat-glm` on input and a third on output, over a 272K-token window slightly larger than glm-5.2's 262K. For a prompt that fits in 131K tokens, `/zerogpu-router:chat` is cheaper on both.
+At \$0.20 / \$1.20 per 1M input/output tokens this costs twice `/zerogpu-router:chat-gpt-6-luna` on input and over twice on output, over the same 272K-token window, and a third more than `/zerogpu-router:chat` on input with twice its output price. For a prompt that fits in 131K tokens, `/zerogpu-router:chat` is cheaper on both.
 
 Output is the assistant's answer as plain text — the model's reasoning trace comes back in a separate field and is not printed. Relay the answer as-is — do not rewrite or expand it.
 

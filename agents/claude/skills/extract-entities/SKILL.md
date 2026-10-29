@@ -1,6 +1,6 @@
 ---
 name: extract-entities
-description: Custom-label named-entity recognition (gliner2-base-v1). Use when the user wants to extract entities with their own labels — people, organizations, locations, products, dates, or any caller-defined entity types — from a passage.
+description: Custom-label named-entity recognition (gliner2.5-base-v1). Use when the user wants to extract entities with their own labels — people, organizations, locations, products, dates, or any caller-defined entity types — from a passage.
 argument-hint: "<text> (-l <label>... | --labels a,b,c) [-t <0..1>]"
 allowed-tools: Bash(zerogpu chat_completions *)
 ---
@@ -10,7 +10,7 @@ Run custom-label NER. The request below holds the source text and the entity lab
 Run this with the Bash tool, filling in the labels and pasting the source text into the heredoc verbatim — no escaping, the quoted heredoc handles every shell metacharacter, newline, quote, and paren:
 
 ```bash
-zerogpu chat_completions -m gliner2-base-v1 --metadata '{"usecase":"ner","labels":["person","company"],"threshold":0.3}' <<'ZGPU_END_OF_INPUT'
+zerogpu chat_completions -m gliner2.5-base-v1 --metadata '{"usecase":"ner","labels":["person","company"],"threshold":0.3}' <<'ZGPU_END_OF_INPUT'
 <the source text, verbatim>
 ZGPU_END_OF_INPUT
 ```

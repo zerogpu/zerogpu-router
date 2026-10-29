@@ -1,5 +1,35 @@
 # Changelog
 
+## 3.3.0
+
+Model catalog sync against the dashboard API. The API stopped serving `glm-5.2`, `gliner2-base-v1`, and `gliner-multi-pii-v1`, so `chat-glm`, `extract-pii`, and `redact-pii` are gone and the three schema-driven gliner skills now call `gliner2.5-base-v1`. Nine models the API serves had no skill calling them, so eight skills are new — among them the plugin's first speech-to-text and text-to-speech routes, with the audio-input caveat noted below. `chat-deepseek-v4-1-flash` was also advertising less than half its real price, and `moderate` and `extract-signals` well under theirs, which steered Claude's routing on cost. Skill names and outputs are unchanged apart from the notes below.
+
+### Added
+
+- **`chat-gpt-6-luna`.** Calls `gpt-6-luna`, the most efficient model of OpenAI's GPT-6 family, with adjustable reasoning effort, function calling, and structured outputs over a 272,000-token context. At \$0.10 / \$0.50 per 1M input/output tokens it is half `chat-gpt-5-6-luna` on input and under half on output over the same window, so it is the one to reach for first.
+- **`chat-qwen3-6-35b-a3b`.** Calls `qwen3.6-35b-a3b`, a 35B Mixture-of-Experts model with structured output and tool calling, for content extraction and agent workflows. A 16,384-token context at \$0.20 / \$1.50 per 1M input/output tokens — the smallest window of the chat skills, and `chat-qwen` is cheaper for ordinary text. The model also accepts images and video, but the skill sends text through `chat_completions`, so image and video prompts are out of its reach.
+- **`summarize-llama-3-2-3b`.** Calls `llama-3.2-3b-instruct-fast`, Meta's Llama 3.2 3B Instruct packaged by ZeroGPU for fast, low-cost summarization on edge GPUs. The same 131,072-token context and summarization pipeline as `summarize` at 3B parameters rather than 8B, and \$0.05 / \$0.30 per 1M input/output tokens — a third of `summarize` on input.
+- **`transcribe`.** Calls `whisper-tiny`, the 39M-parameter smallest model in OpenAI's Whisper family, which recognizes speech across many languages and can translate speech into English. \$0.02 per minute of audio, billing nothing per token. The skill sends the request as text, which is what `zerogpu chat_completions` carries, so it cannot upload a recording on its own — the audio has to be supplied in the form the ZeroGPU API accepts for this model.
+- **`speak`.** Calls `chatterbox-nano`, Resemble AI's 110M-parameter text-to-speech model, built for expressive speech generation and voice cloning at low latency. \$0.01 per minute of generated audio, billing nothing per token. `zerogpu chat_completions` writes to stdout and takes no output-file option, so the skill does not save a playable file.
+- **`decide-tools`.** Calls `zlm-v1-tool-decisions`, a 0.6B model that combines tool selection with query and argument generation in a single inference step and returns `NO_TOOL` when no tool is needed. A 24,576-token context at \$0.05 / \$0.15 per 1M input/output tokens — a third of `chat` on input and a quarter on output.
+- **`classify-decisions`.** Calls `gliner2.5-decide-v1` (486M), a zero-shot decision model: supply the labels at request time to classify intent, route agents and tools, triage requests, make moderation decisions, and decide when a human handoff is needed, with several decision heads in one call. At \$0.004 per 1M input tokens, billing nothing on output, it is the cheapest classifier on the platform.
+- **`extract-entities-multi`.** Calls `gliner2.5-multi-v1` (287M, built on mDeBERTa-v3-base), custom-label NER for text that is not in English, at the same \$0.02 / \$0.05 per 1M input/output tokens as `extract-entities` — so the choice between them is about language, not cost.
+- Skill count goes from 24 to 32 with these eight — 27 to 32 net of the removals below.
+
+### Changed
+
+- **`classify-structured`, `extract-entities`, and `extract-json` call `gliner2.5-base-v1`.** The API no longer serves `gliner2-base-v1`. `gliner2.5-base-v1` (194M, built on DeBERTa-v3-base) serves the same `classification`, `ner`, and `json` usecases at the same \$0.02 / \$0.05 per 1M input/output tokens, so all three skills keep their arguments, metadata, and output shapes.
+- **`chat-deepseek-v4-1-flash`: \$0.30 / \$1.20 per 1M input/output tokens, not \$0.14 / \$0.57.** Corrected in its description, which Claude matches on, and in the README. It is still the middle of the three 1M-context models, but three times `chat-glm-5-3-flash` on input rather than half again as much, and three quarters of `chat-gpt-4-1-mini` rather than a third of what the old comparison claimed.
+- **`moderate`: \$0.10 / \$0.15 per 1M input/output tokens, not \$0.02 / \$0.05.** `moderate-llama` (\$0.18 / \$0.18) is now under twice its price on input rather than nine times, so its description no longer sends short passages to `moderate` because it is "far cheaper" — `moderate` is the choice for short text and OpenAI's 13-category envelope, and `moderate-llama` for long transcripts and named policy categories.
+- **`extract-signals`: \$0.04 / \$0.10 per 1M input/output tokens, not \$0.02 / \$0.05.** Corrected in the skill body and the README; the 80M parameter count and 400-token window are unchanged.
+- **`chat`, `chat-glm-5-3-flash`, `chat-gpt-4-1-mini`, `chat-gpt-5-6-luna`, and `chat-gpt-5-4-nano` no longer price themselves against `chat-glm`.** Each anchored a cost ratio or a context comparison on `glm-5.2`, which the API has stopped serving. They now compare against the models that remain, and `chat-gpt-4-1-mini` (\$0.40 / \$1.60) is the most expensive model on the platform.
+
+### Removed
+
+- **`chat-glm`.** `glm-5.2` is no longer served by the ZeroGPU API, so the skill failed on every call. For input past `chat`'s 131K context, use `chat-glm-5-3-flash` or `chat-deepseek-v4-1-flash` for code and agentic work, or `chat-gpt-4-1-mini` when instruction following and tool calling matter most — each holds a 1M-token context, four times what `glm-5.2` held.
+- **`extract-pii` and `redact-pii`.** `gliner-multi-pii-v1` is no longer served by the ZeroGPU API, and no model it serves offers the `extract-pii` or `redact` usecases these skills sent, so both failed on every call. To find PII spans, `extract-entities` takes labels of your own — name the categories you want.
+- Skill count goes from 27 to 24 before the additions above.
+
 ## 3.2.0
 
 Model catalog sync against the dashboard API. The API stopped serving `deepseek-v4-flash-0731`, so `chat-deepseek` is gone — every call it made already failed — and four models the API serves had no skill calling them, so four chat skills are new. `chat-deepseek-v4-1-flash` was also advertising roughly twice its real price, which steered Claude away from it: it is one of the cheapest long-context options on the platform, not the pricier one. Skill names and outputs are unchanged apart from the notes below.
