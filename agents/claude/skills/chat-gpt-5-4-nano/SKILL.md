@@ -13,7 +13,7 @@ $ARGUMENTS
 ZGPU_END_OF_INPUT
 ```
 
-At \$0.20 / \$1.25 per 1M input/output tokens this matches `/zerogpu-router:chat-gpt-5-6-luna` on input and costs marginally more on output, over a 400K-token window rather than 272K. It is about a fifth of `/zerogpu-router:chat-glm` on input and a third on output. For a prompt that fits in 131K tokens, `/zerogpu-router:chat` is cheaper on both.
+At \$0.20 / \$1.25 per 1M input/output tokens this matches `/zerogpu-router:chat-gpt-5-6-luna` on input and costs marginally more on output, over a 400K-token window rather than 272K. It is twice `/zerogpu-router:chat-gpt-6-luna` on input and two and a half times on output. For a prompt that fits in 131K tokens, `/zerogpu-router:chat` is cheaper on both.
 
 Output is the assistant's answer as plain text. Relay the answer as-is — do not rewrite or expand it.
 

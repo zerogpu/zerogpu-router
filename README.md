@@ -35,7 +35,7 @@ ZeroGPU Router is a smart task router for AI agents. It exposes task-specific sk
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
 - **OpenClaw:** install the `zerogpu` CLI plus **`zerogpu-router`** (see [agents/openclaw/](agents/openclaw/)). Skills run locally through your agent's Bash tools.
-- **Claude Code:** install the `zerogpu` CLI plus the marketplace plugin and you get 21 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
+- **Claude Code:** install the `zerogpu` CLI plus the marketplace plugin and you get 29 auto-invoked skills plus a cost-savings readout (see [agents/claude/](agents/claude/)).
 - **Cheap by default:** small models for trivial work, frontier model untouched for everything else.
 - **Per-call savings:** every routed task returns model, latency, and a real `savings_usd` figure.
 - **CLI, no infra:** everything runs through the local `zerogpu` CLI your agent already calls. No servers, MCP endpoints, or infra to stand up.
@@ -84,7 +84,7 @@ Next: loop in support leadership, send an updated enterprise quote by Friday.
 
 ## Claude Code quick start
 
-The Claude Code plugin ships 24 skills: 21 inference skills that Claude auto-invokes when your request matches ("summarize this", "redact the PII", "classify by sentiment and topic"), plus the manual `signin`, `status`, and `cost-savings` skills. You can also call any skill manually with `/zerogpu-router:<name>`. Run `/zerogpu-router:cost-savings` anytime to see how much you've saved by routing trivial work to ZeroGPU.
+The Claude Code plugin ships 32 skills: 29 inference skills that Claude auto-invokes when your request matches ("summarize this", "redact the PII", "classify by sentiment and topic"), plus the manual `signin`, `status`, and `cost-savings` skills. You can also call any skill manually with `/zerogpu-router:<name>`. Run `/zerogpu-router:cost-savings` anytime to see how much you've saved by routing trivial work to ZeroGPU.
 
 Grab a ZeroGPU API key at [platform.zerogpu.ai](https://platform.zerogpu.ai), then:
 
@@ -113,7 +113,7 @@ You'll be prompted for your API key (`zgpu-api-…`).
 **4. Try it:**
 
 ```text
-Redact PII from this support ticket before I paste it into our public bug tracker:
+Pull every person, company, and email address out of this support ticket:
 
 Hi team, this is Sarah Chen (sarah.chen@northwind-labs.com, +1 415-555-0182).
 Our prod database started throwing connection timeouts around 2:14 AM PT last
@@ -124,9 +124,9 @@ Market St, Suite 600, San Francisco, CA 94103. Please call me back at the
 number above.
 ```
 
-Claude routes to `/zerogpu-router:redact-pii` automatically and returns the same passage with names, emails, phone numbers, social handles, and street addresses replaced by uppercase label placeholders like `[PERSON]`, `[EMAIL]`, `[PHONE_NUMBER]`, `[ADDRESS]`, safe to paste into a public tracker. The `gliner-multi-pii-v1` edge model does the masking, not Claude, so the raw PII never enters Claude's context window.
+Claude routes to `/zerogpu-router:extract-entities` automatically and the `gliner2.5-base-v1` edge model returns the spans it found for each label you named — people, companies, email addresses — rather than Claude reading them out itself.
 
-The model is tuned for the standard PII categories above. Project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) won't be caught. Strip those yourself, or pipe the result through `/zerogpu-router:extract-entities` with your own custom labels.
+The labels are yours to choose, so project-specific identifiers (internal hostnames, IPs, contract numbers, card last-fours) work as well as the standard entity types: name them in the request. For a passage that is not in English, Claude routes to `/zerogpu-router:extract-entities-multi` instead.
 
 Full walkthrough (prerequisites, every skill documented in detail, troubleshooting): **[agents/claude/README.md](agents/claude/README.md)**.
 
@@ -142,14 +142,18 @@ ZeroGPU Router exposes twenty-four auto-invoked skills: twenty-one task routes a
 | `chat-liquid` | Fastest, cheapest chat replies | `LFM2.5-1.2B-Instruct` |
 | `chat-thinking` | Short chat replies with a visible reasoning trace | `LFM2.5-1.2B-Thinking` |
 | `chat-qwen` | Multilingual chat, 100+ languages | `qwen3-30b-a3b-fp8` |
+| `chat-qwen3-6-35b-a3b` | Multimodal chat over text, images, and video | `qwen3.6-35b-a3b` |
 | `chat-deepseek` | Coding and agentic work, 1M-token context | `deepseek-v4-flash-0731` |
 | `chat-deepseek-v4-1-flash` | 1M-token context with higher-effort reasoning and function calling | `deepseek-v4.1-flash` |
 | `chat-glm-5-3-flash` | Coding and long-horizon agents, cheapest 1M-token context | `glm-5.3-flash` |
 | `chat-gpt-4-1-mini` | 1M-token context, instruction following and tool calling | `gpt-4.1-mini` |
 | `chat-gpt-5-6-luna` | Cost-optimized high-volume chat, 272K-token context | `gpt-5.6-luna` |
 | `chat-gpt-5-4-nano` | High-volume, latency-sensitive routing and extraction, 400K-token context | `gpt-5.4-nano` |
+| `chat-gpt-6-luna` | Most efficient GPT-6, 272K-token context | `gpt-6-luna` |
+| `decide-tools` | Pick the right tool for a request and generate its arguments | `zlm-v1-tool-decisions` |
 | `chat-glm` | Most capable, 262K-token context, ~7x the cost | `glm-5.2` |
 | `summarize` | TL;DRs, abstracts, meeting note summaries | `llama-3.1-8b-instruct-fast` |
+| `summarize-llama-3-2-3b` | Cheaper summaries at 3B parameters | `llama-3.2-3b-instruct-fast` |
 
 On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its own `summarize` skill (for URLs, videos, and PDFs), and two skills cannot share a name. Skill names are otherwise identical across both agents.
 
@@ -161,14 +165,16 @@ On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its
 | `classify-iab-enriched` | IAB categories plus topics, keywords, intent | `zlm-v2-iab-classify-edge-enriched` |
 | `classify-domain` | IAB classification from a bare hostname, no page fetch | `zlm-v1-iab-domain-classifier` |
 | `classify-zero-shot` | Classify against a flat label list | `deberta-v3-small` |
-| `classify-structured` | Multi-axis schema classification | `gliner2-base-v1` |
+| `classify-structured` | Multi-axis schema classification | `gliner2.5-base-v1` |
+| `classify-decisions` | Dynamic-label decisions, intent and routing | `gliner2.5-decide-v1` |
 
 **Extraction and PII**
 
 | Skill | Workload | Model |
 |---|---|---|
-| `extract-entities` | Extract people, places, companies, dates, custom entities | `gliner2-base-v1` |
-| `extract-json` | Pull structured fields into grouped JSON | `gliner2-base-v1` |
+| `extract-entities` | Extract people, places, companies, dates, custom entities | `gliner2.5-base-v1` |
+| `extract-entities-multi` | The same, for text that is not in English | `gliner2.5-multi-v1` |
+| `extract-json` | Pull structured fields into grouped JSON | `gliner2.5-base-v1` |
 | `extract-signals` | Topics, keywords, intent and other contextual signals | `zlm-v1-signal-extract` |
 | `extract-pii` | Extract PII grouped by category | `gliner-multi-pii-v1` |
 | `redact-pii` | Mask emails, phones, names, addresses, other PII | `gliner-multi-pii-v1` |
@@ -180,6 +186,13 @@ On OpenClaw this skill is named **`zerogpu-summarize`** — OpenClaw bundles its
 | `moderate` | Safety verdict across OpenAI's 13 moderation categories | `zlm-v1-moderation-edge` |
 | `moderate-llama` | Safe/unsafe verdict with the policy categories named | `llama-guard-4-12b` |
 | `embed` | Text to 384-dimensional vectors for search, RAG, dedupe | `all-minilm-l6-v2`, `bge-small-en-v1.5` |
+
+**Speech**
+
+| Skill | Workload | Model |
+|---|---|---|
+| `transcribe` | Speech to text for voice agents, meetings, subtitles | `whisper-tiny` |
+| `speak` | Text to speech with expressive delivery and voice cloning | `chatterbox-nano` |
 
 **Account** (manual only): `signin`, `status`, `cost-savings`.
 
