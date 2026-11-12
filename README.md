@@ -30,7 +30,7 @@
 
 ## What is ZeroGPU Router?
 
-ZeroGPU Router is a smart task router for AI agents. It exposes task-specific skills (summarize, classify, extract JSON, and more) that shell out to the local `zerogpu` CLI, backed by small language models that run for a fraction of the cost of a frontier model.
+ZeroGPU Router is a smart task router for AI agents. It exposes task-specific skills (summarize, classify, extract JSON, and more) that shell out to the local `zerogpu` CLI, backed by small language models that run for a fraction of the cost of a frontier model. Its also called [HeroGPU](https://www.herogpu.com)
 
 Your agent keeps doing the heavy reasoning. The boring stuff gets routed to ZeroGPU.
 
